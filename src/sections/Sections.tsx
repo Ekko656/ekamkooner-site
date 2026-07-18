@@ -1,45 +1,58 @@
 /* ============================================================
-   The five checkpoints of the session. Content is real copy
-   from ekamkooner.com. Reveals are wired in App via ScrollTrigger
-   — every reveal uses the same masked-line pattern + ease family.
+   Five sections, plain names. Text blocks carry data-drift so
+   they move with the scene instead of sitting frozen above it.
    ============================================================ */
-import { useState } from 'react'
-import { PROJECTS, MANIFESTO_LINES, CONTACT, OFF_CLOCK, type Project } from '../data/projects'
+import { useRef, useState } from 'react'
+import { PROJECTS, MANIFESTO, CONTACT, OFF_CLOCK, type Project } from '../data/projects'
 
 export function Hero() {
   return (
     <section id="hero" className="section section-hero" data-section="hero">
-      <p className="hero-eyebrow mono-label reveal">Biomedical engineering · Robotics · UBC</p>
-      <h1 className="hero-name">
-        <span className="mask-line">
-          <span className="reveal-line">EKAM</span>
-        </span>
-        <span className="mask-line">
-          <span className="reveal-line">KOONER</span>
-        </span>
-      </h1>
-      <p className="hero-sub reveal">
-        Embedded &amp; robotics software — building toward machines that show up for people.
-      </p>
-      <p className="hero-platform mono-xs reveal">PLATFORM · SO-ARM101 · OPEN HARDWARE</p>
-      <div className="hero-cue mono-xs" aria-hidden>
+      <div className="hero-inner" data-drift="0.12">
+        <h1 className="hero-name">
+          <span className="mask-line">
+            <span className="reveal-line">EKAM</span>
+          </span>
+          <span className="mask-line">
+            <span className="reveal-line">KOONER</span>
+          </span>
+        </h1>
+        <p className="hero-sub reveal">
+          Biomedical Engineering student at UBC.
+          <br />
+          <em>I build robots that help people.</em>
+        </p>
+      </div>
+      <div className="hero-cue" aria-hidden>
         <span className="cue-line" />
-        [ SCROLL ]
+        <span className="cue-word">Scroll</span>
       </div>
     </section>
   )
 }
 
-export function Directive() {
+export function Why() {
   return (
-    <section id="directive" className="section section-directive" data-section="directive">
-      <p className="section-index mono-label reveal">01 / DIRECTIVE</p>
-      <div className="directive-body">
-        {MANIFESTO_LINES.map((line, i) => (
+    <section id="why" className="section section-why" data-section="why">
+      <p className="section-index reveal">
+        <span className="index-num">01</span> Why
+      </p>
+      <div className="why-body" data-drift="0.2">
+        <h2 className="why-lead">
+          <span className="mask-line">
+            <span className="reveal-line">{MANIFESTO.lead}</span>
+          </span>
+        </h2>
+        {MANIFESTO.lines.map((line, i) => (
           <span key={i} className="mask-line">
-            <span className={`reveal-line directive-line${i === 0 ? ' is-lead' : ''}`}>{line}</span>
+            <span className={`reveal-line why-line${i >= 3 && i <= 5 ? ' is-aim' : ''}`}>{line}</span>
           </span>
         ))}
+        <p className="why-close">
+          <span className="mask-line">
+            <span className="reveal-line">{MANIFESTO.close}</span>
+          </span>
+        </p>
       </div>
     </section>
   )
@@ -47,47 +60,68 @@ export function Directive() {
 
 function ProjectRow({ p }: { p: Project }) {
   const [open, setOpen] = useState(false)
+  const vid = useRef<HTMLVideoElement>(null)
+
+  const toggle = () => {
+    const next = !open
+    setOpen(next)
+    if (vid.current) {
+      if (next) vid.current.play().catch(() => {})
+      else vid.current.pause()
+    }
+  }
+
   return (
     <li className={`row${open ? ' is-open' : ''}`}>
-      <button
-        className="row-head"
-        data-cursor={open ? 'CLOSE' : 'QUERY'}
-        aria-expanded={open}
-        onClick={() => setOpen(!open)}
-      >
-        <span className="row-index mono-label">{p.index}</span>
+      <button className="row-head" data-cursor={open ? 'Close' : 'Open'} aria-expanded={open} onClick={toggle}>
+        <span className="row-index">{p.index}</span>
         <span className="row-title">{p.title}</span>
-        <span className="row-tag mono-label">{p.tag}</span>
+        <span className="row-tag">{p.tag}</span>
         <span className="row-cross" aria-hidden />
       </button>
       <div className="row-sheet" aria-hidden={!open}>
         <div className="sheet-inner">
-          <p className="sheet-desc">{p.description}</p>
-          <ul className="sheet-stack">
-            {p.stack.map((s) => (
-              <li key={s} className="mono-xs">
-                {s}
-              </li>
-            ))}
-          </ul>
+          <figure className="sheet-media">
+            {p.media.type === 'video' ? (
+              <video
+                ref={vid}
+                src={p.media.src}
+                poster={p.media.poster}
+                muted
+                loop
+                playsInline
+                preload="metadata"
+              />
+            ) : (
+              <img src={p.media.src} alt={p.title} loading="lazy" />
+            )}
+          </figure>
+          <div className="sheet-body">
+            <p className="sheet-desc">{p.description}</p>
+            <ul className="sheet-stack">
+              {p.stack.map((s) => (
+                <li key={s}>{s}</li>
+              ))}
+            </ul>
+            {p.links.length > 0 && (
+              <div className="sheet-links">
+                {p.links.map((l) => (
+                  <a key={l.label} href={l.href} target="_blank" rel="noreferrer" className="link-wipe" data-cursor="Open">
+                    {l.label}
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
           {p.awards && (
             <ul className="sheet-awards">
               {p.awards.map((a) => (
                 <li key={a.title}>
-                  <span className="mono-label">{a.title}</span>
+                  <span className="award-title">{a.title}</span>
                   <p>{a.body}</p>
                 </li>
               ))}
             </ul>
-          )}
-          {p.links.length > 0 && (
-            <div className="sheet-links">
-              {p.links.map((l) => (
-                <a key={l.label} href={l.href} target="_blank" rel="noreferrer" className="mono-label link-wipe" data-cursor="OPEN">
-                  {l.label} ↗
-                </a>
-              ))}
-            </div>
           )}
         </div>
       </div>
@@ -95,11 +129,15 @@ function ProjectRow({ p }: { p: Project }) {
   )
 }
 
-export function Systems() {
+export function Projects() {
   return (
-    <section id="systems" className="section section-systems" data-section="systems">
-      <p className="section-index mono-label reveal">02 / SYSTEMS</p>
-      <h2 className="section-title reveal">Things I've built.</h2>
+    <section id="projects" className="section section-projects" data-section="projects">
+      <p className="section-index reveal">
+        <span className="index-num">02</span> Projects
+      </p>
+      <h2 className="section-title reveal" data-drift="0.1">
+        Things I have built.
+      </h2>
       <ul className="rows">
         {PROJECTS.map((p) => (
           <ProjectRow key={p.id} p={p} />
@@ -109,29 +147,29 @@ export function Systems() {
   )
 }
 
-export function Operator() {
+export function About() {
   return (
-    <section id="operator" className="section section-operator" data-section="operator">
-      <p className="section-index mono-label reveal">03 / OPERATOR</p>
-      <div className="operator-grid">
-        <div className="operator-bio">
-          <h2 className="section-title reveal">The human in the loop.</h2>
+    <section id="about" className="section section-about" data-section="about">
+      <p className="section-index reveal">
+        <span className="index-num">03</span> About
+      </p>
+      <div className="about-grid">
+        <div className="about-bio" data-drift="0.16">
+          <h2 className="section-title reveal">Calgary raised. Vancouver based.</h2>
           <p className="reveal">
-            Biomedical Engineering student at UBC, aiming at humanoid robotics — embedded
-            firmware with UBC Bionics, autonomous navigation since VEX, kinematics from first
-            principles. Calgary raised, Vancouver based.
+            I study Biomedical Engineering at UBC and I am aiming at humanoid robotics. Embedded
+            firmware with UBC Bionics. Autonomous navigation since VEX. Kinematics from first
+            principles.
           </p>
-          <p className="reveal">
-            The goal isn't the technology. It's who the technology is able to serve.
+          <p className="reveal about-callout">
+            The goal is not the technology. It is who the technology serves.
           </p>
         </div>
-        <div className="operator-side">
-          <p className="mono-label reveal">IDLE PROCESSES</p>
+        <div className="about-side" data-drift="0.26">
+          <p className="side-label reveal">Off the clock</p>
           <ul className="chips">
             {OFF_CLOCK.map((c) => (
-              <li key={c} className="mono-xs">
-                {c}
-              </li>
+              <li key={c}>{c}</li>
             ))}
           </ul>
         </div>
@@ -140,31 +178,30 @@ export function Operator() {
   )
 }
 
-export function Uplink() {
+export function Contact() {
   return (
-    <section id="uplink" className="section section-uplink" data-section="uplink">
-      <p className="section-index mono-label reveal">04 / UPLINK</p>
-      <p className="uplink-status mono-label reveal">{CONTACT.status}</p>
-      <a className="uplink-cta" href={`mailto:${CONTACT.email}`} data-cursor="SEND" data-magnetic>
+    <section id="contact" className="section section-contact" data-section="contact">
+      <p className="section-index reveal">
+        <span className="index-num">04</span> Contact
+      </p>
+      <p className="contact-status reveal">{CONTACT.status}</p>
+      <a className="contact-cta" href={`mailto:${CONTACT.email}`} data-cursor="Send" data-magnetic>
         <span className="mask-line">
-          <span className="reveal-line">LET'S BUILD →</span>
+          <span className="reveal-line">Let's build.</span>
         </span>
       </a>
-      <div className="uplink-links">
-        <a href={CONTACT.github} target="_blank" rel="noreferrer" className="mono-label link-wipe" data-cursor="OPEN">
-          GITHUB
+      <div className="contact-links">
+        <a href={CONTACT.github} target="_blank" rel="noreferrer" className="link-wipe" data-cursor="Open">
+          GitHub
         </a>
-        <a href={CONTACT.linkedin} target="_blank" rel="noreferrer" className="mono-label link-wipe" data-cursor="OPEN">
-          LINKEDIN
+        <a href={CONTACT.linkedin} target="_blank" rel="noreferrer" className="link-wipe" data-cursor="Open">
+          LinkedIn
         </a>
-        <a href={`mailto:${CONTACT.email}`} className="mono-label link-wipe" data-cursor="SEND">
+        <a href={`mailto:${CONTACT.email}`} className="link-wipe" data-cursor="Send">
           {CONTACT.email}
         </a>
       </div>
-      <footer className="uplink-footer mono-xs">
-        <span>© 2026 EKAM KOONER · {CONTACT.location.toUpperCase()}</span>
-        <span>[ SYSTEM IDLE ]</span>
-      </footer>
+      <footer className="contact-footer">Ekam Kooner 2026</footer>
     </section>
   )
 }

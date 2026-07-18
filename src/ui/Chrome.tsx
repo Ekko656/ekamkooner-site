@@ -1,5 +1,5 @@
-/* Fixed session chrome: monogram, section quick-jump, live readouts,
-   local time. These never leave the screen — they ARE the HMI frame. */
+/* Fixed chrome: monogram, section jump nav, build readout, local time.
+   Plain words, no decoration language. */
 import { useEffect, useRef, useState } from 'react'
 import { SECTIONS, session, type SectionId } from '../lib/session'
 
@@ -33,19 +33,20 @@ export function Nav({ onJump }: { onJump: (id: SectionId) => void }) {
   useEffect(() => session.onSection(setCurrent), [])
   return (
     <header className="chrome chrome-nav">
-      <button className="monogram" data-cursor="TOP" onClick={() => onJump('hero')}>
+      <button className="monogram" data-cursor="Top" onClick={() => onJump('hero')}>
         EKAM KOONER
       </button>
       <nav className="jump">
         {SECTIONS.filter((s) => s.id !== 'hero').map((s) => (
           <button
             key={s.id}
-            className={`jump-item mono-xs${current === s.id ? ' is-active' : ''}`}
-            data-cursor="JUMP"
+            className={`jump-item${current === s.id ? ' is-active' : ''}`}
+            data-cursor="Go"
             onClick={() => onJump(s.id)}
           >
             <span className="jump-dot" />
-            {s.index} / {s.label}
+            <span className="jump-index">{s.index}</span>
+            {s.label}
           </button>
         ))}
       </nav>
@@ -54,20 +55,29 @@ export function Nav({ onJump }: { onJump: (id: SectionId) => void }) {
 }
 
 export function Readouts() {
-  const el = useRef<HTMLDivElement>(null)
+  const el = useRef<HTMLSpanElement>(null)
+  const bar = useRef<HTMLSpanElement>(null)
   useEffect(() => {
     let raf = 0
     const loop = () => {
-      if (el.current) {
-        const s = SECTIONS.find((x) => x.id === session.section)!
-        el.current.innerText = `[ SEC ${s.index} · ${s.label} ]  [ SCROLL ${String(Math.round(session.scroll * 100)).padStart(3, '0')}% ]  [ ASM ${String(Math.round(session.assembly * 100)).padStart(3, '0')}% ]`
-      }
+      const pct = Math.round(session.assembly * 100)
+      if (el.current) el.current.innerText = `BUILD ${String(pct).padStart(3, '0')}`
+      if (bar.current) bar.current.style.transform = `scaleX(${session.assembly})`
       raf = requestAnimationFrame(loop)
     }
     raf = requestAnimationFrame(loop)
     return () => cancelAnimationFrame(raf)
   }, [])
-  return <div ref={el} className="chrome chrome-readouts mono-xs" aria-hidden />
+  return (
+    <div className="chrome chrome-readouts" aria-hidden>
+      <span ref={el} className="readout-text">
+        BUILD 000
+      </span>
+      <span className="readout-track">
+        <span ref={bar} className="readout-bar" />
+      </span>
+    </div>
+  )
 }
 
 export function Clock() {
@@ -79,16 +89,15 @@ export function Clock() {
           hour12: false,
           hour: '2-digit',
           minute: '2-digit',
-          second: '2-digit',
         }),
       )
     tick()
-    const id = setInterval(tick, 1000)
+    const id = setInterval(tick, 5000)
     return () => clearInterval(id)
   }, [])
   return (
-    <div className="chrome chrome-clock mono-xs" aria-hidden>
-      [ VANCOUVER {now} PT ]
+    <div className="chrome chrome-clock" aria-hidden>
+      VANCOUVER {now}
     </div>
   )
 }

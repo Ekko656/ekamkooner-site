@@ -1,5 +1,5 @@
-/* The cursor is a tool: a reticle ring + center dot with weighted lag.
-   Elements opt into labels via data-cursor="OPEN" etc. */
+/* A compact reticle: solid dot, sturdy ring, plain word labels.
+   Weighted follow, quick contract on press. */
 import { useEffect, useRef, useState } from 'react'
 import gsap from 'gsap'
 
@@ -26,13 +26,13 @@ export default function Cursor() {
       setLabel(t?.dataset.cursor ?? '')
       setActive(!!t)
     }
-    const down = () => gsap.to(ring.current, { scale: 0.72, duration: 0.15, ease: 'mechSnap' })
-    const up = () => gsap.to(ring.current, { scale: 1, duration: 0.3, ease: 'mechOut' })
+    const down = () => gsap.to(ring.current, { scale: 0.78, duration: 0.12, ease: 'mechSnap' })
+    const up = () => gsap.to(ring.current, { scale: 1, duration: 0.28, ease: 'mechOut' })
 
     let raf = 0
     const loop = () => {
-      lag.x += (pos.x - lag.x) * 0.16
-      lag.y += (pos.y - lag.y) * 0.16
+      lag.x += (pos.x - lag.x) * 0.24
+      lag.y += (pos.y - lag.y) * 0.24
       gsap.set(ring.current, { x: lag.x, y: lag.y })
       raf = requestAnimationFrame(loop)
     }
@@ -53,7 +53,7 @@ export default function Cursor() {
     <>
       <div ref={dot} className="cursor-dot" />
       <div ref={ring} className={`cursor-ring${active ? ' is-active' : ''}`}>
-        {label && <span className="cursor-label mono-xs">[ {label} ]</span>}
+        {label && <span className="cursor-label">{label}</span>}
       </div>
     </>
   )
