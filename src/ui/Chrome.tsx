@@ -1,15 +1,21 @@
-/* Fixed chrome: monogram, section jump nav, build readout, local time.
-   Plain words, no decoration language. */
+/* Fixed chrome: monogram home link, page nav, build readout, local time. */
 import { useEffect, useRef, useState } from 'react'
-import { SECTIONS, session, type SectionId } from '../lib/session'
+import { Link, useLocation } from 'react-router-dom'
+import { session } from '../lib/session'
+
+const PAGES = [
+  { to: '/about', label: 'About' },
+  { to: '/projects', label: 'Projects' },
+  { to: '/resume', label: 'Resume' },
+  { to: '/contact', label: 'Contact' },
+]
 
 export function GridLines() {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => {
     let raf = 0
     const loop = () => {
-      const humming = Math.abs(session.velocity) > 0.4
-      ref.current?.classList.toggle('is-humming', humming)
+      ref.current?.classList.toggle('is-humming', Math.abs(session.velocity) > 0.4)
       raf = requestAnimationFrame(loop)
     }
     raf = requestAnimationFrame(loop)
@@ -17,7 +23,7 @@ export function GridLines() {
   }, [])
   return (
     <div ref={ref} className="layer-grid" aria-hidden>
-      {Array.from({ length: 12 }).map((_, i) => (
+      {Array.from({ length: 4 }).map((_, i) => (
         <span key={i} />
       ))}
     </div>
@@ -28,26 +34,20 @@ export function Grain() {
   return <div className="layer-grain" aria-hidden />
 }
 
-export function Nav({ onJump }: { onJump: (id: SectionId) => void }) {
-  const [current, setCurrent] = useState<SectionId>('hero')
-  useEffect(() => session.onSection(setCurrent), [])
+export function Nav() {
+  const { pathname } = useLocation()
+  if (pathname === '/') return null
   return (
     <header className="chrome chrome-nav">
-      <button className="monogram" data-cursor="Top" onClick={() => onJump('hero')}>
+      <Link to="/" className="monogram" data-cursor="Home">
         EKAM KOONER
-      </button>
+      </Link>
       <nav className="jump">
-        {SECTIONS.filter((s) => s.id !== 'hero').map((s) => (
-          <button
-            key={s.id}
-            className={`jump-item${current === s.id ? ' is-active' : ''}`}
-            data-cursor="Go"
-            onClick={() => onJump(s.id)}
-          >
+        {PAGES.map((p) => (
+          <Link key={p.to} to={p.to} className={`jump-item${pathname === p.to ? ' is-active' : ''}`} data-cursor="Go">
             <span className="jump-dot" />
-            <span className="jump-index">{s.index}</span>
-            {s.label}
-          </button>
+            {p.label}
+          </Link>
         ))}
       </nav>
     </header>
@@ -85,11 +85,7 @@ export function Clock() {
   useEffect(() => {
     const tick = () =>
       setNow(
-        new Date().toLocaleTimeString('en-CA', {
-          hour12: false,
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
+        new Date().toLocaleTimeString('en-CA', { hour12: false, hour: '2-digit', minute: '2-digit' }),
       )
     tick()
     const id = setInterval(tick, 5000)

@@ -7,8 +7,8 @@ import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { session } from '../lib/session'
 
-const COUNT = 420
-const BOUNDS = { x: 16, y: 10, z: 8 }
+const COUNT = 620
+const BOUNDS = { x: 17, y: 11, z: 9 }
 
 export default function Dust() {
   const ref = useRef<THREE.Points>(null)
@@ -31,11 +31,11 @@ export default function Dust() {
   const mat = useMemo(
     () =>
       new THREE.PointsMaterial({
-        color: '#aebadb',
-        size: 0.024,
+        color: '#b6c2e2',
+        size: 0.034,
         sizeAttenuation: true,
         transparent: true,
-        opacity: 0.6,
+        opacity: 0.7,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
       }),

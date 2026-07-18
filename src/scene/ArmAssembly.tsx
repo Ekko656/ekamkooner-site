@@ -1,13 +1,12 @@
 /* ============================================================
-   THE ASSEMBLY, continuous.
+   THE ASSEMBLY.
 
-   The real SO-ARM101 parts hang exploded like an engineering
-   diagram and build themselves as you scroll. Progress follows
-   the scroll smoothly every frame; section tops are simply the
-   marks the build passes through. Parts fly on arced paths with
-   staggered windows so they never cross through each other, and
-   when the build reaches 100 percent the machine locks in with
-   a quick settle pulse, then breathes as one rigid body.
+   Exploded real SO-ARM101 parts build themselves as the About
+   page scrolls. Every part's flight window ends inside the
+   master range so the machine truly completes. At 100 percent
+   the baked parts swap for the live articulated robot, a lock
+   pulse fires, and the machine starts moving: light, airy,
+   slow joint drift, never snappy.
    ============================================================ */
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useFrame } from '@react-three/fiber'
@@ -19,18 +18,18 @@ import { session } from '../lib/session'
 
 type Part = {
   geom: THREE.BufferGeometry
-  servo: boolean
+  mat: THREE.Material
   aPos: THREE.Vector3
   aQuat: THREE.Quaternion
   ePos: THREE.Vector3
   eQuat: THREE.Quaternion
-  /** arc waypoint between exploded and assembled */
   mPos: THREE.Vector3
-  /** stagger window inside the master progress, base parts first */
   w0: number
   w1: number
   seed: number
 }
+
+type Joints = Record<string, { setJointValue: (v: number) => void }>
 
 /* display pose for the assembled arm, head level and alert */
 const DISPLAY_POSE: Record<string, number> = {
@@ -41,6 +40,36 @@ const DISPLAY_POSE: Record<string, number> = {
   Wrist_Roll: 0,
   Jaw: 0.25,
 }
+const JOINT_NAMES = ['Rotation', 'Pitch', 'Elbow', 'Wrist_Pitch', 'Wrist_Roll', 'Jaw'] as const
+
+/* light airy idle drift: layered slow sines per joint, tiny amplitudes */
+const IDLE_AMP: Record<string, number> = {
+  Rotation: 0.34,
+  Pitch: 0.07,
+  Elbow: 0.1,
+  Wrist_Pitch: 0.18,
+  Wrist_Roll: 0.3,
+  Jaw: 0.08,
+}
+const IDLE_SPD: Record<string, number> = {
+  Rotation: 0.11,
+  Pitch: 0.09,
+  Elbow: 0.07,
+  Wrist_Pitch: 0.14,
+  Wrist_Roll: 0.17,
+  Jaw: 0.12,
+}
+const IDLE_SEED: Record<string, number> = {
+  Rotation: 1.3,
+  Pitch: 4.7,
+  Elbow: 8.1,
+  Wrist_Pitch: 2.9,
+  Wrist_Roll: 6.2,
+  Jaw: 9.8,
+}
+
+const fbm = (t: number, seed: number) =>
+  Math.sin(t + seed) * 0.55 + Math.sin(t * 0.43 + seed * 2.1) * 0.3 + Math.sin(t * 1.7 + seed * 4.3) * 0.15
 
 const ARM_SCALE = 7.2
 
@@ -49,15 +78,54 @@ const smooth01 = (x: number) => {
   return t * t * (3 - 2 * t)
 }
 
+/* colour: warm white printed shell, steel blue servos, signal blue
+   accent parts so the machine reads designed, not unrendered */
+function makeMats() {
+  const shell = new THREE.MeshStandardMaterial({
+    color: '#e9edf5',
+    metalness: 0.35,
+    roughness: 0.4,
+    envMapIntensity: 0.85,
+  })
+  const servo = new THREE.MeshStandardMaterial({
+    color: '#31406b',
+    metalness: 0.85,
+    roughness: 0.28,
+    envMapIntensity: 1.3,
+  })
+  const accent = new THREE.MeshStandardMaterial({
+    color: '#5d7bf0',
+    metalness: 0.4,
+    roughness: 0.42,
+    envMapIntensity: 1.0,
+  })
+  const base = new THREE.MeshStandardMaterial({
+    color: '#aeb9d6',
+    metalness: 0.55,
+    roughness: 0.36,
+    envMapIntensity: 0.9,
+  })
+  const pick = (src: string) => {
+    if (src.includes('sts3215')) return servo
+    if (src.includes('moving_jaw') || src.includes('wrist_roll_follower')) return accent
+    if (src.includes('base_so101') || src.includes('base_motor_holder')) return base
+    return shell
+  }
+  return { pick }
+}
+
 export default function ArmAssembly() {
   const [parts, setParts] = useState<Part[] | null>(null)
   const outer = useRef<(THREE.Group | null)[]>([])
   const root = useRef<THREE.Group>(null)
+  const partsGroup = useRef<THREE.Group>(null)
   const ring = useRef<THREE.Mesh>(null)
   const locked = useRef(false)
   const lockPulse = useRef({ s: 0 })
+  const liveRobot = useRef<THREE.Object3D | null>(null)
+  const liveJoints = useRef<Joints | null>(null)
+  const liveAt = useRef(0)
 
-  /* ---- load URDF, bake transforms, plan the flight ---- */
   useEffect(() => {
     const manager = new THREE.LoadingManager()
     const loader = new URDFLoader(manager)
@@ -85,9 +153,8 @@ export default function ArmAssembly() {
 
     manager.onLoad = () => {
       if (!robot) return
-      const joints = (robot as unknown as {
-        joints: Record<string, { setJointValue: (v: number) => void }>
-      }).joints
+      const { pick } = makeMats()
+      const joints = (robot as unknown as { joints: Joints }).joints
       Object.entries(DISPLAY_POSE).forEach(([n, v]) => joints[n]?.setJointValue(v))
 
       const rig = new THREE.Group()
@@ -105,12 +172,18 @@ export default function ArmAssembly() {
         const mesh = o as THREE.Mesh
         if (!mesh.isMesh) return
         const src = String(mesh.userData.src ?? '')
-        if (src.includes('waveshare_mounting_plate')) return
+        if (src.includes('waveshare_mounting_plate')) {
+          mesh.visible = false
+          return
+        }
+        const mat = pick(src)
+        mesh.material = mat
+        mesh.castShadow = true
         mesh.updateWorldMatrix(true, false)
         mesh.matrixWorld.decompose(tmpP, tmpQ, tmpS)
         collected.push({
           geom: mesh.geometry as THREE.BufferGeometry,
-          servo: src.includes('sts3215'),
+          mat,
           aPos: tmpP.clone().multiplyScalar(ARM_SCALE),
           aQuat: tmpQ.clone(),
           ePos: new THREE.Vector3(),
@@ -122,7 +195,6 @@ export default function ArmAssembly() {
       })
       centroid.divideScalar(collected.length)
 
-      /* exploded diagram cloud, up and to the right of where it will stand */
       const cloudCenter = centroid.clone().add(new THREE.Vector3(1.0, 1.8, 0.3))
       const axis = new THREE.Vector3()
       const planned: Part[] = collected.map((p, i) => {
@@ -142,8 +214,6 @@ export default function ArmAssembly() {
           )
         axis.set(Math.sin(p.seed), Math.cos(p.seed * 2.1), Math.sin(p.seed * 1.3)).normalize()
         p.eQuat.copy(p.aQuat).multiply(new THREE.Quaternion().setFromAxisAngle(axis, 0.55 + (i % 3) * 0.3))
-        /* arc waypoint: midpoint pushed outward and to the part's own side,
-           so flight paths bow apart instead of crossing */
         const side = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 0, 1)).normalize()
         p.mPos
           .copy(p.ePos)
@@ -153,23 +223,39 @@ export default function ArmAssembly() {
         return p as Part
       })
 
-      /* base up build order: each part owns a window of the master progress,
-         windows overlap a little so the build flows instead of ticking */
+      /* base up windows that all END inside the master range, so the
+         final part seats exactly at 100 percent, nothing left floating */
       const order = planned
         .map((p, i) => ({ i, y: p.aPos.y }))
         .sort((a, b) => a.y - b.y)
       const n = order.length
+      const WINDOW = 0.34
       order.forEach(({ i }, rank) => {
-        const start = (rank / n) * 0.78
+        const start = (rank / Math.max(1, n - 1)) * (1 - WINDOW)
         planned[i].w0 = start
-        planned[i].w1 = start + 0.34
+        planned[i].w1 = start + WINDOW
       })
+
+      /* keep the live articulated robot for the post lock life */
+      liveRobot.current = rig
+      liveJoints.current = joints
+      rig.visible = false
 
       setParts(planned)
     }
   }, [])
 
-  /* quadratic bezier through the arc waypoint */
+  /* mount the live robot rig under the root group once parts exist */
+  useEffect(() => {
+    if (!parts || !root.current || !liveRobot.current) return
+    const rig = liveRobot.current
+    rig.scale.setScalar(ARM_SCALE)
+    root.current.add(rig)
+    return () => {
+      root.current?.remove(rig)
+    }
+  }, [parts])
+
   const bez = useMemo(() => new THREE.Vector3(), [])
   const evalPart = (p: Part, g: THREE.Group, master: number) => {
     const t = smooth01((master - p.w0) / (p.w1 - p.w0))
@@ -184,7 +270,6 @@ export default function ArmAssembly() {
     return t
   }
 
-  /* ---- per frame: chase the scroll target, drift, breathe, lock ---- */
   useFrame(({ clock }, dt) => {
     if (!parts) return
     const k = 1 - Math.exp(-4.2 * dt)
@@ -192,36 +277,49 @@ export default function ArmAssembly() {
     const p = session.assembly
     const t = clock.elapsedTime
 
-    for (let i = 0; i < parts.length; i++) {
-      const g = outer.current[i]
-      if (!g) continue
-      const part = parts[i]
-      const tp = evalPart(part, g, p)
-      /* individual drift only while a part is still in flight or waiting.
-         Fully placed parts sit EXACTLY on their assembled transform. */
-      const loose = 1 - tp
-      if (loose > 0.001) {
-        const s = part.seed
-        const amp = 0.16 * loose
-        g.position.x += Math.sin(t * 0.32 + s) * amp
-        g.position.y += Math.sin(t * 0.24 + s * 2.3) * amp * 1.4
-        g.position.z += Math.cos(t * 0.28 + s * 1.1) * amp * 0.7
+    const live = locked.current
+    if (partsGroup.current) partsGroup.current.visible = !live
+    if (liveRobot.current) liveRobot.current.visible = live
+
+    if (!live) {
+      for (let i = 0; i < parts.length; i++) {
+        const g = outer.current[i]
+        if (!g) continue
+        const part = parts[i]
+        const tp = evalPart(part, g, p)
+        const loose = 1 - tp
+        if (loose > 0.001) {
+          const s = part.seed
+          const amp = 0.16 * loose
+          g.position.x += Math.sin(t * 0.32 + s) * amp
+          g.position.y += Math.sin(t * 0.24 + s * 2.3) * amp * 1.4
+          g.position.z += Math.cos(t * 0.28 + s * 1.1) * amp * 0.7
+        }
+      }
+    } else if (liveJoints.current) {
+      /* the machine is alive: gentle layered drift around the display pose,
+         eased in over the first seconds so it wakes rather than starts */
+      const wake = smooth01((t - liveAt.current) / 3)
+      for (const name of JOINT_NAMES) {
+        const v =
+          DISPLAY_POSE[name] +
+          IDLE_AMP[name] * wake * fbm(t * IDLE_SPD[name] * Math.PI * 2, IDLE_SEED[name])
+        liveJoints.current[name]?.setJointValue(v)
       }
     }
 
-    /* the completed machine breathes as one rigid body */
+    /* unified breathing on the root, felt in both representations */
     if (root.current) {
       const unified = smooth01((p - 0.9) / 0.1)
       root.current.rotation.z = Math.sin(t * 0.5) * 0.008 * unified
       root.current.position.y = -1.35 + Math.sin(t * 0.8) * 0.02 * unified
-      /* lock pulse rides on top */
-      const pulse = 1 + lockPulse.current.s
-      root.current.scale.setScalar(pulse)
+      root.current.scale.setScalar(1 + lockPulse.current.s)
     }
 
-    /* game style lock in: crossing 99.5 percent fires once */
+    /* lock in once at 99.5 percent: pulse, ring, swap to the live robot */
     if (!locked.current && p > 0.995) {
       locked.current = true
+      liveAt.current = t
       gsap
         .timeline()
         .to(lockPulse.current, { s: 0.02, duration: 0.09, ease: 'power2.in' })
@@ -234,44 +332,29 @@ export default function ArmAssembly() {
         gsap.to(mat, { opacity: 0, duration: 0.9, ease: 'power2.out' })
       }
     }
-    if (locked.current && p < 0.96) locked.current = false
+    if (locked.current && p < 0.96) {
+      locked.current = false
+      /* reset the live pose so the baked parts line up again */
+      if (liveJoints.current)
+        Object.entries(DISPLAY_POSE).forEach(([n, v]) => liveJoints.current![n]?.setJointValue(v))
+    }
   })
-
-  const bodyMat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: '#dfe6f2',
-        metalness: 0.5,
-        roughness: 0.34,
-        envMapIntensity: 0.9,
-      }),
-    [],
-  )
-  const servoMat = useMemo(
-    () =>
-      new THREE.MeshStandardMaterial({
-        color: '#31406b',
-        metalness: 0.85,
-        roughness: 0.28,
-        envMapIntensity: 1.3,
-      }),
-    [],
-  )
 
   if (!parts) return null
   return (
     <group ref={root} position={[1.15, -1.35, 0]}>
-      {parts.map((p, i) => (
-        <group
-          key={i}
-          ref={(el) => {
-            outer.current[i] = el
-          }}
-        >
-          <mesh geometry={p.geom} material={p.servo ? servoMat : bodyMat} scale={ARM_SCALE} castShadow />
-        </group>
-      ))}
-      {/* lock in confirmation ring, invisible until the build completes */}
+      <group ref={partsGroup}>
+        {parts.map((p, i) => (
+          <group
+            key={i}
+            ref={(el) => {
+              outer.current[i] = el
+            }}
+          >
+            <mesh geometry={p.geom} material={p.mat} scale={ARM_SCALE} castShadow />
+          </group>
+        ))}
+      </group>
       <mesh ref={ring} position={[0, 1.1, 0.4]}>
         <ringGeometry args={[0.96, 1, 48]} />
         <meshBasicMaterial color={'#6e8cff'} transparent opacity={0} side={THREE.DoubleSide} />
