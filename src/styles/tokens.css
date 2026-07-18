@@ -1,0 +1,110 @@
+/* ============================================================
+   ekamkooner.com — design tokens
+   Strict navy + white. One cold accent, used at <5% coverage.
+   ============================================================ */
+
+/* ---- fonts (self-hosted) ---- */
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  src: url('/fonts/schibsted-grotesk-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  src: url('/fonts/schibsted-grotesk-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  src: url('/fonts/schibsted-grotesk-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Schibsted Grotesk';
+  src: url('/fonts/schibsted-grotesk-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Martian Mono';
+  src: url('/fonts/martian-mono-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Martian Mono';
+  src: url('/fonts/martian-mono-500.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Martian Mono';
+  src: url('/fonts/martian-mono-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  /* ---- color ---- */
+  --navy-950: #060912;
+  --navy-900: #0a0e1a;
+  --navy-800: #10162a;
+  --navy-700: #1a2340;
+  --navy-600: #26314f;
+
+  --ice-100: #ffffff;
+  --ice-200: #eaeef6;
+  --ice-400: #9ba6bd;
+  --ice-600: #5a6580;
+
+  --signal: #6e8cff;
+
+  /* ---- type ---- */
+  --font-display: 'Schibsted Grotesk', system-ui, sans-serif;
+  --font-mono: 'Martian Mono', ui-monospace, monospace;
+
+  --text-display: clamp(3.5rem, 9vw, 10rem);
+  --text-h1: clamp(2.5rem, 5vw, 4.5rem);
+  --text-h2: clamp(1.75rem, 3vw, 2.75rem);
+  --text-body-lg: clamp(1.05rem, 1.4vw, 1.3rem);
+  --text-body: 1rem;
+  --text-mono-sm: 0.8125rem;
+  --text-mono-xs: 0.6875rem;
+
+  /* ---- spacing (8px rhythm) ---- */
+  --s-1: 8px;
+  --s-2: 16px;
+  --s-3: 24px;
+  --s-5: 40px;
+  --s-8: 64px;
+  --s-12: 96px;
+  --s-20: 160px;
+
+  /* ---- grid ---- */
+  --gutter: 24px;
+  --margin: clamp(20px, 3vw, 48px);
+
+  /* ---- motion: the one ease family (mirrors GSAP CustomEase "mech") ---- */
+  --ease-mech: cubic-bezier(0.6, 0, 0.1, 1);
+  --ease-mech-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 0.3s;
+  --dur-med: 0.7s;
+
+  /* ---- z-index registry ---- */
+  --z-canvas: 0;
+  --z-grid: 1;
+  --z-content: 2;
+  --z-chrome: 10;
+  --z-grain: 20;
+  --z-cursor: 30;
+}
