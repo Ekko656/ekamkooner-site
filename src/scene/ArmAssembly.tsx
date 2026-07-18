@@ -121,7 +121,7 @@ export default function ArmAssembly() {
       /* structured explosion: the diagram cloud hangs up-right of where the
          machine will stand, each part pushed out along its centroid ray with
          a deliberate per-part twist. Reads as a diagram, not debris. */
-      const cloudCenter = centroid.clone().add(new THREE.Vector3(1.1, 2.5, 0.3))
+      const cloudCenter = centroid.clone().add(new THREE.Vector3(1.0, 1.8, 0.3))
       const axis = new THREE.Vector3()
       collected.forEach((p, i) => {
         const dir = p.aPos.clone().sub(centroid)
@@ -176,10 +176,10 @@ export default function ArmAssembly() {
     t.progress(0.0001).progress(0)
 
     /* section change → tween the timeline's progress (the trajectory) */
-    const off = session.onSection((id: SectionId) => {
+    const driveTo = (target: number, duration = 1.9) => {
       gsap.to(prog.current, {
-        v: ASSEMBLY_TARGET[id],
-        duration: 1.9,
+        v: target,
+        duration,
         ease: MECH_HEAVY,
         overwrite: true,
         onUpdate: () => {
@@ -187,7 +187,11 @@ export default function ArmAssembly() {
           session.assembly = prog.current.v
         },
       })
-    })
+    }
+    const off = session.onSection((id: SectionId) => driveTo(ASSEMBLY_TARGET[id]))
+    /* meshes load async: catch up to whatever checkpoint the page is already at
+       (covers reloads mid-scroll and fast scrollers beating the STL fetch) */
+    driveTo(ASSEMBLY_TARGET[session.section], 2.4)
     return () => {
       off()
       t.kill()
@@ -225,9 +229,9 @@ export default function ArmAssembly() {
   const servoMat = useMemo(
     () =>
       new THREE.MeshStandardMaterial({
-        color: '#151b2c',
-        metalness: 0.75,
-        roughness: 0.35,
+        color: '#242e4d',
+        metalness: 0.7,
+        roughness: 0.32,
       }),
     [],
   )

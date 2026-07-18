@@ -14,11 +14,11 @@ import Dust from './Dust'
 
 /* per-section camera framing: [pos], [lookAt] */
 const FRAMES: Record<SectionId, { pos: [number, number, number]; look: [number, number, number] }> = {
-  hero: { pos: [0, 0.2, 9.4], look: [0.9, -0.2, 0] },
-  directive: { pos: [-1.6, 0.5, 8.6], look: [1.4, -0.4, 0] },
-  systems: { pos: [2.2, 0.9, 7.6], look: [1.1, -0.5, 0] },
-  operator: { pos: [-0.8, 1.4, 7.2], look: [1.2, -0.3, 0] },
-  uplink: { pos: [0, 0.4, 6.4], look: [1.15, -0.35, 0] },
+  hero: { pos: [0, 0.2, 9.8], look: [0.9, 0.1, 0] },
+  directive: { pos: [-1.7, 0.5, 8.8], look: [1.5, -0.3, 0] },
+  systems: { pos: [-2.0, 0.7, 8.4], look: [1.7, -0.4, 0] },
+  operator: { pos: [-1.2, 0.9, 8.2], look: [1.5, -0.35, 0] },
+  uplink: { pos: [-0.6, 0.35, 8.8], look: [1.6, -0.3, 0] },
 }
 
 function CameraRig() {
@@ -57,10 +57,13 @@ export default function Stage() {
         gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
         camera={{ position: FRAMES.hero.pos, fov: 38, near: 0.1, far: 60 }}
       >
-        {/* pool-of-light atmosphere: cool key, faint signal rim, low ambient */}
-        <ambientLight intensity={0.32} color={'#c8d4f0'} />
-        <directionalLight position={[4, 6, 7]} intensity={1.35} color={'#f2f5ff'} />
-        <directionalLight position={[-6, 2, -4]} intensity={0.5} color={'#6e8cff'} />
+        {/* pool-of-light atmosphere: cool key, faint signal rim, soft front fill
+            so the dark servo blocks keep their shape in the navy void */}
+        <ambientLight intensity={0.42} color={'#c8d4f0'} />
+        <hemisphereLight intensity={0.35} color={'#dfe8ff'} groundColor={'#0a0e1a'} />
+        <directionalLight position={[4, 6, 7]} intensity={1.4} color={'#f2f5ff'} />
+        <directionalLight position={[-6, 2, -4]} intensity={0.55} color={'#6e8cff'} />
+        <directionalLight position={[0, -1, 8]} intensity={0.3} color={'#9fb2e8'} />
         <pointLight position={[1.2, -0.5, 3]} intensity={0.55} distance={12} decay={2} color={'#8fa5e8'} />
         <Suspense fallback={null}>
           <ArmAssembly />
