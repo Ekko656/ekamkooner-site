@@ -11,6 +11,9 @@ class Session {
   assembly = 0
   /** About page scroll progress, drives the camera orbit path */
   aboutProgress = 0
+  /** closing gesture 0..1: arm reaches down, lifts the off-clock card up
+      and to the left. Scrubbed by the last stretch of the About scroll. */
+  cardPull = 0
   /** whether the arm should be on stage at all */
   armVisible = false
   /** page scroll velocity, for the grid hum */

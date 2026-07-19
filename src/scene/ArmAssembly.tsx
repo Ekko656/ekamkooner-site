@@ -34,15 +34,50 @@ type Joints = Record<string, { setJointValue: (v: number) => void }>
 /* display pose: the natural SO-ARM101 stance, seen in profile so the
    bend actually reads on screen: base yawed sideways, upper arm leaning,
    clear elbow bend, gripper held level */
+/* the finished stance: leaning forward, elbow bent, the gripper reaching
+   toward the viewer and angled slightly down, jaw open like a claw. NOT
+   pointing at the sky. */
 const DISPLAY_POSE: Record<string, number> = {
-  Rotation: 1.25,
-  Pitch: -0.5,
-  Elbow: -1.05,
-  Wrist_Pitch: -0.35,
+  Rotation: 0.8,
+  Pitch: -0.65,
+  Elbow: -0.95,
+  Wrist_Pitch: 0.3,
   Wrist_Roll: 0,
-  Jaw: 0.2,
+  Jaw: 0.5,
 }
 const JOINT_NAMES = ['Rotation', 'Pitch', 'Elbow', 'Wrist_Pitch', 'Wrist_Roll', 'Jaw'] as const
+
+/* ---- closing gesture keyframes ----
+   REST is the finished stance itself (no snap when the pull begins), then
+   the arm reaches down out of frame toward the left, grabs, and lifts the
+   card up into place. Blended by session.cardPull: REST -> REACH -> LIFT. */
+const CARD_REST = DISPLAY_POSE
+const CARD_REACH: Record<string, number> = {
+  Rotation: 0.95,
+  Pitch: -1.2,
+  Elbow: -0.3,
+  Wrist_Pitch: 0.7,
+  Wrist_Roll: 0,
+  Jaw: 0.95,
+}
+const CARD_LIFT: Record<string, number> = {
+  Rotation: 1.15,
+  Pitch: -0.35,
+  Elbow: -0.95,
+  Wrist_Pitch: 0.1,
+  Wrist_Roll: 0,
+  Jaw: 0.18,
+}
+const lerpPose = (a: Record<string, number>, b: Record<string, number>, k: number) => {
+  const out: Record<string, number> = {}
+  for (const n of JOINT_NAMES) out[n] = a[n] + (b[n] - a[n]) * k
+  return out
+}
+/* pose along the closing gesture for a given pull 0..1 */
+const cardPose = (pull: number) => {
+  if (pull <= 0.45) return lerpPose(CARD_REST, CARD_REACH, smooth01(pull / 0.45))
+  return lerpPose(CARD_REACH, CARD_LIFT, smooth01((pull - 0.45) / 0.55))
+}
 
 /* light airy idle drift: layered slow sines per joint, tiny amplitudes */
 const IDLE_AMP: Record<string, number> = {
@@ -191,31 +226,30 @@ export default function ArmAssembly() {
       })
       centroid.divideScalar(collected.length)
 
-      const cloudCenter = centroid.clone().add(new THREE.Vector3(1.0, 1.8, 0.3))
+      /* exploded diagram: spread every part evenly over a fibonacci sphere
+         (flattened toward the camera plane) so the whole set reads at once
+         and no two parts overlap. Centred on the arm so it fills the frame. */
+      const N = collected.length
+      const golden = Math.PI * (3 - Math.sqrt(5))
+      const cloudCenter = centroid.clone().add(new THREE.Vector3(0, 0.5, 0.2))
       const axis = new THREE.Vector3()
+      const dir = new THREE.Vector3()
       const planned: Part[] = collected.map((p, i) => {
-        const dir = p.aPos.clone().sub(centroid)
-        if (dir.lengthSq() < 1e-6) dir.set(1, 0, 0)
-        dir.normalize()
-        const spread = 1.35 + (i % 5) * 0.38
-        p.ePos
-          .copy(cloudCenter)
-          .addScaledVector(dir, spread)
-          .add(
-            new THREE.Vector3(
-              Math.sin(p.seed) * 0.85,
-              Math.cos(p.seed * 1.7) * 0.7,
-              Math.sin(p.seed * 0.6) * 0.7,
-            ),
-          )
+        const yy = 1 - (i / Math.max(1, N - 1)) * 2 // 1 .. -1
+        const ringR = Math.sqrt(Math.max(0, 1 - yy * yy))
+        const theta = golden * i
+        /* flatten z so parts spread across the screen more than into depth */
+        dir.set(Math.cos(theta) * ringR, yy * 1.15, Math.sin(theta) * ringR * 0.6).normalize()
+        const R = 2.0 + (i % 4) * 0.3
+        p.ePos.copy(cloudCenter).addScaledVector(dir, R)
         axis.set(Math.sin(p.seed), Math.cos(p.seed * 2.1), Math.sin(p.seed * 1.3)).normalize()
-        p.eQuat.copy(p.aQuat).multiply(new THREE.Quaternion().setFromAxisAngle(axis, 0.55 + (i % 3) * 0.3))
-        const side = new THREE.Vector3().crossVectors(dir, new THREE.Vector3(0, 0, 1)).normalize()
+        p.eQuat.copy(p.aQuat).multiply(new THREE.Quaternion().setFromAxisAngle(axis, 0.5 + (i % 3) * 0.28))
+        /* arc waypoint bows outward along its own ray, so flight paths fan
+           apart instead of crossing through one another */
         p.mPos
           .copy(p.ePos)
           .lerp(p.aPos, 0.5)
-          .addScaledVector(dir, 0.7)
-          .addScaledVector(side, Math.sin(p.seed * 3.1) * 0.5)
+          .addScaledVector(dir, 0.55)
         return p as Part
       })
 
@@ -304,22 +338,26 @@ export default function ArmAssembly() {
         }
       }
     } else if (liveJoints.current) {
-      /* the machine is alive: gentle layered drift around the display pose,
-         eased in over the first seconds so it wakes rather than starts */
+      /* the machine is alive. Base pose eases from the woken display pose
+         into the closing gesture as the card is pulled; idle drift fades
+         out so the gesture reads clean. */
       const wake = smooth01((t - liveAt.current) / 3)
+      const pull = session.cardPull
+      const base = pull > 0.001 ? cardPose(pull) : DISPLAY_POSE
+      const drift = (1 - smooth01(pull / 0.2)) * wake
       for (const name of JOINT_NAMES) {
-        const v =
-          DISPLAY_POSE[name] +
-          IDLE_AMP[name] * wake * fbm(t * IDLE_SPD[name] * Math.PI * 2, IDLE_SEED[name])
+        const v = base[name] + IDLE_AMP[name] * drift * fbm(t * IDLE_SPD[name] * Math.PI * 2, IDLE_SEED[name])
         liveJoints.current[name]?.setJointValue(v)
       }
     }
 
-    /* unified breathing on the root, felt in both representations */
+    /* unified breathing on the root, felt in both representations. As the
+       card is pulled the whole rig eases down a touch so the lifted arm
+       stays fully in frame. */
     if (root.current) {
       const unified = smooth01((p - 0.9) / 0.1)
       root.current.rotation.z = Math.sin(t * 0.5) * 0.008 * unified
-      root.current.position.y = -1.7 + Math.sin(t * 0.8) * 0.02 * unified
+      root.current.position.y = -2.15 - session.cardPull * 0.2 + Math.sin(t * 0.8) * 0.02 * unified
       root.current.scale.setScalar(1 + lockPulse.current.s)
     }
 
@@ -349,7 +387,7 @@ export default function ArmAssembly() {
 
   if (!parts) return null
   return (
-    <group ref={root} position={[1.15, -1.7, 0]}>
+    <group ref={root} position={[1.7, -2.15, 0]}>
       <group ref={partsGroup}>
         {parts.map((p, i) => (
           <group

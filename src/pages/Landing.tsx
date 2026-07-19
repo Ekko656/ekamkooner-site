@@ -36,13 +36,14 @@ export default function Landing() {
           </span>
         </h1>
         <p className="landing-sub reveal">Biomedical Engineering student at UBC, aiming at humanoid robotics.</p>
-        <nav className="glint-nav" aria-label="Sections">
+        <nav className="glass-nav" aria-label="Sections">
           {DOORS.map((d, i) => (
-            <Link key={d.to} to={d.to} className="glint-btn" data-cursor="Enter" style={{ ['--i' as string]: i }}>
-              <span className="glint-ring" aria-hidden />
-              <span className="glint-face">
-                <span className="glint-index">{d.index}</span>
-                {d.label}
+            <Link key={d.to} to={d.to} className="glass-btn" data-cursor="Enter" style={{ ['--i' as string]: i }}>
+              <span className="glass-sheen" aria-hidden />
+              <span className="glass-index">{d.index}</span>
+              <span className="glass-label">{d.label}</span>
+              <span className="glass-arrow" aria-hidden>
+                ↗
               </span>
             </Link>
           ))}

@@ -7,7 +7,7 @@ import './lib/eases'
 import { session } from './lib/session'
 import Stage from './scene/Stage'
 import Cursor from './ui/Cursor'
-import { GridLines, Grain, Nav, Readouts, Clock } from './ui/Chrome'
+import { Grain, Nav, Readouts, Clock } from './ui/Chrome'
 import Landing from './pages/Landing'
 import About, { bindAboutScroll } from './pages/About'
 import Projects from './pages/Projects'
@@ -28,6 +28,7 @@ function Shell() {
       session.aboutProgress = 0
       session.assemblyTarget = 0
       session.assembly = 0
+      session.cardPull = 0
     }
 
     const lenis = new Lenis({ lerp: 0.1 })
@@ -70,7 +71,7 @@ function Shell() {
         })
       })
       /* landing buttons walk in one after another */
-      gsap.utils.toArray<HTMLElement>('.glint-btn').forEach((el, i) => {
+      gsap.utils.toArray<HTMLElement>('.glass-btn').forEach((el, i) => {
         gsap.to(el, {
           opacity: 1,
           y: 0,
@@ -119,7 +120,6 @@ function Shell() {
   return (
     <>
       <Stage showArm={pathname === '/about'} />
-      <GridLines />
       <main ref={main}>
         <Routes>
           <Route path="/" element={<Landing />} />

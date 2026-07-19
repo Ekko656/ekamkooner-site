@@ -2,6 +2,7 @@
    opens at a fixed position from the top, media shown uncropped, and
    the panel scrolls natively inside itself. */
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { PROJECTS, type Project } from '../data/projects'
 
@@ -71,7 +72,7 @@ function Detail({ p, onClose }: { p: Project; onClose: () => void }) {
     }
   }, [onClose])
 
-  return (
+  return createPortal(
     <div className="detail" role="dialog" aria-label={p.title} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="detail-panel" ref={panel} data-lenis-prevent>
         <button className="detail-close" data-cursor="Close" onClick={onClose} aria-label="Close">
@@ -117,7 +118,8 @@ function Detail({ p, onClose }: { p: Project; onClose: () => void }) {
           )}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 
