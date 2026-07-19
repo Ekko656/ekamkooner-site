@@ -54,10 +54,46 @@
   font-display: swap;
 }
 
+@font-face {
+  font-family: 'Shantell Sans';
+  src: url('/fonts/shantell-sans-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Shantell Sans';
+  src: url('/fonts/shantell-sans-700.woff2') format('woff2');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Figtree';
+  src: url('/fonts/figtree-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Figtree';
+  src: url('/fonts/figtree-400i.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Figtree';
+  src: url('/fonts/figtree-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* ---- color ---- */
-  --navy-950: #060912;
-  --navy-900: #0a0e1a;
+  --navy-950: #04060c;
+  --navy-900: #080c16;
   --navy-800: #10162a;
   --navy-700: #1a2340;
   --navy-600: #26314f;
@@ -72,6 +108,8 @@
   /* ---- type ---- */
   --font-display: 'Schibsted Grotesk', system-ui, sans-serif;
   --font-mono: 'Martian Mono', ui-monospace, monospace;
+  --font-hand: 'Shantell Sans', cursive;
+  --font-story: 'Figtree', system-ui, sans-serif;
 
   --text-display: clamp(3.5rem, 9vw, 10rem);
   --text-h1: clamp(2.5rem, 5vw, 4.5rem);

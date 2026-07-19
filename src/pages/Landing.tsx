@@ -1,7 +1,8 @@
-/* The front door: name and a short line on the left with four solid
-   panel buttons beneath, the interactive 3D robot on the right. The
-   robot follows the cursor, so the whole page feels awake. */
-import { Suspense, lazy } from 'react'
+/* The front door. The humanoid stands full height on the right, feet
+   meeting the bottom of the page, edges blended into the ground so it
+   inhabits the scene instead of sitting on it. It fades up once its
+   scene is actually ready, never popping in. */
+import { Suspense, lazy, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 const Spline = lazy(() => import('@splinetool/react-spline'))
@@ -14,34 +15,38 @@ const DOORS = [
 ]
 
 export default function Landing() {
+  const [ready, setReady] = useState(false)
   return (
     <div className="page page-landing">
-      <div className="landing-grid">
-        <div className="landing-intro">
-          <h1 className="landing-name">
-            <span className="mask-line">
-              <span className="reveal-line">EKAM</span>
-            </span>
-            <span className="mask-line">
-              <span className="reveal-line">KOONER</span>
-            </span>
-          </h1>
-          <p className="landing-sub reveal">Biomedical Engineering student at UBC, aiming at humanoid robotics.</p>
-          <nav className="panel-nav" aria-label="Sections">
-            {DOORS.map((d, i) => (
-              <Link key={d.to} to={d.to} className="panel-btn" data-cursor="Enter" style={{ ['--i' as string]: i }}>
-                <span className="panel-btn-index">{d.index}</span>
-                <span className="panel-btn-label">{d.label}</span>
-                <span className="panel-btn-fill" aria-hidden />
-              </Link>
-            ))}
-          </nav>
-        </div>
-        <div className="landing-robot reveal">
-          <Suspense fallback={<div className="robot-loading">Waking the robot</div>}>
-            <Spline scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode" />
-          </Suspense>
-        </div>
+      <div className={`landing-robot${ready ? ' is-ready' : ''}`} aria-hidden>
+        <Suspense fallback={null}>
+          <Spline
+            scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+            onLoad={() => setReady(true)}
+          />
+        </Suspense>
+      </div>
+      <div className="landing-intro">
+        <h1 className="landing-name">
+          <span className="mask-line">
+            <span className="reveal-line">EKAM</span>
+          </span>
+          <span className="mask-line">
+            <span className="reveal-line">KOONER</span>
+          </span>
+        </h1>
+        <p className="landing-sub reveal">Biomedical Engineering student at UBC, aiming at humanoid robotics.</p>
+        <nav className="glint-nav" aria-label="Sections">
+          {DOORS.map((d, i) => (
+            <Link key={d.to} to={d.to} className="glint-btn" data-cursor="Enter" style={{ ['--i' as string]: i }}>
+              <span className="glint-ring" aria-hidden />
+              <span className="glint-face">
+                <span className="glint-index">{d.index}</span>
+                {d.label}
+              </span>
+            </Link>
+          ))}
+        </nav>
       </div>
     </div>
   )

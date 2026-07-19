@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { PROJECTS, type Project } from '../data/projects'
 
-const TAGS = ['All', ...Array.from(new Set(PROJECTS.map((p) => p.tag)))]
+const TAGS = ['All', 'Robotics', 'Software', 'Hardware']
 
 function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
   const el = useRef<HTMLButtonElement>(null)
@@ -129,7 +129,7 @@ export default function Projects() {
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase()
     return PROJECTS.filter((p) => {
-      if (tag !== 'All' && p.tag !== tag) return false
+      if (tag !== 'All' && p.category !== tag) return false
       if (!q) return true
       return [p.title, p.tag, ...p.stack].join(' ').toLowerCase().includes(q)
     })

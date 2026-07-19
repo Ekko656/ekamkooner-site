@@ -116,6 +116,7 @@ export default function ArmAssembly() {
   const partsGroup = useRef<THREE.Group>(null)
   const ring = useRef<THREE.Mesh>(null)
   const locked = useRef(false)
+  const seated = useRef<boolean[]>([])
   const lockPulse = useRef({ s: 0 })
   const liveRobot = useRef<THREE.Object3D | null>(null)
   const liveJoints = useRef<Joints | null>(null)
@@ -224,7 +225,7 @@ export default function ArmAssembly() {
         .map((p, i) => ({ i, y: p.aPos.y }))
         .sort((a, b) => a.y - b.y)
       const n = order.length
-      const WINDOW = 0.34
+      const WINDOW = 0.13
       order.forEach(({ i }, rank) => {
         const start = (rank / Math.max(1, n - 1)) * (1 - WINDOW)
         planned[i].w0 = start
@@ -289,6 +290,17 @@ export default function ArmAssembly() {
           g.position.x += Math.sin(t * 0.32 + s) * amp
           g.position.y += Math.sin(t * 0.24 + s * 2.3) * amp * 1.4
           g.position.z += Math.cos(t * 0.28 + s * 1.1) * amp * 0.7
+        }
+        /* each part clicks home with a tiny settle pulse: the build
+           reads as a sequence of events, not one long slide */
+        if (!seated.current[i] && tp >= 0.999) {
+          seated.current[i] = true
+          gsap
+            .timeline()
+            .to(g.scale, { x: 1.05, y: 1.05, z: 1.05, duration: 0.08, ease: 'power2.in' })
+            .to(g.scale, { x: 1, y: 1, z: 1, duration: 0.4, ease: 'elastic.out(1.8, 0.4)' })
+        } else if (seated.current[i] && tp < 0.98) {
+          seated.current[i] = false
         }
       }
     } else if (liveJoints.current) {

@@ -69,13 +69,16 @@ function Shell() {
           scrollTrigger: { trigger: mask, start: 'top 92%' },
         })
       })
-      /* landing doors walk in one after another */
-      gsap.utils.toArray<HTMLElement>('.door').forEach((el, i) => {
-        gsap.fromTo(
-          el,
-          { opacity: 0, x: 42 },
-          { opacity: 1, x: 0, duration: 0.8, delay: 0.25 + i * 0.09, ease: 'mechOut' },
-        )
+      /* landing buttons walk in one after another */
+      gsap.utils.toArray<HTMLElement>('.glint-btn').forEach((el, i) => {
+        gsap.to(el, {
+          opacity: 1,
+          y: 0,
+          duration: 0.7,
+          delay: 0.3 + i * 0.08,
+          ease: 'mechOut',
+          overwrite: 'auto',
+        })
       })
       /* magnetic elements */
       gsap.utils.toArray<HTMLElement>('[data-magnetic]').forEach((el) => {

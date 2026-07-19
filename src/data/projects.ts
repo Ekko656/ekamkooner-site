@@ -6,6 +6,7 @@ export type Project = {
   index: string
   title: string
   tag: string
+  category: 'Robotics' | 'Software' | 'Hardware' 
   description: string
   stack: string[]
   media: { type: 'video' | 'image'; src: string; poster?: string }
@@ -16,6 +17,7 @@ export type Project = {
 export const PROJECTS: Project[] = [
   {
     id: 'arm-sim',
+    category: 'Robotics',
     index: '01',
     title: 'Arm Sim',
     tag: 'Simulation',
@@ -27,6 +29,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'ubc-bionics',
+    category: 'Robotics',
     index: '02',
     title: 'UBC Bionics',
     tag: 'Embedded',
@@ -41,6 +44,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'honeykey',
+    category: 'Software',
     index: '03',
     title: 'HoneyKey',
     tag: 'Security',
@@ -55,6 +59,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'barrage',
+    category: 'Software',
     index: '04',
     title: 'Barrage',
     tag: 'Backend',
@@ -66,6 +71,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'vex',
+    category: 'Robotics',
     index: '05',
     title: 'VEX Robotics',
     tag: 'Robotics',
@@ -95,6 +101,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'ultrasonic-claw',
+    category: 'Hardware',
     index: '06',
     title: 'Ultrasonic Claw',
     tag: 'Hardware',
@@ -106,6 +113,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'rc-car',
+    category: 'Hardware',
     index: '07',
     title: 'Arduino RC Car',
     tag: 'Hardware',

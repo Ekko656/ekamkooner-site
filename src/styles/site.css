@@ -188,128 +188,161 @@
   display: flex;
   align-items: center;
   padding-top: var(--s-12);
+  overflow: hidden;
 }
-.landing-grid {
-  width: 100%;
-  display: grid;
-  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
-  gap: calc(var(--gutter) * 2);
-  align-items: center;
+.landing-intro {
+  position: relative;
+  z-index: 2;
+  max-width: 560px;
 }
 .landing-name {
-  font-size: var(--text-display);
+  font-size: clamp(2.75rem, 6vw, 6.25rem);
   font-weight: 700;
-  line-height: 0.94;
+  line-height: 0.96;
   letter-spacing: -0.03em;
   color: var(--ice-100);
 }
 .landing-sub {
-  margin-top: var(--s-3);
-  max-width: 30ch;
-  font-size: var(--text-body-lg);
+  margin-top: var(--s-2);
+  max-width: 34ch;
+  font-size: 1.05rem;
   font-weight: 500;
   color: var(--ice-400);
   line-height: 1.65;
 }
+
+/* the humanoid: full height, feet meeting the bottom of the page,
+   left and top edges dissolved into the ground */
 .landing-robot {
-  position: relative;
-  height: min(78vh, 720px);
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(56vw, 980px);
+  z-index: 1;
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 1.1s var(--ease-mech-out), transform 1.1s var(--ease-mech-out);
+  mask-image: linear-gradient(to right, transparent 0%, black 16%),
+    linear-gradient(to bottom, transparent 0%, black 14%);
+  mask-composite: intersect;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 16%),
+    linear-gradient(to bottom, transparent 0%, black 14%);
+  -webkit-mask-composite: source-in;
+}
+.landing-robot.is-ready {
+  opacity: 1;
+  transform: none;
 }
 .landing-robot canvas {
   width: 100% !important;
   height: 100% !important;
 }
-.robot-loading {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--ice-600);
-}
 
-/* panel buttons: solid instrument keys, clipped corner, fill sweep */
-.panel-nav {
+/* glint buttons: solid keys with a light travelling the border,
+   adapted from the shimmer button pattern */
+.glint-nav {
   margin-top: var(--s-5);
   display: grid;
-  grid-template-columns: repeat(2, minmax(150px, 220px));
-  gap: var(--s-2);
+  grid-template-columns: repeat(2, minmax(140px, 190px));
+  gap: 14px;
 }
-.panel-btn {
+.glint-btn {
   position: relative;
+  display: block;
+  border-radius: 12px;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(14px);
+  transition: transform var(--dur-fast) var(--ease-mech);
+}
+.glint-btn:hover {
+  transform: translateY(-2px);
+}
+.glint-btn:active {
+  transform: translateY(1px) scale(0.99);
+}
+.glint-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.glint-ring::before {
+  content: '';
+  position: absolute;
+  inset: -150%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg 288deg,
+    rgba(110, 140, 255, 0.06) 302deg,
+    rgba(148, 170, 255, 0.95) 336deg,
+    transparent 360deg
+  );
+  animation: glint-spin 3.4s linear infinite;
+}
+.glint-btn:hover .glint-ring::before {
+  animation-duration: 1.3s;
+}
+@keyframes glint-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+.glint-face {
+  position: relative;
+  z-index: 1;
+  margin: 2px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 18px 20px;
-  background: var(--navy-800);
-  border: 2px solid var(--navy-600);
-  clip-path: polygon(0 0, calc(100% - 14px) 0, 100% 14px, 100% 100%, 0 100%);
-  overflow: hidden;
-  transition: border-color var(--dur-fast) var(--ease-mech), transform var(--dur-fast) var(--ease-mech);
+  padding: 14px 20px;
+  background: linear-gradient(180deg, #131a30 0%, #0a0f1f 100%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: var(--ice-200);
+  transition: background var(--dur-fast) var(--ease-mech), color var(--dur-fast) var(--ease-mech),
+    box-shadow var(--dur-fast) var(--ease-mech);
 }
-.panel-btn:hover {
-  border-color: var(--ice-600);
-  transform: translateY(-2px);
+.glint-btn:hover .glint-face {
+  background: linear-gradient(180deg, #1a2340 0%, #0e1428 100%);
+  color: var(--ice-100);
 }
-.panel-btn:active {
-  transform: translateY(1px);
+.glint-btn:active .glint-face {
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.45);
 }
-.panel-btn-index {
-  position: relative;
-  z-index: 1;
+.glint-index {
   font-family: var(--font-mono);
   font-size: 0.6875rem;
   font-weight: 700;
   color: var(--ice-600);
   transition: color var(--dur-fast) var(--ease-mech);
 }
-.panel-btn:hover .panel-btn-index {
+.glint-btn:hover .glint-index {
   color: var(--signal);
 }
-.panel-btn-label {
-  position: relative;
-  z-index: 1;
-  font-size: 1.15rem;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ice-200);
-  transition: color var(--dur-fast) var(--ease-mech);
-}
-.panel-btn:hover .panel-btn-label {
-  color: var(--ice-100);
-}
-.panel-btn-fill {
-  position: absolute;
-  inset: 0;
-  background: var(--navy-700);
-  transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.45s var(--ease-mech);
-}
-.panel-btn:hover .panel-btn-fill {
-  transform: scaleX(1);
-}
 
-/* ---------- about: story beats ---------- */
+/* ---------- about: the story, in the old site's voice system.
+   Three voices with strict roles: handwritten statements, warm
+   rounded body, handwritten margin notes. Key phrase in a line
+   gets bold plus signal, nothing else does. ---------- */
 .page-about {
   padding-top: 0;
   padding-bottom: var(--s-12);
 }
 .beat {
-  min-height: 62vh;
+  min-height: 58vh;
   display: flex;
   align-items: center;
 }
 .beat-tall {
-  min-height: 96vh;
+  min-height: 86vh;
 }
 .beat-text {
-  max-width: 34rem;
+  max-width: 37rem;
   width: 100%;
 }
 .beat-left .beat-text {
@@ -319,141 +352,75 @@
   margin-left: auto;
 }
 
-.b-display {
-  font-size: var(--text-display);
+/* voice 1: handwritten statement */
+.v-state {
+  font-family: var(--font-hand);
+  font-size: clamp(2.7rem, 4.8vw, 4.2rem);
   font-weight: 700;
-  letter-spacing: -0.03em;
-  line-height: 0.98;
+  line-height: 1.18;
   color: var(--ice-100);
 }
-.b-display-2 {
-  font-size: var(--text-h1);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.04;
-  color: var(--ice-100);
-}
-.b-accent {
-  display: block;
-  color: var(--signal);
-}
-.b-close {
-  font-size: var(--text-h1);
-  font-weight: 700;
-  letter-spacing: -0.02em;
-  line-height: 1.05;
-  color: var(--ice-100);
-  border-left: 5px solid var(--signal);
-  padding-left: var(--s-3);
-}
-.b-mono {
-  font-family: var(--font-mono);
-  font-size: var(--text-mono-sm);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ice-400);
-}
-.b-mono-dim {
-  font-family: var(--font-mono);
-  font-size: var(--text-mono-sm);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ice-600);
-  margin-top: var(--s-3);
-}
-.b-big {
-  font-size: var(--text-h2);
-  font-weight: 500;
-  line-height: 1.35;
-  color: var(--ice-200);
-}
-.b-big em,
-.b-why em {
+.v-state em {
   font-style: normal;
-  font-weight: 700;
-  color: var(--ice-100);
+  color: var(--signal);
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 96%;
+  background-size: 0% 3px;
+  transition: background-size 0.8s var(--ease-mech) 0.45s;
 }
-.b-list {
-  font-family: var(--font-mono);
-  font-size: 1.05rem;
-  font-weight: 500;
-  color: var(--ice-600);
-  line-height: 2.1;
-  text-decoration: line-through;
-  text-decoration-color: var(--navy-600);
-  text-decoration-thickness: 2px;
+.line-in.is-in em,
+.line-in.is-in .v-state em {
+  background-size: 100% 3px;
 }
-.b-quiet {
-  margin-top: var(--s-3);
-  font-size: var(--text-body-lg);
-  font-weight: 500;
-  color: var(--ice-400);
+
+/* voice 2: warm body, one size, always readable */
+.v-body {
+  font-family: var(--font-story);
+  font-size: clamp(1.35rem, 1.8vw, 1.6rem);
+  font-weight: 400;
   line-height: 1.7;
-}
-.b-aim {
-  font-size: var(--text-h2);
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  line-height: 1.3;
-  color: var(--ice-100);
-  margin-bottom: var(--s-3);
-}
-.b-why {
-  font-size: var(--text-body-lg);
-  font-weight: 500;
   color: var(--ice-200);
-  line-height: 1.8;
+  margin-bottom: 12px;
 }
-.b-bio {
-  font-size: var(--text-h2);
-  font-weight: 500;
-  letter-spacing: -0.01em;
-  color: var(--ice-200);
-  line-height: 1.5;
+.v-body em {
+  font-style: normal;
+  font-weight: 600;
+  color: var(--signal);
+  background-image: linear-gradient(currentColor, currentColor);
+  background-repeat: no-repeat;
+  background-position: 0 100%;
+  background-size: 0% 2px;
+  transition: background-size 0.7s var(--ease-mech) 0.5s;
 }
-.b-thanks {
-  margin-top: var(--s-8);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ice-600);
-}
-.track-in {
-  display: inline-block;
-}
-.side-label {
-  font-family: var(--font-mono);
-  font-size: var(--text-mono-sm);
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--ice-200);
-}
-.chips {
-  list-style: none;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--s-1);
+
+/* voice 3: the quiet italic aside */
+.v-quiet {
+  font-family: var(--font-story);
+  font-style: italic;
+  font-size: 1.1rem;
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--ice-400);
   margin-top: var(--s-2);
 }
-.chips li {
-  padding: 8px 14px;
-  border: 2px solid var(--navy-600);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--ice-400);
+
+/* voice 4: handwritten margin note */
+.v-note {
+  font-family: var(--font-hand);
+  font-size: clamp(2rem, 2.8vw, 2.5rem);
+  font-weight: 600;
+  color: var(--signal);
+  line-height: 1.3;
+}
+
+/* every story line starts hidden and rises in on arrival */
+.line-in {
   opacity: 0;
-  transform: translateY(18px);
+  transform: translateY(26px);
 }
 @media (prefers-reduced-motion: reduce) {
-  .chips li {
+  .line-in {
     opacity: 1;
     transform: none;
   }
@@ -710,7 +677,7 @@
 .resume-pages {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--s-3);
 }
 .resume-page {
