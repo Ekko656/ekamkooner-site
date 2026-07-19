@@ -1,6 +1,10 @@
-/* The front door: name, identity, headshot, four big doors.
-   Everything enters with the same masked reveal vocabulary. */
+/* The front door: name and a short line on the left with four solid
+   panel buttons beneath, the interactive 3D robot on the right. The
+   robot follows the cursor, so the whole page feels awake. */
+import { Suspense, lazy } from 'react'
 import { Link } from 'react-router-dom'
+
+const Spline = lazy(() => import('@splinetool/react-spline'))
 
 const DOORS = [
   { to: '/about', index: '01', label: 'About' },
@@ -23,24 +27,21 @@ export default function Landing() {
             </span>
           </h1>
           <p className="landing-sub reveal">Biomedical Engineering student at UBC, aiming at humanoid robotics.</p>
-          <figure className="landing-photo reveal">
-            <img src="/headshot.jpg" alt="Ekam Kooner" width={400} height={400} />
-            <figcaption>Vancouver, BC</figcaption>
-          </figure>
+          <nav className="panel-nav" aria-label="Sections">
+            {DOORS.map((d, i) => (
+              <Link key={d.to} to={d.to} className="panel-btn" data-cursor="Enter" style={{ ['--i' as string]: i }}>
+                <span className="panel-btn-index">{d.index}</span>
+                <span className="panel-btn-label">{d.label}</span>
+                <span className="panel-btn-fill" aria-hidden />
+              </Link>
+            ))}
+          </nav>
         </div>
-        <nav className="doors" aria-label="Sections">
-          {DOORS.map((d, i) => (
-            <Link key={d.to} to={d.to} className="door" data-cursor="Enter" style={{ ['--i' as string]: i }}>
-              <span className="door-index">{d.index}</span>
-              <span className="door-label">
-                <span className="mask-line">
-                  <span className="reveal-line">{d.label}</span>
-                </span>
-              </span>
-              <span className="door-tick" aria-hidden />
-            </Link>
-          ))}
-        </nav>
+        <div className="landing-robot reveal">
+          <Suspense fallback={<div className="robot-loading">Waking the robot</div>}>
+            <Spline scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode" />
+          </Suspense>
+        </div>
       </div>
     </div>
   )

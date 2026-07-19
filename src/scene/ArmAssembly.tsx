@@ -31,14 +31,16 @@ type Part = {
 
 type Joints = Record<string, { setJointValue: (v: number) => void }>
 
-/* display pose for the assembled arm, head level and alert */
+/* display pose: the natural SO-ARM101 stance, seen in profile so the
+   bend actually reads on screen: base yawed sideways, upper arm leaning,
+   clear elbow bend, gripper held level */
 const DISPLAY_POSE: Record<string, number> = {
-  Rotation: 0.18,
-  Pitch: -0.55,
-  Elbow: -0.85,
-  Wrist_Pitch: -0.45,
+  Rotation: 1.25,
+  Pitch: -0.5,
+  Elbow: -1.05,
+  Wrist_Pitch: -0.35,
   Wrist_Roll: 0,
-  Jaw: 0.25,
+  Jaw: 0.2,
 }
 const JOINT_NAMES = ['Rotation', 'Pitch', 'Elbow', 'Wrist_Pitch', 'Wrist_Roll', 'Jaw'] as const
 
@@ -78,8 +80,8 @@ const smooth01 = (x: number) => {
   return t * t * (3 - 2 * t)
 }
 
-/* colour: warm white printed shell, steel blue servos, signal blue
-   accent parts so the machine reads designed, not unrendered */
+/* colour: warm white printed shell, gunmetal servos, brushed steel base.
+   No blue anywhere on the machine. */
 function makeMats() {
   const shell = new THREE.MeshStandardMaterial({
     color: '#e9edf5',
@@ -88,26 +90,19 @@ function makeMats() {
     envMapIntensity: 0.85,
   })
   const servo = new THREE.MeshStandardMaterial({
-    color: '#31406b',
-    metalness: 0.85,
-    roughness: 0.28,
-    envMapIntensity: 1.3,
-  })
-  const accent = new THREE.MeshStandardMaterial({
-    color: '#5d7bf0',
-    metalness: 0.4,
-    roughness: 0.42,
-    envMapIntensity: 1.0,
+    color: '#4a5160',
+    metalness: 0.8,
+    roughness: 0.32,
+    envMapIntensity: 1.25,
   })
   const base = new THREE.MeshStandardMaterial({
-    color: '#aeb9d6',
-    metalness: 0.55,
-    roughness: 0.36,
-    envMapIntensity: 0.9,
+    color: '#b6bcc9',
+    metalness: 0.6,
+    roughness: 0.34,
+    envMapIntensity: 0.95,
   })
   const pick = (src: string) => {
     if (src.includes('sts3215')) return servo
-    if (src.includes('moving_jaw') || src.includes('wrist_roll_follower')) return accent
     if (src.includes('base_so101') || src.includes('base_motor_holder')) return base
     return shell
   }
@@ -312,7 +307,7 @@ export default function ArmAssembly() {
     if (root.current) {
       const unified = smooth01((p - 0.9) / 0.1)
       root.current.rotation.z = Math.sin(t * 0.5) * 0.008 * unified
-      root.current.position.y = -1.35 + Math.sin(t * 0.8) * 0.02 * unified
+      root.current.position.y = -1.7 + Math.sin(t * 0.8) * 0.02 * unified
       root.current.scale.setScalar(1 + lockPulse.current.s)
     }
 
@@ -342,7 +337,7 @@ export default function ArmAssembly() {
 
   if (!parts) return null
   return (
-    <group ref={root} position={[1.15, -1.35, 0]}>
+    <group ref={root} position={[1.15, -1.7, 0]}>
       <group ref={partsGroup}>
         {parts.map((p, i) => (
           <group

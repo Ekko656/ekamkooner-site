@@ -1,9 +1,11 @@
-/* The board: a grid of project cards like the current site, upgraded.
-   Cards tilt toward the cursor, media wakes on hover, and a click
-   opens a full detail panel that slides up over the page. */
-import { useEffect, useRef, useState } from 'react'
+/* The board: searchable, filterable project cards. The detail panel
+   opens at a fixed position from the top, media shown uncropped, and
+   the panel scrolls natively inside itself. */
+import { useEffect, useMemo, useRef, useState } from 'react'
 import gsap from 'gsap'
 import { PROJECTS, type Project } from '../data/projects'
+
+const TAGS = ['All', ...Array.from(new Set(PROJECTS.map((p) => p.tag)))]
 
 function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
   const el = useRef<HTMLButtonElement>(null)
@@ -36,7 +38,7 @@ function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
   }, [])
 
   return (
-    <button ref={el} className="card reveal" data-cursor="Open" onClick={() => onOpen(p)}>
+    <button ref={el} className="card" data-cursor="Open" onClick={() => onOpen(p)}>
       <figure className="card-media">
         {p.media.type === 'video' ? (
           <video ref={vid} src={p.media.src} poster={p.media.poster} muted loop playsInline preload="metadata" />
@@ -58,16 +60,20 @@ function Detail({ p, onClose }: { p: Project; onClose: () => void }) {
   const vid = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
-    gsap.fromTo(panel.current, { yPercent: 6, opacity: 0 }, { yPercent: 0, opacity: 1, duration: 0.55, ease: 'mechOut' })
+    gsap.fromTo(panel.current, { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: 'mechOut' })
     vid.current?.play().catch(() => {})
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
     window.addEventListener('keydown', esc)
-    return () => window.removeEventListener('keydown', esc)
+    document.documentElement.style.overflow = 'hidden'
+    return () => {
+      window.removeEventListener('keydown', esc)
+      document.documentElement.style.overflow = ''
+    }
   }, [onClose])
 
   return (
-    <div className="detail" role="dialog" aria-label={p.title}>
-      <div className="detail-panel" ref={panel}>
+    <div className="detail" role="dialog" aria-label={p.title} onClick={(e) => e.target === e.currentTarget && onClose()}>
+      <div className="detail-panel" ref={panel} data-lenis-prevent>
         <button className="detail-close" data-cursor="Close" onClick={onClose} aria-label="Close">
           <span />
           <span />
@@ -117,6 +123,18 @@ function Detail({ p, onClose }: { p: Project; onClose: () => void }) {
 
 export default function Projects() {
   const [open, setOpen] = useState<Project | null>(null)
+  const [query, setQuery] = useState('')
+  const [tag, setTag] = useState('All')
+
+  const shown = useMemo(() => {
+    const q = query.trim().toLowerCase()
+    return PROJECTS.filter((p) => {
+      if (tag !== 'All' && p.tag !== tag) return false
+      if (!q) return true
+      return [p.title, p.tag, ...p.stack].join(' ').toLowerCase().includes(q)
+    })
+  }, [query, tag])
+
   return (
     <div className="page page-projects">
       <header className="page-head">
@@ -128,11 +146,34 @@ export default function Projects() {
             <span className="reveal-line">Things I have built.</span>
           </span>
         </h1>
+        <div className="board-tools reveal">
+          <input
+            className="board-search"
+            type="search"
+            placeholder="Search projects"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label="Search projects"
+          />
+          <div className="board-tags" role="tablist" aria-label="Filter by type">
+            {TAGS.map((t) => (
+              <button
+                key={t}
+                className={`board-tag${tag === t ? ' is-active' : ''}`}
+                data-cursor="Filter"
+                onClick={() => setTag(t)}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+        </div>
       </header>
       <div className="board">
-        {PROJECTS.map((p) => (
+        {shown.map((p) => (
           <Card key={p.id} p={p} onOpen={setOpen} />
         ))}
+        {shown.length === 0 && <p className="board-empty">Nothing matches. Try another word.</p>}
       </div>
       {open && <Detail p={open} onClose={() => setOpen(null)} />}
     </div>
