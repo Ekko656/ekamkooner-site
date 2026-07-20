@@ -226,9 +226,11 @@ export default function ArmAssembly() {
       })
       centroid.divideScalar(collected.length)
 
-      /* exploded diagram: spread every part evenly over a fibonacci sphere
-         (flattened toward the camera plane) so the whole set reads at once
-         and no two parts overlap. Centred on the arm so it fills the frame. */
+      /* exploded diagram: spread every part evenly over a fibonacci sphere,
+         squashed into a tall narrow ellipsoid and biased to the right, so
+         the whole cloud lives in the right half of the opening frame and
+         never drifts under the text column. (No normalize after squashing:
+         that would silently undo the flattening for equator parts.) */
       const N = collected.length
       const golden = Math.PI * (3 - Math.sqrt(5))
       const cloudCenter = centroid.clone().add(new THREE.Vector3(0, 0.5, 0.2))
@@ -238,8 +240,9 @@ export default function ArmAssembly() {
         const yy = 1 - (i / Math.max(1, N - 1)) * 2 // 1 .. -1
         const ringR = Math.sqrt(Math.max(0, 1 - yy * yy))
         const theta = golden * i
-        /* flatten z so parts spread across the screen more than into depth */
-        dir.set(Math.cos(theta) * ringR, yy * 1.15, Math.sin(theta) * ringR * 0.6).normalize()
+        /* tall and narrow: generous vertical spread, tight horizontal and
+           depth spread, so the diagram reads as a column beside the text */
+        dir.set(Math.cos(theta) * ringR * 0.6, yy, Math.sin(theta) * ringR * 0.55)
         const R = 2.0 + (i % 4) * 0.3
         p.ePos.copy(cloudCenter).addScaledVector(dir, R)
         axis.set(Math.sin(p.seed), Math.cos(p.seed * 2.1), Math.sin(p.seed * 1.3)).normalize()

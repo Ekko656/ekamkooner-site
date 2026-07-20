@@ -44,18 +44,26 @@ export default function About() {
          except during the brief transition, so scrolling stays smooth. */
       gsap.utils.toArray<HTMLElement>('.unblur').forEach((el) => {
         const inView = el.getBoundingClientRect().top < window.innerHeight * 0.9
+        /* stagger lines that share a beat so they resolve in a small
+           cascade rather than all at once */
+        const stack = Array.from(el.parentElement?.querySelectorAll(':scope > .unblur') ?? [])
+        const stagger = stack.indexOf(el) * 0.09
+        /* the line arrives in its own true colour, not a shared one, so
+           .a-soft keeps its intentional dimmer tone */
+        const trueColor = getComputedStyle(el).color
         gsap.fromTo(
           el,
-          { opacity: 0, filter: 'blur(10px)', y: 24 },
+          { opacity: 0, filter: 'blur(10px)', y: 24, color: 'rgba(228, 232, 245, 0.4)' },
           {
             opacity: 1,
             filter: 'blur(0px)',
             y: 0,
+            color: trueColor,
             duration: 1.0,
             ease: 'mechOut',
             /* elements already on screen at load play on their own; the rest
                play as they scroll into view */
-            delay: inView ? 0.25 : 0,
+            delay: inView ? 0.25 + stagger : stagger,
             scrollTrigger: inView ? undefined : { trigger: el, start: 'top 84%' },
           },
         )

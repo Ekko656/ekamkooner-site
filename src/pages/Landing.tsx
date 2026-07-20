@@ -3,7 +3,8 @@
    inhabits the scene instead of sitting on it. It fades up once its
    scene is actually ready, never popping in. */
 import { Suspense, lazy, useState } from 'react'
-import { Link } from 'react-router-dom'
+import GlassButton from '../ui/GlassButton'
+import ParticleName from '../ui/ParticleName'
 
 const Spline = lazy(() => import('@splinetool/react-spline'))
 
@@ -27,25 +28,11 @@ export default function Landing() {
         </Suspense>
       </div>
       <div className="landing-intro">
-        <h1 className="landing-name">
-          <span className="mask-line">
-            <span className="reveal-line">EKAM</span>
-          </span>
-          <span className="mask-line">
-            <span className="reveal-line">KOONER</span>
-          </span>
-        </h1>
+        <ParticleName />
         <p className="landing-sub reveal">Biomedical Engineering student at UBC, aiming at humanoid robotics.</p>
         <nav className="glass-nav" aria-label="Sections">
           {DOORS.map((d, i) => (
-            <Link key={d.to} to={d.to} className="glass-btn" data-cursor="Enter" style={{ ['--i' as string]: i }}>
-              <span className="glass-sheen" aria-hidden />
-              <span className="glass-index">{d.index}</span>
-              <span className="glass-label">{d.label}</span>
-              <span className="glass-arrow" aria-hidden>
-                ↗
-              </span>
-            </Link>
+            <GlassButton key={d.to} to={d.to} index={d.index} label={d.label} i={i} />
           ))}
         </nav>
       </div>

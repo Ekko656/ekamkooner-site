@@ -13,24 +13,45 @@ import { session } from '../lib/session'
 import ArmAssembly from './ArmAssembly'
 import Dust from './Dust'
 
-/* About orbit: camera swings from the machine's left side around to its
-   right and back in, so the machine reads right, then left, then close */
-const PATH = {
-  pos: [
-    new THREE.Vector3(-0.2, 0.8, 11.6),
-    new THREE.Vector3(1.4, 0.95, 9.4),
-    new THREE.Vector3(4.2, 0.75, 7.4),
-    new THREE.Vector3(-0.9, 0.55, 7.9),
-    new THREE.Vector3(0.75, 0.15, 7.5),
-  ],
-  look: [
-    new THREE.Vector3(1.6, 0.25, 0),
-    new THREE.Vector3(1.5, 0.0, 0),
-    new THREE.Vector3(2.7, -0.4, 0),
-    new THREE.Vector3(0.72, -0.42, 0),
-    new THREE.Vector3(0.85, -0.5, 0),
-  ],
-}
+/* ---- About camera rig ----
+   The machine always takes the half of the screen the text is not on.
+   Measured beat centres (page progress): text is LEFT through 0.27,
+   RIGHT from 0.28 to 0.59, LEFT again from 0.60 to 0.80. Camera keys
+   are in orbit time (orbitT = progress / 0.8), so those boundaries land
+   at orbitT 0.34 and 0.74.
+
+   Framing is polar around the machine rather than absolute positions,
+   which is what lets the two side swaps have different character:
+     theta  - azimuth around the machine. Changing it ORBITS.
+     lat    - lateral truck applied to camera and look target together.
+              Changing it alone SLIDES the machine across frame with no
+              rotation. Negative lat puts the machine screen-right.
+   First swap (orbitT .34 -> .46) turns theta: a rotation around the
+   machine. Second swap (orbitT .74 -> .86) holds theta and moves lat
+   only: a clean horizontal slide back to the right. */
+const ARM_CENTER = new THREE.Vector3(1.7, -0.3, 0)
+/* how far off centre the machine sits. Half the visible width at this
+   distance is about 4.4 units and the exploded cloud is about 1.8 wide,
+   so 3.0 puts the machine's far edge around a third of the way across
+   the screen, leaving the text half genuinely clear. */
+const LAT = 3.0
+/* Swaps are timed to the measured beat centres, converted to orbit time
+   (orbitT = progress / 0.8). Text goes right at progress .28 (orbitT
+   .35) and back to left at .60 (orbitT .75); each swap finishes just
+   before the incoming text block reaches the middle of the screen. */
+type Key = { t: number; theta: number; r: number; y: number; lat: number }
+const KEYS: Key[] = [
+  { t: 0.0, theta: -0.1, r: 9.6, y: 1.15, lat: -LAT },
+  { t: 0.2, theta: -0.1, r: 8.9, y: 1.0, lat: -LAT },
+  { t: 0.28, theta: -0.06, r: 8.6, y: 0.9, lat: -LAT },
+  /* rotate: theta swings the camera around to the machine's far side */
+  { t: 0.42, theta: 0.62, r: 8.2, y: 0.8, lat: LAT },
+  { t: 0.68, theta: 0.64, r: 8.0, y: 0.65, lat: LAT },
+  /* slide: theta held, lateral truck only, done before the left-hand
+     copy arrives */
+  { t: 0.78, theta: 0.64, r: 8.0, y: 0.5, lat: -LAT },
+  { t: 1.0, theta: 0.62, r: 7.8, y: 0.35, lat: -LAT },
+]
 const IDLE_FRAME = { pos: new THREE.Vector3(0, 0.3, 9.6), look: new THREE.Vector3(0.6, 0.1, 0) }
 /* closing frame: square in front of the finished arm (root x = 1.7), which
    sits in the right third so the pulled card has room on the left */
@@ -41,9 +62,30 @@ const ss = (x: number) => {
   return t * t * (3 - 2 * t)
 }
 
+/* sample the keyframes at orbit time, smoothstepped between neighbours */
+function sampleKeys(t: number): Key {
+  let a = KEYS[0]
+  let b = KEYS[KEYS.length - 1]
+  for (let i = 0; i < KEYS.length - 1; i++) {
+    if (t >= KEYS[i].t && t <= KEYS[i + 1].t) {
+      a = KEYS[i]
+      b = KEYS[i + 1]
+      break
+    }
+  }
+  if (t <= KEYS[0].t) return KEYS[0]
+  if (t >= b.t && b === KEYS[KEYS.length - 1] && t >= KEYS[KEYS.length - 1].t) return KEYS[KEYS.length - 1]
+  const k = ss((t - a.t) / Math.max(1e-6, b.t - a.t))
+  return {
+    t,
+    theta: a.theta + (b.theta - a.theta) * k,
+    r: a.r + (b.r - a.r) * k,
+    y: a.y + (b.y - a.y) * k,
+    lat: a.lat + (b.lat - a.lat) * k,
+  }
+}
+
 function CameraRig() {
-  const posCurve = useMemo(() => new THREE.CatmullRomCurve3(PATH.pos, false, 'centripetal'), [])
-  const lookCurve = useMemo(() => new THREE.CatmullRomCurve3(PATH.look, false, 'centripetal'), [])
   const cur = useMemo(() => ({ pos: IDLE_FRAME.pos.clone(), look: IDLE_FRAME.look.clone() }), [])
   const target = useMemo(() => ({ pos: new THREE.Vector3(), look: new THREE.Vector3() }), [])
 
@@ -53,8 +95,17 @@ function CameraRig() {
          the last stretch settles into the closing front frame */
       const ap = Math.min(Math.max(session.aboutProgress, 0), 1)
       const orbitT = Math.min(ap / 0.8, 1)
-      posCurve.getPoint(orbitT, target.pos)
-      lookCurve.getPoint(orbitT, target.look)
+      const key = sampleKeys(orbitT)
+      const sin = Math.sin(key.theta)
+      const cos = Math.cos(key.theta)
+      /* camera sits back along the azimuth; lat trucks camera and look
+         target together so the machine slides without turning */
+      target.pos.set(
+        ARM_CENTER.x + sin * key.r + cos * key.lat,
+        ARM_CENTER.y + key.y,
+        ARM_CENTER.z + cos * key.r - sin * key.lat,
+      )
+      target.look.set(ARM_CENTER.x + cos * key.lat, ARM_CENTER.y, ARM_CENTER.z - sin * key.lat)
       const pull = ss(session.cardPull)
       if (pull > 0) {
         target.pos.lerp(END_POS, pull)
@@ -64,7 +115,7 @@ function CameraRig() {
       target.pos.copy(IDLE_FRAME.pos)
       target.look.copy(IDLE_FRAME.look)
     }
-    const k = 1 - Math.exp(-3.2 * dt)
+    const k = 1 - Math.exp(-4.5 * dt)
     cur.pos.lerp(target.pos, k)
     cur.look.lerp(target.look, k)
     /* the pointer parallax settles to nothing during the closing gesture */

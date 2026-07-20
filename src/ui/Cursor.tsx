@@ -1,6 +1,7 @@
 /* A compact reticle: solid dot, sturdy ring, plain word labels.
    Weighted follow, quick contract on press. */
 import { useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 
 export default function Cursor() {
@@ -49,12 +50,13 @@ export default function Cursor() {
   }, [])
 
   if (!fine) return null
-  return (
+  return createPortal(
     <>
       <div ref={dot} className="cursor-dot" />
       <div ref={ring} className={`cursor-ring${active ? ' is-active' : ''}`}>
         {label && <span className="cursor-label">{label}</span>}
       </div>
-    </>
+    </>,
+    document.body,
   )
 }
