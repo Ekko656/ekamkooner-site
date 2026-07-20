@@ -57,24 +57,30 @@ const JOINT_NAMES = ['Rotation', 'Pitch', 'Elbow', 'Wrist_Pitch', 'Wrist_Roll', 
 
 /* ---- closing gesture keyframes ----
    REST is the finished stance itself (no snap when the pull begins), then
-   the arm reaches down out of frame toward the left, grabs, and lifts the
-   card up into place. Blended by session.cardPull: REST -> REACH -> LIFT. */
+   the arm dives its claw below the bottom of the frame, closes on the
+   card waiting there, and hauls it up. Blended by session.cardPull:
+   REST -> REACH -> LIFT. Solved with scripts/arm-pose-probe.mjs; the
+   elbow keeps the same sign through all three keys, because blending
+   through zero straightens the arm mid-gesture into exactly the vertical
+   stance this page must never show.
+     REACH: tip y=-0.030 (below base level, off the frame), jaw wide
+     LIFT:  tip y=+0.383, elbow bent hard, jaw closed on the card */
 const CARD_REST = DISPLAY_POSE
 const CARD_REACH: Record<string, number> = {
-  Rotation: 0.95,
-  Pitch: -1.2,
-  Elbow: -0.3,
-  Wrist_Pitch: 0.7,
+  Rotation: 0.85,
+  Pitch: 1.15,
+  Elbow: -0.6,
+  Wrist_Pitch: 1.5,
   Wrist_Roll: 0,
-  Jaw: 0.95,
+  Jaw: 1.2,
 }
 const CARD_LIFT: Record<string, number> = {
-  Rotation: 1.15,
-  Pitch: -0.35,
-  Elbow: -0.95,
-  Wrist_Pitch: 0.1,
+  Rotation: 0.85,
+  Pitch: -0.2,
+  Elbow: -1.05,
+  Wrist_Pitch: 0.9,
   Wrist_Roll: 0,
-  Jaw: 0.18,
+  Jaw: 0.3,
 }
 const lerpPose = (a: Record<string, number>, b: Record<string, number>, k: number) => {
   const out: Record<string, number> = {}
@@ -167,6 +173,16 @@ export default function ArmAssembly() {
   const liveRobot = useRef<THREE.Object3D | null>(null)
   const liveJoints = useRef<Joints | null>(null)
   const liveAt = useRef(0)
+  const jawLink = useRef<THREE.Object3D | null>(null)
+  const gripV = useMemo(() => new THREE.Vector3(), [])
+
+  /* the card must never chase a stale claw after the arm leaves */
+  useEffect(
+    () => () => {
+      session.grip.active = false
+    },
+    [],
+  )
 
   useEffect(() => {
     const manager = new THREE.LoadingManager()
@@ -314,7 +330,7 @@ export default function ArmAssembly() {
     return t
   }
 
-  useFrame(({ clock }, dt) => {
+  useFrame(({ clock, camera, size }, dt) => {
     if (!parts) return
     const k = 1 - Math.exp(-4.2 * dt)
     session.assembly += (session.assemblyTarget - session.assembly) * k
@@ -366,13 +382,30 @@ export default function ArmAssembly() {
     }
 
     /* unified breathing on the root, felt in both representations. As the
-       card is pulled the whole rig eases down a touch so the lifted arm
-       stays fully in frame. */
+       card is pulled the whole rig settles noticeably lower, which both
+       frames the machine deeper in the shot and leaves the claw's lift
+       height with room below it for the hanging card. */
     if (root.current) {
       const unified = smooth01((p - 0.9) / 0.1)
       root.current.rotation.z = Math.sin(t * 0.5) * 0.008 * unified
-      root.current.position.y = -2.15 - session.cardPull * 0.2 + Math.sin(t * 0.8) * 0.02 * unified
+      root.current.position.y = -2.15 - smooth01(session.cardPull) * 0.55 + Math.sin(t * 0.8) * 0.02 * unified
       root.current.scale.setScalar(1 + lockPulse.current.s)
+    }
+
+    /* project the claw tip into CSS pixels for the card to hang from.
+       The pose and root were just written, so refresh matrices first. */
+    if (locked.current && root.current && liveRobot.current?.visible) {
+      if (!jawLink.current) jawLink.current = liveRobot.current.getObjectByName('jaw') ?? null
+      const link = jawLink.current
+      if (link) {
+        root.current.updateMatrixWorld(true)
+        gripV.set(-0.055, 0.012, 0).applyMatrix4(link.matrixWorld).project(camera)
+        session.grip.x = ((gripV.x + 1) / 2) * size.width
+        session.grip.y = ((1 - gripV.y) / 2) * size.height
+        session.grip.active = true
+      }
+    } else {
+      session.grip.active = false
     }
 
     /* lock in once at 99.5 percent: pulse, ring, swap to the live robot */

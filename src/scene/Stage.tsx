@@ -30,33 +30,41 @@ import Dust from './Dust'
    machine. Second swap (orbitT .74 -> .86) holds theta and moves lat
    only: a clean horizontal slide back to the right. */
 const ARM_CENTER = new THREE.Vector3(1.7, -0.3, 0)
-/* how far off centre the machine sits. Half the visible width at this
-   distance is about 4.4 units and the exploded cloud is about 1.8 wide,
-   so 3.0 puts the machine's far edge around a third of the way across
-   the screen, leaving the text half genuinely clear. */
-const LAT = 3.0
+/* How far off centre the machine sits, per side. Right phase: half the
+   visible width at r 8.9+ is about 4.9 units, so 3.0 clears the text
+   with the cloud's 1.8 spread still fully on screen. Left phase runs
+   closer (r 8.5-8.7, half width about 4.7), and 3.0 was pushing the
+   machine's far edge off the frame - 2.45 keeps it clear of the copy
+   AND entirely on screen. */
+const LAT_R = 3.0
+const LAT_L = 2.3
 /* Swaps are timed to the measured beat centres, converted to orbit time
    (orbitT = progress / 0.82). Measured centres: copy sits left through
    progress .197, right from .352 to .556, left again from .711 to .814.
    Each swap runs through the empty gap between those runs, so the
-   machine crosses the frame while neither block is mid-screen. */
+   machine crosses the frame while neither block is mid-screen.
+   The two swaps are deliberately different moves: the first ORBITS the
+   machine (theta sweeps a full radian while the lateral offset flips),
+   the second holds theta and trucks sideways - a plain slide. */
 type Key = { t: number; theta: number; r: number; y: number; lat: number }
 const KEYS: Key[] = [
-  { t: 0.0, theta: -0.1, r: 9.6, y: 1.15, lat: -LAT },
-  { t: 0.28, theta: -0.08, r: 8.9, y: 1.0, lat: -LAT },
+  { t: 0.0, theta: -0.1, r: 9.6, y: 1.15, lat: -LAT_R },
+  { t: 0.28, theta: -0.08, r: 8.9, y: 1.0, lat: -LAT_R },
   /* rotate: theta swings the camera around to the machine's far side */
-  { t: 0.41, theta: 0.62, r: 8.2, y: 0.85, lat: LAT },
-  { t: 0.73, theta: 0.64, r: 8.0, y: 0.7, lat: LAT },
+  { t: 0.41, theta: 0.9, r: 8.7, y: 0.85, lat: LAT_L },
+  { t: 0.73, theta: 0.92, r: 8.5, y: 0.7, lat: LAT_L },
   /* slide: theta held, lateral truck only, done before the left-hand
      copy arrives */
-  { t: 0.84, theta: 0.64, r: 8.0, y: 0.55, lat: -LAT },
-  { t: 1.0, theta: 0.62, r: 7.8, y: 0.35, lat: -LAT },
+  { t: 0.84, theta: 0.92, r: 8.2, y: 0.55, lat: -LAT_R },
+  { t: 1.0, theta: 0.9, r: 8.0, y: 0.35, lat: -LAT_R },
 ]
 const IDLE_FRAME = { pos: new THREE.Vector3(0, 0.3, 9.6), look: new THREE.Vector3(0.6, 0.1, 0) }
 /* closing frame: square in front of the finished arm (root x = 1.7), which
    sits in the right third so the pulled card has room on the left */
 const END_POS = new THREE.Vector3(0.85, 0.05, 6.9)
-const END_LOOK = new THREE.Vector3(0.9, -0.55, 0)
+/* aimed low on purpose: it pushes the machine into the upper half of the
+   closing frame, so the card hanging from the claw clears the bottom */
+const END_LOOK = new THREE.Vector3(0.9, -1.1, 0)
 const ss = (x: number) => {
   const t = Math.min(Math.max(x, 0), 1)
   return t * t * (3 - 2 * t)

@@ -436,13 +436,15 @@
 }
 /* the aside: same size, lighter, with a leading rule so it reads as an
    aside without shrinking into grey noise */
-/* The closing thought of a beat. It earns its difference from voice, not
-   from being dimmed or fenced off in an aside: same size, same full
-   strength colour, italic. Nothing on this page is greyed out. */
+/* The closing thought of a beat. It earns its difference from voice and
+   motion, not from being dimmed or fenced off in an aside: same size,
+   full strength colour, italic, and it breathes in from wide tracking
+   as it arrives. Nothing on this page is greyed out. */
 .a-soft {
   margin-top: 1.1em;
   font-style: italic;
   color: var(--ice-200);
+  letter-spacing: 0.01em;
 }
 
 /* unblur reveal base state (GSAP scrubs it to sharp on scroll) */
@@ -484,19 +486,23 @@
 
 /* the off-clock card: brushed-metal panel the arm sets down on the left,
    fixed and revealed by the closing gesture */
+/* Positioned entirely by the pull loop in About.tsx: translated to hang
+   from the claw's projected grip point, rotating around its top centre
+   where the claw holds it. It starts parked below the viewport - never
+   faded, never revealed in place. */
 .oc-card {
   position: fixed;
-  left: clamp(24px, 8vw, 150px);
-  top: 50%;
+  left: 0;
+  top: 0;
   z-index: 3;
   width: min(340px, 82vw);
-  margin-top: -170px;
   padding: 28px 30px;
   border-radius: 16px;
-  opacity: 0;
+  transform: translate3d(-100vw, 120vh, 0);
+  transform-origin: 50% 0;
   background: linear-gradient(178deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 12%),
     linear-gradient(180deg, #232c3f 0%, #131a28 55%, #0c111d 100%);
-  border: 1px solid rgba(130, 150, 190, 0.18);
+  border: 2px solid rgba(130, 150, 190, 0.22);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 24px 60px rgba(0, 0, 0, 0.6);
 }
 .oc-kicker {

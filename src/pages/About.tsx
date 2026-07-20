@@ -96,26 +96,31 @@ export default function About() {
         const lineDelay = stack.indexOf(el) * 0.14
         const words = splitWords(el)
         if (!words.length) return
-        /* the line arrives in its own true colour, not a shared one, so
-           .a-soft keeps its intentional dimmer tone */
-        el.style.color = getComputedStyle(el).color
+
+        /* the soft closing thought of a beat carries its life in its
+           motion, not in decoration: its words drift in slower, and the
+           whole line breathes in from wide tracking to its resting set */
+        const soft = el.classList.contains('a-soft')
+        const delay = inView ? 0.25 + lineDelay : lineDelay
+        const trigger = inView ? undefined : { trigger: el, start: 'top 84%' }
 
         gsap.fromTo(
           words,
-          { opacity: 0, filter: 'blur(9px)', yPercent: 34 },
+          { opacity: 0, filter: 'blur(9px)', yPercent: soft ? 0 : 34, xPercent: soft ? 12 : 0 },
           {
             opacity: 1,
             filter: 'blur(0px)',
             yPercent: 0,
-            duration: 0.85,
+            xPercent: 0,
+            duration: soft ? 1.2 : 0.85,
             ease: 'mechOut',
             /* words arrive in a cascade; the whole line still resolves
                quickly enough to read as one movement */
-            stagger: 0.045,
+            stagger: soft ? 0.085 : 0.045,
             /* elements already on screen at load play on their own; the
                rest play as they scroll into view */
-            delay: inView ? 0.25 + lineDelay : lineDelay,
-            scrollTrigger: inView ? undefined : { trigger: el, start: 'top 84%' },
+            delay,
+            scrollTrigger: trigger,
             /* never clearProps the filter: it strips the inline blur(0)
                and the CSS base blur takes over, leaving text fuzzy */
             onComplete: () => {
@@ -123,16 +128,62 @@ export default function About() {
             },
           },
         )
+        if (soft) {
+          gsap.fromTo(
+            el,
+            { letterSpacing: '0.09em' },
+            {
+              letterSpacing: '0.01em',
+              duration: 1.7,
+              ease: 'mechOut',
+              delay,
+              scrollTrigger: trigger ? { ...trigger } : undefined,
+            },
+          )
+        }
       })
     })
 
+    /* ---- the card pull ----
+       No fade. The card waits below the bottom edge of the frame; the
+       claw dives down past the edge, closes on it, and hauls it up. The
+       card's top edge is pinned to the claw tip's projected position
+       (session.grip) through a weighted spring, so it genuinely hangs
+       from the machine: it lags on the way up like a load, sways with
+       the claw's sideways motion, and keeps breathing with the idle
+       drift once the lift is done. */
     let raf = 0
-    const tick = () => {
-      const reveal = Math.min(1, Math.max(0, (session.cardPull - 0.45) / 0.55))
-      if (card.current) {
-        card.current.style.opacity = String(reveal)
-        card.current.style.transform = `translateY(${(1 - reveal) * 150}px) scale(${0.96 + reveal * 0.04})`
-        card.current.style.pointerEvents = reveal > 0.9 ? 'auto' : 'none'
+    let last = performance.now()
+    const spring = { x: 0, y: 0, vx: 0, vy: 0, init: false }
+    const tick = (now: number) => {
+      const dt = Math.min((now - last) / 1000, 0.05)
+      last = now
+      const el = card.current
+      if (el) {
+        const pull = session.cardPull
+        const g = session.grip
+        const w = el.offsetWidth
+        /* the claw closes at 0.45 of the gesture: from then on the card
+           is attached. Before that it idles out of sight below the
+           frame, already under where the claw will dive. */
+        const grabbed = pull > 0.45 && g.active
+        const tx = (g.active ? g.x : window.innerWidth * 0.6) - w / 2
+        const ty = grabbed ? g.y - 10 : window.innerHeight + 90
+        if (!spring.init) {
+          spring.x = tx
+          spring.y = window.innerHeight + 260
+          spring.init = true
+        }
+        /* stiff, near-critically-damped: heavy load, no rubber wobble */
+        const wn = 15
+        spring.vx += ((tx - spring.x) * wn * wn - 2 * 1.05 * wn * spring.vx) * dt
+        spring.vy += ((ty - spring.y) * wn * wn - 2 * 1.05 * wn * spring.vy) * dt
+        spring.x += spring.vx * dt
+        spring.y += spring.vy * dt
+        /* hangs from the grip point, so it tilts against sideways motion */
+        const sway = Math.max(-5, Math.min(5, -spring.vx * 0.012))
+        el.style.transform = `translate3d(${spring.x}px, ${spring.y}px, 0) rotate(${sway}deg)`
+        el.style.pointerEvents = pull > 0.9 ? 'auto' : 'none'
       }
       raf = requestAnimationFrame(tick)
     }

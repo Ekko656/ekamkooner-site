@@ -16,6 +16,11 @@ class Session {
   cardPull = 0
   /** whether the arm should be on stage at all */
   armVisible = false
+  /** the claw tip projected into CSS pixels, written by the scene every
+      frame while the machine is live. The About page pins the off-clock
+      card to this point during the pull, so the card is physically
+      attached to the claw instead of being choreographed beside it. */
+  grip = { x: 0, y: 0, active: false }
   /** page scroll velocity, for the grid hum */
   velocity = 0
   /** pointer in normalized device coords */
