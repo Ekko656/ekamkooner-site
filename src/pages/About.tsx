@@ -144,46 +144,50 @@ export default function About() {
       })
     })
 
-    /* ---- the card pull ----
-       No fade. The card waits below the bottom edge of the frame; the
-       claw dives down past the edge, closes on it, and hauls it up. The
-       card's top edge is pinned to the claw tip's projected position
-       (session.grip) through a weighted spring, so it genuinely hangs
-       from the machine: it lags on the way up like a load, sways with
-       the claw's sideways motion, and keeps breathing with the idle
-       drift once the lift is done. */
+    /* ---- the card in the claw ----
+       No fade, no choreography beside the arm. The card waits below the
+       bottom edge of the frame. From the exact frame the claw closes
+       (session.gripHold, set by the performance timeline), the card's
+       top edge is bolted to the claw tip's projected position: zero
+       positional lag, because a held object does not trail its grip.
+       All the life is rotational - it swings like a pendulum from the
+       grip point against the claw's sideways motion, lightly damped, so
+       the tugs and the hauling overshoot read through the card. */
     let raf = 0
     let last = performance.now()
-    const spring = { x: 0, y: 0, vx: 0, vy: 0, init: false }
+    let theta = 0
+    let thetaV = 0
+    let prevGX = 0
+    let held = false
     const tick = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.05)
       last = now
       const el = card.current
       if (el) {
-        const pull = session.cardPull
         const g = session.grip
+        const holdNow = session.gripHold && g.active
         const w = el.offsetWidth
-        /* the claw closes at 0.45 of the gesture: from then on the card
-           is attached. Before that it idles out of sight below the
-           frame, already under where the claw will dive. */
-        const grabbed = pull > 0.45 && g.active
-        const tx = (g.active ? g.x : window.innerWidth * 0.6) - w / 2
-        const ty = grabbed ? g.y - 10 : window.innerHeight + 90
-        if (!spring.init) {
-          spring.x = tx
-          spring.y = window.innerHeight + 260
-          spring.init = true
+        if (holdNow) {
+          const vx = held ? (g.x - prevGX) / Math.max(dt, 1e-3) : 0
+          prevGX = g.x
+          /* airy pendulum: the swing target trails the grip's motion */
+          const target = Math.max(-0.16, Math.min(0.16, -vx * 0.0016))
+          const wn = 5.2
+          const zeta = 0.3
+          thetaV += (wn * wn * (target - theta) - 2 * zeta * wn * thetaV) * dt
+          theta += thetaV * dt
+          /* top edge tucked 22px up into the jaws: visibly gripped */
+          el.style.transform = `translate3d(${g.x - w / 2}px, ${g.y - 22}px, 0) rotate(${theta * 57.3}deg)`
+        } else {
+          theta *= 0.9
+          thetaV = 0
+          prevGX = g.x
+          /* parked out of sight below the frame, under the dive point */
+          const px = (g.active ? g.x : window.innerWidth * 0.6) - w / 2
+          el.style.transform = `translate3d(${px}px, ${window.innerHeight + 90}px, 0)`
         }
-        /* stiff, near-critically-damped: heavy load, no rubber wobble */
-        const wn = 15
-        spring.vx += ((tx - spring.x) * wn * wn - 2 * 1.05 * wn * spring.vx) * dt
-        spring.vy += ((ty - spring.y) * wn * wn - 2 * 1.05 * wn * spring.vy) * dt
-        spring.x += spring.vx * dt
-        spring.y += spring.vy * dt
-        /* hangs from the grip point, so it tilts against sideways motion */
-        const sway = Math.max(-5, Math.min(5, -spring.vx * 0.012))
-        el.style.transform = `translate3d(${spring.x}px, ${spring.y}px, 0) rotate(${sway}deg)`
-        el.style.pointerEvents = pull > 0.9 ? 'auto' : 'none'
+        held = holdNow
+        el.style.pointerEvents = holdNow && session.cardPull > 0.9 ? 'auto' : 'none'
       }
       raf = requestAnimationFrame(tick)
     }

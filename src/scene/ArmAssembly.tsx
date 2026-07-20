@@ -55,43 +55,40 @@ const DISPLAY_POSE: Record<string, number> = {
 }
 const JOINT_NAMES = ['Rotation', 'Pitch', 'Elbow', 'Wrist_Pitch', 'Wrist_Roll', 'Jaw'] as const
 
-/* ---- closing gesture keyframes ----
-   REST is the finished stance itself (no snap when the pull begins), then
-   the arm dives its claw below the bottom of the frame, closes on the
-   card waiting there, and hauls it up. Blended by session.cardPull:
-   REST -> REACH -> LIFT. Solved with scripts/arm-pose-probe.mjs; the
-   elbow keeps the same sign through all three keys, because blending
-   through zero straightens the arm mid-gesture into exactly the vertical
-   stance this page must never show.
-     REACH: tip y=-0.030 (below base level, off the frame), jaw wide
-     LIFT:  tip y=+0.383, elbow bent hard, jaw closed on the card */
-const CARD_REST = DISPLAY_POSE
-const CARD_REACH: Record<string, number> = {
-  Rotation: 0.85,
-  Pitch: 1.15,
-  Elbow: -0.6,
-  Wrist_Pitch: 1.5,
-  Wrist_Roll: 0,
-  Jaw: 1.2,
-}
-const CARD_LIFT: Record<string, number> = {
-  Rotation: 0.85,
-  Pitch: -0.2,
-  Elbow: -1.05,
-  Wrist_Pitch: 0.9,
-  Wrist_Roll: 0,
-  Jaw: 0.3,
-}
-const lerpPose = (a: Record<string, number>, b: Record<string, number>, k: number) => {
-  const out: Record<string, number> = {}
-  for (const n of JOINT_NAMES) out[n] = a[n] + (b[n] - a[n]) * k
-  return out
-}
-/* pose along the closing gesture for a given pull 0..1 */
-const cardPose = (pull: number) => {
-  if (pull <= 0.45) return lerpPose(CARD_REST, CARD_REACH, smooth01(pull / 0.45))
-  return lerpPose(CARD_REACH, CARD_LIFT, smooth01((pull - 0.45) / 0.55))
-}
+/* ---- the closing performance ----
+   Not scrubbed by scroll. When the reader reaches the end zone the arm
+   performs once, on its own clock, like a studio-logo animation: a small
+   breath of anticipation, an eager dive below the bottom of the frame,
+   the claw closing on the card waiting down there, two strained tugs
+   because the thing is heavier than it looks, then one proud hauling
+   lift with an overshoot that settles. Leaving the zone reverses it, a
+   touch faster, so the card is set back down out of frame.
+
+   Joint targets solved with scripts/arm-pose-probe.mjs; the elbow keeps
+   the same sign throughout, because passing through zero straightens the
+   arm into exactly the vertical stance this page must never show.
+   `grab01` rides in the same tweened object: the card is rigidly held
+   while it is past a half. */
+type Gesture = Record<string, number> & { grab01: number }
+const makeGesture = (): Gesture => ({ ...DISPLAY_POSE, grab01: 0 }) as Gesture
+const buildCardTimeline = (gest: Gesture) =>
+  gsap
+    .timeline({ paused: true })
+    /* anticipation: rise a touch, jaw opens wide */
+    .to(gest, { Pitch: 0.32, Jaw: 1.25, duration: 0.4, ease: 'power2.out' }, 0)
+    /* the dive, eager, accelerating out of the bottom of the frame */
+    .to(gest, { Pitch: 1.15, Elbow: -0.6, Wrist_Pitch: 1.5, duration: 0.55, ease: 'power3.in' }, 0.38)
+    /* the claw closes on the card edge */
+    .to(gest, { Jaw: 0.16, grab01: 1, duration: 0.16, ease: 'power3.out' }, 0.98)
+    /* two tugs: heavier than expected */
+    .to(gest, { Pitch: 0.98, duration: 0.24, ease: 'power2.out' }, 1.2)
+    .to(gest, { Pitch: 1.12, duration: 0.2, ease: 'power2.in' }, 1.44)
+    /* the haul, with a proud overshoot that settles */
+    .to(
+      gest,
+      { Pitch: -0.2, Elbow: -1.05, Wrist_Pitch: 0.9, duration: 1.15, ease: 'back.out(1.6)' },
+      1.68,
+    )
 
 /* light airy idle drift: layered slow sines per joint, tiny amplitudes */
 /* kept small on Rotation and Wrist_Roll: a wide yaw drift swings the
@@ -175,14 +172,19 @@ export default function ArmAssembly() {
   const liveAt = useRef(0)
   const jawLink = useRef<THREE.Object3D | null>(null)
   const gripV = useMemo(() => new THREE.Vector3(), [])
+  const gest = useMemo(makeGesture, [])
+  const cardTl = useRef<gsap.core.Timeline | null>(null)
+  const inZone = useRef(false)
 
-  /* the card must never chase a stale claw after the arm leaves */
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    cardTl.current = buildCardTimeline(gest)
+    return () => {
+      cardTl.current?.kill()
+      cardTl.current = null
       session.grip.active = false
-    },
-    [],
-  )
+      session.gripHold = false
+    }
+  }, [gest])
 
   useEffect(() => {
     const manager = new THREE.LoadingManager()
@@ -368,17 +370,28 @@ export default function ArmAssembly() {
         }
       }
     } else if (liveJoints.current) {
-      /* the machine is alive. Base pose eases from the woken display pose
-         into the closing gesture as the card is pulled; idle drift fades
-         out so the gesture reads clean. */
+      /* the machine is alive. Reaching the end zone triggers the card
+         performance once, on its own clock; leaving the zone reverses it
+         a touch faster so the card is set back down out of frame. */
+      const tl = cardTl.current
+      if (tl) {
+        const zone = session.cardPull > 0.2 ? true : session.cardPull < 0.08 ? false : inZone.current
+        if (zone !== inZone.current) {
+          inZone.current = zone
+          if (zone) tl.timeScale(1).play()
+          else tl.timeScale(1.5).reverse()
+        }
+      }
+      /* idle drift dims while the arm is performing or holding, but never
+         fully dies: the held card keeps breathing with the machine */
       const wake = smooth01((t - liveAt.current) / 3)
-      const pull = session.cardPull
-      const base = pull > 0.001 ? cardPose(pull) : DISPLAY_POSE
-      const drift = (1 - smooth01(pull / 0.2)) * wake
+      const perf = tl ? smooth01(tl.progress() / 0.12) : 0
+      const drift = wake * (1 - 0.8 * perf)
       for (const name of JOINT_NAMES) {
-        const v = base[name] + IDLE_AMP[name] * drift * fbm(t * IDLE_SPD[name] * Math.PI * 2, IDLE_SEED[name])
+        const v = gest[name] + IDLE_AMP[name] * drift * fbm(t * IDLE_SPD[name] * Math.PI * 2, IDLE_SEED[name])
         liveJoints.current[name]?.setJointValue(v)
       }
+      session.gripHold = gest.grab01 > 0.5
     }
 
     /* unified breathing on the root, felt in both representations. As the
@@ -426,7 +439,12 @@ export default function ArmAssembly() {
     }
     if (locked.current && p < 0.96) {
       locked.current = false
-      /* reset the live pose so the baked parts line up again */
+      /* reset the live pose and the performance so the baked parts line
+         up again and the show can play fresh next time */
+      cardTl.current?.pause(0)
+      Object.assign(gest, makeGesture())
+      inZone.current = false
+      session.gripHold = false
       if (liveJoints.current)
         Object.entries(DISPLAY_POSE).forEach(([n, v]) => liveJoints.current![n]?.setJointValue(v))
     }

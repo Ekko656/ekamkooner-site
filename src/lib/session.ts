@@ -21,6 +21,9 @@ class Session {
       card to this point during the pull, so the card is physically
       attached to the claw instead of being choreographed beside it. */
   grip = { x: 0, y: 0, active: false }
+  /** true from the frame the claw closes on the card until it lets go.
+      While held, the card is rigidly attached to the grip point. */
+  gripHold = false
   /** page scroll velocity, for the grid hum */
   velocity = 0
   /** pointer in normalized device coords */
