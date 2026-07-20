@@ -34,16 +34,24 @@ type Joints = Record<string, { setJointValue: (v: number) => void }>
 /* display pose: the natural SO-ARM101 stance, seen in profile so the
    bend actually reads on screen: base yawed sideways, upper arm leaning,
    clear elbow bend, gripper held level */
-/* the finished stance: leaning forward, elbow bent, the gripper reaching
-   toward the viewer and angled slightly down, jaw open like a claw. NOT
-   pointing at the sky. */
+/* The finished stance: bent forward over its own base, elbow clearly
+   broken, the claw hanging BELOW the elbow joint and reaching out toward
+   the viewer. It must never stand up straight.
+
+   These numbers are not eyeballed. They were solved from the URDF chain
+   (see the forward-kinematics probe in the commit history) against two
+   hard constraints, with the wrist roll pinned to zero so the gripper
+   stays square:
+     claw tip 0.10 below the elbow joint in world height
+     claw tip 0.13 in front of the elbow, toward the camera
+   Measured result: elbow y=0.234, tip y=0.134, elbow z=0.086, tip z=0.216. */
 const DISPLAY_POSE: Record<string, number> = {
   Rotation: 0.8,
-  Pitch: -0.65,
-  Elbow: -0.95,
-  Wrist_Pitch: 0.3,
+  Pitch: 0.5,
+  Elbow: -0.71,
+  Wrist_Pitch: 1.34,
   Wrist_Roll: 0,
-  Jaw: 0.5,
+  Jaw: 0.62,
 }
 const JOINT_NAMES = ['Rotation', 'Pitch', 'Elbow', 'Wrist_Pitch', 'Wrist_Roll', 'Jaw'] as const
 
@@ -80,12 +88,15 @@ const cardPose = (pull: number) => {
 }
 
 /* light airy idle drift: layered slow sines per joint, tiny amplitudes */
+/* kept small on Rotation and Wrist_Roll: a wide yaw drift swings the
+   machine out of the frame the camera is holding, and rolling the wrist
+   spoils the square-on claw the stance is built around */
 const IDLE_AMP: Record<string, number> = {
-  Rotation: 0.34,
-  Pitch: 0.07,
-  Elbow: 0.1,
-  Wrist_Pitch: 0.18,
-  Wrist_Roll: 0.3,
+  Rotation: 0.1,
+  Pitch: 0.05,
+  Elbow: 0.08,
+  Wrist_Pitch: 0.1,
+  Wrist_Roll: 0.06,
   Jaw: 0.08,
 }
 const IDLE_SPD: Record<string, number> = {

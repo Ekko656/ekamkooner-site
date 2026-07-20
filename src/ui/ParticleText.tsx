@@ -131,18 +131,18 @@ export default function ParticleText({
           let mix: number
           let a: number
           let r: number
-          if (roll < 0.55) {
-            mix = 0.5 + Math.random() * 0.2
-            a = 0.82 + Math.random() * 0.1
-            r = 0.5 + Math.random() * 0.3
-          } else if (roll < 0.9) {
-            mix = 0.74 + Math.random() * 0.2
-            a = 0.92 + Math.random() * 0.08
-            r = 0.62 + Math.random() * 0.32
+          if (roll < 0.4) {
+            mix = 0.78 + Math.random() * 0.12
+            a = 0.9 + Math.random() * 0.08
+            r = 0.55 + Math.random() * 0.3
+          } else if (roll < 0.82) {
+            mix = 0.9 + Math.random() * 0.08
+            a = 0.96 + Math.random() * 0.04
+            r = 0.66 + Math.random() * 0.3
           } else {
             mix = 1
             a = 1
-            r = 0.8 + Math.random() * 0.4
+            r = 0.82 + Math.random() * 0.4
           }
           next.push({
             hx,
@@ -202,9 +202,9 @@ export default function ParticleText({
           p.y += p.vy * dt
         }
 
-        /* a shallow twinkle: enough to feel alive, never enough to make a
-           letter drop out */
-        const tw = reduced ? 1 : 0.88 + 0.12 * Math.sin(ts * p.tw + p.ph)
+        /* barely-there twinkle: the name should read as solid white type
+           that happens to be built from motes, not as a field of stars */
+        const tw = reduced ? 1 : 0.94 + 0.06 * Math.sin(ts * p.tw + p.ph)
         const alpha = live * p.a * tw
         if (alpha <= 0.01) continue
         ctx.beginPath()

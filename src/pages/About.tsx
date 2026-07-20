@@ -6,6 +6,7 @@
    off-clock card in at the very end.
    ============================================================ */
 import { useEffect, useRef, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { session } from '../lib/session'
@@ -190,19 +191,28 @@ export default function About() {
 
       <section className="beat beat-end" aria-hidden />
 
-      <aside className="oc-card" ref={card}>
-        <p className="oc-kicker">When I'm not building</p>
-        <p className="oc-title">Off the clock</p>
-        <ul className="oc-list">
-          {OFF_CLOCK.map((o) => (
-            <li key={o.label}>
-              <span className="oc-icon">{o.icon}</span>
-              {o.label}
-            </li>
-          ))}
-        </ul>
-        <p className="oc-foot">Thanks for reading this far.</p>
-      </aside>
+      {/* Portaled to the body on purpose. `main` keeps a transform from
+          the page entrance tween, and any transform makes an element the
+          containing block for `position: fixed` — the card was resolving
+          against a 6900px-tall `main` and sitting thousands of pixels off
+          screen, so the pull looked like it never happened. Same trap the
+          project detail panel hits; do not move this back inside. */}
+      {createPortal(
+        <aside className="oc-card" ref={card}>
+          <p className="oc-kicker">When I'm not building</p>
+          <p className="oc-title">Off the clock</p>
+          <ul className="oc-list">
+            {OFF_CLOCK.map((o) => (
+              <li key={o.label}>
+                <span className="oc-icon">{o.icon}</span>
+                {o.label}
+              </li>
+            ))}
+          </ul>
+          <p className="oc-foot">Thanks for reading this far.</p>
+        </aside>,
+        document.body,
+      )}
     </div>
   )
 }
