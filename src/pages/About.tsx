@@ -14,16 +14,61 @@ function Beat({
   side,
   children,
   variant = '',
+  flip = false,
 }: {
   side: 'left' | 'right'
   children: ReactNode
   variant?: '' | 'hero' | 'tall'
+  /* marks a beat that starts on the opposite side from the one before
+     it; it carries extra lead-in so the camera and the machine have
+     empty scroll to cross the frame in before any copy arrives */
+  flip?: boolean
 }) {
   return (
-    <section className={`beat beat-${side}${variant ? ` beat-${variant}` : ''}`}>
+    <section
+      className={`beat beat-${side}${variant ? ` beat-${variant}` : ''}${flip ? ' beat-flip' : ''}`}
+    >
       <div className="beat-text">{children}</div>
     </section>
   )
+}
+
+/* Split an element's text into word spans, leaving nested markup (the
+   <em> in the lead lines) intact, so the reveal can cascade word by
+   word instead of resolving the whole line at once. */
+function splitWords(el: HTMLElement): HTMLElement[] {
+  /* Idempotent: the effect runs twice under StrictMode, and reverting the
+     GSAP context restores styles but does not un-split the DOM. Splitting
+     an already-split line would nest .w inside .w, and the tween would
+     only reach the inner set while the outer stayed hidden. */
+  const existing = el.querySelectorAll<HTMLElement>('.w')
+  if (existing.length) return Array.from(existing)
+
+  const words: HTMLElement[] = []
+  const process = (node: Node) => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      const text = node.textContent ?? ''
+      if (!text.trim()) return
+      const frag = document.createDocumentFragment()
+      for (const part of text.split(/(\s+)/)) {
+        if (!part) continue
+        if (/^\s+$/.test(part)) {
+          frag.appendChild(document.createTextNode(part))
+          continue
+        }
+        const span = document.createElement('span')
+        span.className = 'w'
+        span.textContent = part
+        frag.appendChild(span)
+        words.push(span)
+      }
+      node.parentNode?.replaceChild(frag, node)
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      Array.from(node.childNodes).forEach(process)
+    }
+  }
+  Array.from(el.childNodes).forEach(process)
+  return words
 }
 
 const OFF_CLOCK = [
@@ -47,24 +92,34 @@ export default function About() {
         /* stagger lines that share a beat so they resolve in a small
            cascade rather than all at once */
         const stack = Array.from(el.parentElement?.querySelectorAll(':scope > .unblur') ?? [])
-        const stagger = stack.indexOf(el) * 0.09
+        const lineDelay = stack.indexOf(el) * 0.14
+        const words = splitWords(el)
+        if (!words.length) return
         /* the line arrives in its own true colour, not a shared one, so
            .a-soft keeps its intentional dimmer tone */
-        const trueColor = getComputedStyle(el).color
+        el.style.color = getComputedStyle(el).color
+
         gsap.fromTo(
-          el,
-          { opacity: 0, filter: 'blur(10px)', y: 24, color: 'rgba(228, 232, 245, 0.4)' },
+          words,
+          { opacity: 0, filter: 'blur(9px)', yPercent: 34 },
           {
             opacity: 1,
             filter: 'blur(0px)',
-            y: 0,
-            color: trueColor,
-            duration: 1.0,
+            yPercent: 0,
+            duration: 0.85,
             ease: 'mechOut',
-            /* elements already on screen at load play on their own; the rest
-               play as they scroll into view */
-            delay: inView ? 0.25 + stagger : stagger,
+            /* words arrive in a cascade; the whole line still resolves
+               quickly enough to read as one movement */
+            stagger: 0.045,
+            /* elements already on screen at load play on their own; the
+               rest play as they scroll into view */
+            delay: inView ? 0.25 + lineDelay : lineDelay,
             scrollTrigger: inView ? undefined : { trigger: el, start: 'top 84%' },
+            /* never clearProps the filter: it strips the inline blur(0)
+               and the CSS base blur takes over, leaving text fuzzy */
+            onComplete: () => {
+              for (const wsp of words) wsp.style.willChange = 'auto'
+            },
           },
         )
       })
@@ -102,7 +157,7 @@ export default function About() {
         <p className="a-body unblur">Most of what gets built today is built for the people who need it least.</p>
       </Beat>
 
-      <Beat side="right">
+      <Beat side="right" flip>
         <p className="a-body unblur">Faster trading algorithms.</p>
         <p className="a-body unblur">Sharper ad targeting.</p>
         <p className="a-body unblur">Another delivery app.</p>
@@ -123,7 +178,7 @@ export default function About() {
         <p className="a-body unblur">At the parent who needs an extra set of hands.</p>
       </Beat>
 
-      <Beat side="left">
+      <Beat side="left" flip>
         <p className="a-body unblur">This is why I study Biomedical Engineering at UBC,</p>
         <p className="a-body unblur">and why I'm aiming at humanoid robotics.</p>
         <p className="a-body a-soft unblur">Not for the technology, but for who the technology is able to serve.</p>
@@ -157,8 +212,11 @@ export function bindAboutScroll() {
     const max = document.documentElement.scrollHeight - window.innerHeight
     const p = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0
     session.aboutProgress = p
-    session.assemblyTarget = Math.min(1, p / 0.8)
-    session.cardPull = Math.min(1, Math.max(0, (p - 0.8) / 0.2))
+    /* the build completes at 0.82, and the closing gesture only begins at
+       0.86, so the last statement ("Everything I build comes back to
+       that.") lands and is read before the arm reaches for the card */
+    session.assemblyTarget = Math.min(1, p / 0.82)
+    session.cardPull = Math.min(1, Math.max(0, (p - 0.86) / 0.14))
   }
   update()
   ScrollTrigger.create({ onUpdate: update, start: 0, end: 'max' })

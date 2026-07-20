@@ -364,17 +364,32 @@
   padding-bottom: 0;
 }
 .beat {
-  min-height: 52vh;
+  min-height: 72vh;
   display: flex;
   align-items: center;
-  padding: 3vh 0;
+  padding: 5vh 0;
 }
 .beat-tall {
-  min-height: 62vh;
+  min-height: 84vh;
 }
 /* the opening statement sits dead-centre of the first screen */
 .beat-hero {
   min-height: 92vh;
+}
+/* a beat that opens on the opposite side to the one before it gets a
+   long empty run-up, so the camera finishes carrying the machine across
+   the frame before any copy arrives */
+.beat-flip {
+  margin-top: 46vh;
+}
+/* the words of a line, revealed in a cascade as the line enters */
+.unblur .w {
+  display: inline-block;
+  will-change: filter, transform, opacity;
+}
+/* the split preserves the em, which must not become a block */
+.unblur em .w {
+  font-style: italic;
 }
 .beat-text {
   max-width: 44rem;
@@ -437,12 +452,20 @@
 }
 
 /* unblur reveal base state (GSAP scrubs it to sharp on scroll) */
-.unblur {
+/* The reveal animates the word spans, so the hidden base state lives on
+   them. The line itself must stay visible, or it would hide the words
+   the tween is bringing in. Before the split runs, the line is hidden as
+   a whole so nothing flashes unstyled. */
+.unblur:not(:has(.w)) {
+  opacity: 0;
+}
+.unblur .w {
   opacity: 0;
   filter: blur(12px);
 }
 @media (prefers-reduced-motion: reduce) {
-  .unblur {
+  .unblur,
+  .unblur .w {
     opacity: 1;
     filter: none;
   }

@@ -36,20 +36,20 @@ const ARM_CENTER = new THREE.Vector3(1.7, -0.3, 0)
    the screen, leaving the text half genuinely clear. */
 const LAT = 3.0
 /* Swaps are timed to the measured beat centres, converted to orbit time
-   (orbitT = progress / 0.8). Text goes right at progress .28 (orbitT
-   .35) and back to left at .60 (orbitT .75); each swap finishes just
-   before the incoming text block reaches the middle of the screen. */
+   (orbitT = progress / 0.82). Measured centres: copy sits left through
+   progress .197, right from .352 to .556, left again from .711 to .814.
+   Each swap runs through the empty gap between those runs, so the
+   machine crosses the frame while neither block is mid-screen. */
 type Key = { t: number; theta: number; r: number; y: number; lat: number }
 const KEYS: Key[] = [
   { t: 0.0, theta: -0.1, r: 9.6, y: 1.15, lat: -LAT },
-  { t: 0.2, theta: -0.1, r: 8.9, y: 1.0, lat: -LAT },
-  { t: 0.28, theta: -0.06, r: 8.6, y: 0.9, lat: -LAT },
+  { t: 0.28, theta: -0.08, r: 8.9, y: 1.0, lat: -LAT },
   /* rotate: theta swings the camera around to the machine's far side */
-  { t: 0.42, theta: 0.62, r: 8.2, y: 0.8, lat: LAT },
-  { t: 0.68, theta: 0.64, r: 8.0, y: 0.65, lat: LAT },
+  { t: 0.41, theta: 0.62, r: 8.2, y: 0.85, lat: LAT },
+  { t: 0.73, theta: 0.64, r: 8.0, y: 0.7, lat: LAT },
   /* slide: theta held, lateral truck only, done before the left-hand
      copy arrives */
-  { t: 0.78, theta: 0.64, r: 8.0, y: 0.5, lat: -LAT },
+  { t: 0.84, theta: 0.64, r: 8.0, y: 0.55, lat: -LAT },
   { t: 1.0, theta: 0.62, r: 7.8, y: 0.35, lat: -LAT },
 ]
 const IDLE_FRAME = { pos: new THREE.Vector3(0, 0.3, 9.6), look: new THREE.Vector3(0.6, 0.1, 0) }
@@ -91,10 +91,10 @@ function CameraRig() {
 
   useFrame(({ camera }, dt) => {
     if (session.armVisible) {
-      /* the orbit tells the build story and finishes by 80% of the page;
-         the last stretch settles into the closing front frame */
+      /* the orbit tells the build story and finishes with the assembly at
+         82% of the page; the last stretch settles into the closing frame */
       const ap = Math.min(Math.max(session.aboutProgress, 0), 1)
-      const orbitT = Math.min(ap / 0.8, 1)
+      const orbitT = Math.min(ap / 0.82, 1)
       const key = sampleKeys(orbitT)
       const sin = Math.sin(key.theta)
       const cos = Math.cos(key.theta)
