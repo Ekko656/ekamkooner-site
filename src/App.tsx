@@ -70,17 +70,8 @@ function Shell() {
           scrollTrigger: { trigger: mask, start: 'top 92%' },
         })
       })
-      /* landing buttons walk in one after another */
-      gsap.utils.toArray<HTMLElement>('.glass-btn').forEach((el, i) => {
-        gsap.to(el, {
-          opacity: 1,
-          y: 0,
-          duration: 0.7,
-          delay: 0.3 + i * 0.08,
-          ease: 'mechOut',
-          overwrite: 'auto',
-        })
-      })
+      /* the landing entrance is choreographed in Landing.tsx, so that the
+         name, the line under it and the keys share one clock */
       /* magnetic elements */
       gsap.utils.toArray<HTMLElement>('[data-magnetic]').forEach((el) => {
         const xTo = gsap.quickTo(el, 'x', { duration: 0.4, ease: 'mechOut' })
