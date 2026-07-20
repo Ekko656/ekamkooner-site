@@ -677,7 +677,9 @@
    the ratio intact, which is what removes the grey letterbox bars. */
 .detail-media {
   position: relative;
-  align-self: start;
+  /* centre the media against the taller of the two columns, so it never
+     hangs at the top of a long text block */
+  align-self: center;
   justify-self: center;
   width: 100%;
   aspect-ratio: var(--ar, 16 / 9);

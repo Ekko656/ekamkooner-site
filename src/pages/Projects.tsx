@@ -26,7 +26,12 @@ function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
     const leave = () => {
       rx(0)
       ry(0)
-      vid.current?.pause()
+      const v = vid.current
+      if (v) {
+        v.pause()
+        /* park back on the representative still, not the black frame 0 */
+        if (v.duration) v.currentTime = Math.min(1.2, v.duration * 0.1)
+      }
     }
     card.addEventListener('pointermove', move)
     card.addEventListener('pointerenter', enter)
@@ -42,7 +47,21 @@ function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
     <button ref={el} className="card" data-cursor="Open" onClick={() => onOpen(p)}>
       <figure className="card-media">
         {p.media.type === 'video' ? (
-          <video ref={vid} src={p.media.src} poster={p.media.poster} muted loop playsInline preload="metadata" />
+          <video
+            ref={vid}
+            src={p.media.src}
+            poster={p.media.poster}
+            muted
+            loop
+            playsInline
+            preload="metadata"
+            /* many of these clips open on a black frame; seek to a real
+               one so the resting card is never a dark rectangle */
+            onLoadedMetadata={(e) => {
+              const v = e.currentTarget
+              if (v.duration) v.currentTime = Math.min(1.2, v.duration * 0.1)
+            }}
+          />
         ) : (
           <img src={p.media.src} alt={p.title} loading="lazy" />
         )}
