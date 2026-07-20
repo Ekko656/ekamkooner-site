@@ -56,9 +56,44 @@ function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
   )
 }
 
+/* Does this element actually carry an audio track? Browsers disagree on
+   how to report it, and the Chromium counter only fills in once some
+   audio has been decoded, so this is checked again shortly after play. */
+function hasAudioTrack(v: HTMLVideoElement) {
+  const el = v as HTMLVideoElement & {
+    mozHasAudio?: boolean
+    audioTracks?: { length: number }
+    webkitAudioDecodedByteCount?: number
+  }
+  if (typeof el.mozHasAudio === 'boolean') return el.mozHasAudio
+  if (el.audioTracks) return el.audioTracks.length > 0
+  if (typeof el.webkitAudioDecodedByteCount === 'number') return el.webkitAudioDecodedByteCount > 0
+  return false
+}
+
 function Detail({ p, onClose }: { p: Project; onClose: () => void }) {
   const panel = useRef<HTMLDivElement>(null)
   const vid = useRef<HTMLVideoElement>(null)
+  const fig = useRef<HTMLElement>(null)
+  const [audio, setAudio] = useState(false)
+  const [muted, setMuted] = useState(true)
+
+  /* Lock the frame to the media's true aspect so it is never letterboxed
+     into grey bars, and keep it centred in the column. */
+  const fitTo = (w: number, h: number) => {
+    if (!fig.current || !w || !h) return
+    fig.current.style.setProperty('--ar', String(w / h))
+  }
+
+  /* React sets `muted` as an attribute, which does not always reach the
+     DOM property, so mirror it onto the element directly. Unmuting is
+     driven by a click, so the browser allows the audio to start. */
+  useEffect(() => {
+    const v = vid.current
+    if (!v) return
+    v.muted = muted
+    if (!muted) v.play().catch(() => {})
+  }, [muted])
 
   useEffect(() => {
     gsap.fromTo(panel.current, { y: 34, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: 'mechOut' })
@@ -79,11 +114,42 @@ function Detail({ p, onClose }: { p: Project; onClose: () => void }) {
           <span />
           <span />
         </button>
-        <figure className="detail-media">
+        <figure className="detail-media" ref={fig}>
           {p.media.type === 'video' ? (
-            <video ref={vid} src={p.media.src} poster={p.media.poster} muted loop playsInline controls={false} />
+            <video
+              ref={vid}
+              src={p.media.src}
+              poster={p.media.poster}
+              muted={muted}
+              loop
+              playsInline
+              controls={false}
+              onLoadedMetadata={(e) => {
+                const v = e.currentTarget
+                fitTo(v.videoWidth, v.videoHeight)
+              }}
+              onPlaying={(e) => {
+                const v = e.currentTarget
+                window.setTimeout(() => setAudio(hasAudioTrack(v)), 400)
+              }}
+            />
           ) : (
-            <img src={p.media.src} alt={p.title} />
+            <img
+              src={p.media.src}
+              alt={p.title}
+              onLoad={(e) => fitTo(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight)}
+            />
+          )}
+          {/* only offered when the clip actually carries sound */}
+          {audio && (
+            <button
+              className="media-sound"
+              data-cursor={muted ? 'Unmute' : 'Mute'}
+              aria-label={muted ? 'Unmute video' : 'Mute video'}
+              onClick={() => setMuted((m) => !m)}
+            >
+              {muted ? 'Sound off' : 'Sound on'}
+            </button>
           )}
         </figure>
         <div className="detail-body">
