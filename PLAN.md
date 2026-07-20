@@ -42,16 +42,32 @@ Last updated 2026-07-20, after commit `ed5251d`.
   the page title, whatever sits above it.
 - [ ] **Centre everything** that remains.
 
-## 4. Projects page popup — media is the worst area
+## 4. Projects page popup — media
 
-- [ ] **Videos are not centred** in the detail popup.
-- [ ] **Videos have no sound.** They are currently `muted`; give them audio
-  with a user-facing control, since autoplay with sound is blocked.
-- [ ] **Wrong aspect ratios / grey letterbox bars.** Size the media box to
-  the actual video aspect instead of a fixed box.
-- [ ] **The HoneyKey project has no video at all.** Find out whether the file
-  is missing from `public/projects` or the entry in `src/data/projects.ts`
-  points at a still. Fix so it plays like the others.
+- [x] **Videos not centred** — fixed, frame is centred in its column.
+- [x] **No sound** — fixed. A sound toggle appears only on clips that
+  actually carry an audio track. `ubc-bionics.mp4` and `claw.mp4` have
+  audio; `arm-sim.webm` has no audio stream at all, so it correctly
+  shows no control.
+- [x] **Wrong aspect ratios / grey bars** — fixed. The frame takes the
+  media's real aspect from its natural size, so nothing letterboxes.
+- [ ] **HoneyKey has no video — blocked, needs Ekam.** This is not a bug in
+  the code. `src/data/projects.ts` declares HoneyKey as `type: 'image'`
+  pointing at `honeykey.png`, and there is no HoneyKey video anywhere in
+  `public/projects`. The asset does not exist. Barrage, VEX and the RC car
+  are stills for the same reason. **Need the video file** (or confirmation
+  that a still is intended), then switch the entry to `type: 'video'`.
+
+## 5. Audio, later
+
+- [ ] **Quality of life sound effects.** Small, restrained cues: button
+  hover and press on the landing keys, popup open and close, the arm's
+  lock-in pulse on About. Must obey the restraint rule — subtle, never
+  cartoonish, and never fired on page load.
+- [ ] **Subtle background music** fitting the site's theme (dark, technical,
+  spacious). Off by default with a visible, persistent mute control;
+  browsers block autoplay with sound anyway, so it needs a deliberate
+  user gesture to start. Remember the choice across pages.
 
 ---
 
