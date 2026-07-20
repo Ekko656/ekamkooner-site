@@ -10,37 +10,32 @@ Last updated 2026-07-20, after commit `ed5251d`.
 
 ## 1. Landing page
 
-- [ ] **Particle name: match the background stars more closely.** It settles
-  into the letterforms correctly today, but while it is in particle form the
-  motes do not read like the starfield behind them. Match the star layer's
-  colour (`#9daccf`), size distribution and opacity range from
-  `Starfield` in `src/scene/Stage.tsx`, so the name dissolves into the same
-  sky rather than looking like a separate white effect.
-- [ ] **Apply the same particle treatment to the sub-line.** "Biomedical
-  Engineering student at UBC, aiming at humanoid robotics." gets the same
-  TextFlow treatment as the name, at its own smaller scale.
-- [ ] **Shift the whole landing text block slightly right.** `.landing-intro`
-  margin-left, small nudge only.
+- [x] **Particle name** — kept on the name only. A full star-dim palette
+  made the type unreadable, so only the tint varies now while every mote
+  stays high in the brightness range.
+- [x] **Sub-line particles** — tried and reverted. At body size the motes
+  were unreadable; the description is real text again with a rise-in.
+- [x] **Shift the block right** and align the name, description and keys
+  on one edge (all at x=141; the canvas is pulled back by its drawing pad).
+- [x] **Keys smaller and less plain at rest** — top-lit gradient, bright
+  inner top edge, soft drop.
+- [x] **One entrance clock** — name gathers, line rises, keys walk in, and
+  the robot fades on the same rise, ease and duration.
 
 ## 2. About page
 
-- [ ] **Scroll animations on the About text were never actually added.** The
-  `.unblur` one-shot blur reveal exists, but the scroll-driven character
-  Ekam asked for is still missing. This is outstanding, not done.
-- [ ] **More space between every text section.** Increase the vertical gap
-  between beats generally.
-- [ ] **Extra space at the two side flips.** Where the text swaps sides
-  (after "Another delivery app." and after "At the parent who needs an extra
-  set of hands.") add more room still, so the camera and machine have empty
-  scroll distance to travel across before any text arrives. Camera keys in
-  `KEYS` in `src/scene/Stage.tsx` are timed to measured beat centres, so
-  **re-measure the beat centres and retime `KEYS` after changing spacing.**
+- [x] **Scroll animation with real character** — lines split into words
+  that cascade in from blur as they enter.
+- [x] **More space between sections** — beats 72vh (tall 84vh), 5vh padding.
+- [x] **Run-up at the two side flips** — 46vh lead-in so the machine has
+  empty scroll to cross the frame in. Camera re-measured and retimed.
+- [ ] **Still unverified: the closing card pull.** Does the arm convincingly
+  lift the off-clock card into place on the left? The gesture now starts at
+  progress .86. This and the finished pose need Ekam's eyes.
 
 ## 3. Contact page
 
-- [ ] **Delete everything above "Let's build".** Remove the section index,
-  the page title, whatever sits above it.
-- [ ] **Centre everything** that remains.
+- [x] **Everything above "Let's build" removed**, all centred.
 
 ## 4. Projects page popup — media
 
