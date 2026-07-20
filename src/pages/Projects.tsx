@@ -114,8 +114,17 @@ function Detail({ p, onClose }: { p: Project; onClose: () => void }) {
           <span />
           <span />
         </button>
-        <figure className="detail-media" ref={fig}>
-          {p.media.type === 'video' ? (
+        <figure className={`detail-media${p.embed ? ' is-embed' : ''}`} ref={fig}>
+          {p.embed ? (
+            /* the hosted clip carries its own controls and sound, so the
+               local aspect and mute plumbing below does not apply */
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${p.embed.id}?rel=0&modestbranding=1&playsinline=1`}
+              title={`${p.title} demo`}
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          ) : p.media.type === 'video' ? (
             <video
               ref={vid}
               src={p.media.src}
@@ -141,7 +150,7 @@ function Detail({ p, onClose }: { p: Project; onClose: () => void }) {
             />
           )}
           {/* only offered when the clip actually carries sound */}
-          {audio && (
+          {audio && !p.embed && (
             <button
               className="media-sound"
               data-cursor={muted ? 'Unmute' : 'Mute'}

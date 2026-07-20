@@ -659,11 +659,18 @@
   overflow: hidden;
 }
 .detail-media img,
-.detail-media video {
+.detail-media video,
+.detail-media iframe {
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
+  border: 0;
+}
+/* a hosted player is always 16:9 and sizes itself */
+.detail-media.is-embed {
+  aspect-ratio: 16 / 9;
+  max-width: calc(62vh * 1.7778);
 }
 .media-sound {
   position: absolute;

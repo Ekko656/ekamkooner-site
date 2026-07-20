@@ -10,6 +10,10 @@ export type Project = {
   description: string
   stack: string[]
   media: { type: 'video' | 'image'; src: string; poster?: string }
+  /* Optional: a hosted clip played in the detail popup instead of `media`.
+     The card still uses `media` for its thumbnail, since an iframe cannot
+     be driven by the hover-to-play behaviour the board relies on. */
+  embed?: { provider: 'youtube'; id: string }
   links: { label: string; href: string }[]
   awards?: { title: string; body: string }[]
 }
@@ -52,6 +56,7 @@ export const PROJECTS: Project[] = [
       'A honeypot API that logs and classifies attacker behavior in real time, then generates SOC style reports. Built in a weekend at nwHacks, where it finished as a Best Cybersecurity Hack finalist.',
     stack: ['Python', 'FastAPI', 'SQLite', 'MITRE ATT&CK'],
     media: { type: 'image', src: '/projects/honeykey.png' },
+    embed: { provider: 'youtube', id: '37EOq--P9oo' },
     links: [
       { label: 'GitHub', href: 'https://github.com/Ekko656' },
       { label: 'Devpost', href: 'https://devpost.com' },
