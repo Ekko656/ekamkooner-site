@@ -29,9 +29,17 @@ Last updated 2026-07-20, after commit `ed5251d`.
 - [x] **More space between sections** — beats 72vh (tall 84vh), 5vh padding.
 - [x] **Run-up at the two side flips** — 46vh lead-in so the machine has
   empty scroll to cross the frame in. Camera re-measured and retimed.
-- [ ] **Still unverified: the closing card pull.** Does the arm convincingly
-  lift the off-clock card into place on the left? The gesture now starts at
-  progress .86. This and the finished pose need Ekam's eyes.
+- [x] **The closing card pull rebuilt as a real lift.** The card hangs from
+  the claw's projected screen position through a weighted spring: waits
+  below the frame, gets grabbed at 0.45 of the gesture, gets hauled up
+  lagging and swaying, ends fully in frame. Verified at 1280x800.
+- [ ] **Framing trade-off for Ekam's eyes:** in the final hold, most of the
+  arm body sits above the frame - the claw and card carry the shot. If he
+  wants more machine visible, the LIFT pose has to hold the claw further
+  out to the side instead of high (re-solve in
+  `scripts/arm-pose-probe.mjs`), since the card needs ~440px below the
+  claw. Also worth his eyes: the soft-line tracking breathe, the orbiting
+  first swap.
 
 ## 3. Contact page
 
