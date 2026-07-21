@@ -31,13 +31,15 @@ Last updated 2026-07-20, after commit `ed5251d`.
   empty scroll to cross the frame in. Camera re-measured and retimed.
 - [x] **The closing card pull is a timed performance, not a scroll scrub.**
   Reaching the end zone plays a one-shot timeline: anticipation, dive
-  below the frame, the claw closing on the card edge, two strained tugs,
-  a hauling lift with overshoot. The card is bolted to the claw from the
-  frame the jaws close and swings as a damped pendulum from the grip.
-  Leaving the zone reverses it. Verified at 1280x800.
-- [ ] **For Ekam's eyes:** the feel of the performance (timing, tug count,
-  overshoot), the visible grip, and how much of the machine shows in the
-  final hold.
+  below the frame, the claw closing, two strained tugs, a hauling lift.
+- [x] **Grip solved with a real 3D object.** A metal crossbar + rope loop
+  is a child of the jaw link, so the claw genuinely clamps it; a draped
+  SVG cord ties from the bar to the placard, which hangs as a damped
+  pendulum. The machine slides right (full arm on the right) and sets the
+  placard down into the open left third, clear of its body. Verified at
+  1280x800.
+- [ ] **For Ekam's eyes:** the feel of the performance (timing, tugs,
+  overshoot) and the placard's resting spot.
 
 ## 3. Contact page
 
