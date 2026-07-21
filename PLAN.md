@@ -38,8 +38,27 @@ Last updated 2026-07-20, after commit `ed5251d`.
   pendulum. The machine slides right (full arm on the right) and sets the
   placard down into the open left third, clear of its body. Verified at
   1280x800.
-- [ ] **For Ekam's eyes:** the feel of the performance (timing, tugs,
-  overshoot) and the placard's resting spot.
+- [x] **Cable idea scrapped.** The claw now grips the card's back
+  directly, clamping to -0.14 (near its closed limit) so it visibly grips
+  down, and releases **mid-swing** rather than at the top of the reach -
+  the top is exactly where a flat card and a 3D claw stop lining up. The
+  card leaves on the arc's momentum and is thrown left into its resting
+  spot. The arm follows through and settles proud, never droopy.
+- [ ] **For Ekam's eyes:** the feel of the performance (grab timing,
+  release point, how hard the card is thrown) and the resting spot. This
+  could not be watched frame-by-frame in the preview pane - see below.
+
+## 6. Preview-pane limitation worth knowing
+
+The in-app browser pane runs `requestAnimationFrame` **only while a
+screenshot is being captured** (`document.hidden` is always true). Any
+rAF-driven animation is frozen between captures, so:
+- particle/scene animations appear stuck mid-entrance in probes,
+- the closing performance cannot be watched continuously,
+- numbers read via `javascript_tool` reflect a frozen frame, not live state.
+
+Judge motion by pumping several screenshots in a row, and treat a single
+probe of an animated value as a still frame, not the settled result.
 
 ## 3. Contact page
 
