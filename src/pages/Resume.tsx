@@ -35,7 +35,8 @@ export default function Resume() {
           canvas.style.height = `${(viewport.height / viewport.width) * width}px`
           canvas.className = 'resume-page'
           el.appendChild(canvas)
-          await page.render({ canvasContext: canvas.getContext('2d')!, viewport }).promise
+          /* pdfjs v5 wants the canvas itself alongside the context */
+          await page.render({ canvas, canvasContext: canvas.getContext('2d')!, viewport }).promise
         }
         if (!cancelled) setState('done')
       } catch (err) {

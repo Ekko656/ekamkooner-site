@@ -127,7 +127,7 @@ const IDLE_AMP: Record<string, number> = {
 const IDLE_LIVE: Record<string, number> = {
   /* kept small: this rides on top of the look sway, and the two together
      must stay well inside the bound that keeps the machine facing front */
-  Rotation: 0.09,
+  Rotation: 0.06,
   Pitch: 0.13,
   Elbow: 0.19,
   Wrist_Pitch: 0.27,
@@ -437,13 +437,23 @@ export default function ArmAssembly() {
          LOOK_MAX it turns about 22 degrees each way, nowhere near far
          enough to present its side to the camera or to reach back across
          the card sitting off to the left. */
-      const LOOK_MAX = 0.38
+      const LOOK_BIAS = 0.16
+      const LOOK_RIGHT = 0.52
+      const LOOK_LEFT = 0.08
       const wander =
         (0.55 * Math.sin(t * 0.13 + 0.4) +
           0.28 * Math.sin(t * 0.31 + 2.1) +
           0.14 * Math.sin(t * 0.73 + 4.3)) /
         0.97
-      const look = settled * LOOK_MAX * wander
+      /* The sway used to be symmetric, but the finished stance is already
+         turned toward the card, so an even swing spent nearly all of its
+         time pointing that way and kept clipping behind it. The signal is
+         mapped asymmetrically instead: a wide arc into the open right, a
+         sliver back toward the left, over a small rightward bias. The
+         machine now sits front-facing on average and never crosses back
+         over the card, with the far edge still short of 45 degrees. */
+      const look =
+        settled * (LOOK_BIAS + (wander >= 0 ? wander * LOOK_RIGHT : wander * LOOK_LEFT))
       for (const name of JOINT_NAMES) {
         /* amplitudes swell after the toss: the arm bends around casually
            instead of holding the tight pose it needed for the gesture */

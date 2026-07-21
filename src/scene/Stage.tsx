@@ -174,7 +174,7 @@ function Glow() {
 /* two star layers: a mid field and a far dim field, both drifting very
    slowly so the background is never a dead poster */
 function Starfield({ count, depth, size, opacity, speed }: { count: number; depth: [number, number]; size: number; opacity: number; speed: number }) {
-  const ref = useMemo(() => ({ points: null as THREE.Points | null }), [])
+  const ref = useMemo(() => ({ points: null as THREE.Object3D | null }), [])
   const geom = useMemo(() => {
     const pos = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {

@@ -32,11 +32,11 @@ export const PROJECTS: Project[] = [
     tag: 'Control',
     status: 'In progress',
     description:
-      'A gripper that works out how hard to hold something. Two force sensitive resistors feed a PID loop I wrote, so the jaws settle on just enough pressure to lift an object without crushing it, and a vision tracker keeps the target centred so the gripper knows where to close.',
+      'A custom gripper model using dual force sensitive resistors (FSRs) and computer vision for closed-loop object manipulation. Controlled by custom PID algorithms, it measures contact force in real time to dynamically regulate grip pressure and prevent slipping.',
     stack: ['Python', 'OpenCV', 'PID', 'FSR', 'Fusion 360'],
     preview: '/projects/force-gripper.webp',
     media: { type: 'image', src: '/projects/force-gripper.webp' },
-    links: [{ label: 'GitHub', href: 'https://github.com/Ekko656' }],
+    links: [],
   },
   {
     id: 'vla-teleop',
@@ -46,11 +46,11 @@ export const PROJECTS: Project[] = [
     tag: 'Learning',
     status: 'In progress',
     description:
-      'A vision language action model trained on teleoperation data I recorded myself, driving a follower arm through an SO-ARM101 leader. The arm learns the task from demonstration instead of from control code I write by hand.',
-    stack: ['PyTorch', 'LeRobot', 'SO-ARM101', 'Imitation Learning'],
+      'A vision-language-action (VLA) model made for autonomous applications, trained on teleoperation data collected via the SO-ARM101. Computer vision grounds each instruction in what the arm is actually looking at, so it works from demonstration rather than hand written control code.',
+    stack: ['Computer Vision', 'LeRobot', 'SO-ARM101', 'Imitation Learning'],
     preview: '/projects/vla-teleop.jpg',
     media: { type: 'video', src: '/projects/vla-teleop.webm', poster: '/projects/vla-teleop.jpg' },
-    links: [{ label: 'GitHub', href: 'https://github.com/Ekko656' }],
+    links: [],
   },
   {
     id: 'arm-sim',
@@ -63,7 +63,7 @@ export const PROJECTS: Project[] = [
     stack: ['Python', 'NumPy', 'MuJoCo', 'MJCF'],
     preview: '/projects/arm-sim.jpg',
     media: { type: 'video', src: '/projects/arm-sim.webm' },
-    links: [{ label: 'GitHub', href: 'https://github.com/Ekko656' }],
+    links: [{ label: 'GitHub', href: 'https://github.com/Ekko656/arm-sim' }],
   },
   {
     id: 'ubc-bionics',
@@ -77,8 +77,8 @@ export const PROJECTS: Project[] = [
     preview: '/projects/ubcbionics.png',
     media: { type: 'video', src: '/projects/ubc-bionics.mp4', poster: '/projects/ubcbionics.png' },
     links: [
-      { label: 'GitHub', href: 'https://github.com/Ekko656' },
-      { label: 'Website', href: 'https://ubcbionics.com' },
+      { label: 'GitHub', href: 'https://github.com/BEARUBC' },
+      { label: 'Website', href: 'https://www.ubcbionics.com/' },
     ],
   },
   {
@@ -94,8 +94,8 @@ export const PROJECTS: Project[] = [
     media: { type: 'image', src: '/projects/honeykey.png' },
     embed: { provider: 'youtube', id: '37EOq--P9oo' },
     links: [
-      { label: 'GitHub', href: 'https://github.com/Ekko656' },
-      { label: 'Devpost', href: 'https://devpost.com' },
+      { label: 'GitHub', href: 'https://github.com/Ekko656/HoneyKey' },
+      { label: 'Devpost', href: 'https://devpost.com/software/honeykey' },
     ],
   },
   {
@@ -109,7 +109,10 @@ export const PROJECTS: Project[] = [
     stack: ['Java', 'Spring Boot', 'JUnit 5', 'jQuery'],
     preview: '/projects/barrage.png',
     media: { type: 'image', src: '/projects/barrage.png' },
-    links: [{ label: 'GitHub', href: 'https://github.com/Ekko656' }],
+    links: [
+      { label: 'GitHub', href: 'https://github.com/Ekko656/barrage' },
+      { label: 'Live Demo', href: 'https://barrage-0ajs.onrender.com/' },
+    ],
   },
   {
     id: 'vex',
@@ -122,7 +125,7 @@ export const PROJECTS: Project[] = [
     stack: ['C++', 'PID', 'Pure Pursuit', 'Odometry'],
     preview: '/projects/vex.png',
     media: { type: 'image', src: '/projects/vex.png' },
-    links: [{ label: 'GitHub', href: 'https://github.com/Ekko656' }],
+    links: [{ label: 'GitHub', href: 'https://github.com/dependra123/3300F2023-2024-code' }],
     awards: [
       {
         title: 'Tournament Champion',
@@ -149,8 +152,8 @@ export const PROJECTS: Project[] = [
     title: 'Ultrasonic Claw',
     tag: 'Hardware',
     description:
-      'A claw that senses nearby objects with ultrasound, clamps on for a few seconds, then lets go. Hand modeled CAD and a custom control loop running on an Arduino.',
-    stack: ['Arduino', 'C++', 'HC SR04', 'Fusion 360'],
+      'A small Arduino powered metal claw that uses an ultrasonic sensor to detect nearby objects, clamps onto them for a few seconds, then releases. A class project built with a hand modeled CAD design and a custom control loop on the Arduino.',
+    stack: ['Arduino', 'C++', 'Ultrasonic (HC-SR04)', 'Fusion 360'],
     preview: '/projects/claw.jpg',
     media: { type: 'video', src: '/projects/claw.mp4', poster: '/projects/claw.jpg' },
     links: [],

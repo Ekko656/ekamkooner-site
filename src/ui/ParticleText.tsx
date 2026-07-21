@@ -7,7 +7,7 @@
    and a handful burn white, each twinkling on its own slow cycle. The
    name reads as part of the same sky rather than a separate white effect
    sitting on top of it. */
-import { useEffect, useRef, type ElementType } from 'react'
+import { useEffect, useRef, type ElementType, type Ref } from 'react'
 
 type P = {
   hx: number
@@ -242,9 +242,13 @@ export default function ParticleText({
     }
   }, [lines, step, repel, delay])
 
+  /* `as` is a runtime-chosen tag, so TypeScript cannot narrow the props
+     of the resulting element. Widening it here keeps the call sites typed
+     while letting the tag stay configurable. */
+  const Host = Tag as 'div'
   return (
-    <Tag className={className} ref={wrap} aria-label={label}>
+    <Host className={className} ref={wrap as Ref<HTMLDivElement>} aria-label={label}>
       <canvas ref={canvasRef} className="particle-canvas" aria-hidden />
-    </Tag>
+    </Host>
   )
 }
