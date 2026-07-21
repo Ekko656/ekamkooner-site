@@ -61,10 +61,10 @@ const KEYS: Key[] = [
 const IDLE_FRAME = { pos: new THREE.Vector3(0, 0.3, 9.6), look: new THREE.Vector3(0.6, 0.1, 0) }
 /* closing frame: square in front of the finished arm (root x = 1.7), which
    sits in the right third so the pulled card has room on the left */
-const END_POS = new THREE.Vector3(0.85, 0.05, 6.9)
-/* aimed low on purpose: it pushes the machine into the upper half of the
-   closing frame, so the card hanging from the claw clears the bottom */
-const END_LOOK = new THREE.Vector3(0.9, -1.1, 0)
+/* pulled back so the whole machine reads on the right of the closing
+   frame, leaving the left half open for the placard the arm sets down */
+const END_POS = new THREE.Vector3(1.1, 0.3, 9.8)
+const END_LOOK = new THREE.Vector3(1.15, -0.25, 0)
 const ss = (x: number) => {
   const t = Math.min(Math.max(x, 0), 1)
   return t * t * (3 - 2 * t)

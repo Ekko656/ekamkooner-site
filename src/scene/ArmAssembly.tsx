@@ -83,10 +83,19 @@ const buildCardTimeline = (gest: Gesture) =>
     /* two tugs: heavier than expected */
     .to(gest, { Pitch: 0.98, duration: 0.24, ease: 'power2.out' }, 1.2)
     .to(gest, { Pitch: 1.12, duration: 0.2, ease: 'power2.in' }, 1.44)
-    /* the haul, with a proud overshoot that settles */
+    /* the haul, with a proud overshoot that settles. Rotation swings the
+       whole arm toward screen-left so the hoisted placard hangs clear of
+       the machine body rather than in front of it. */
     .to(
       gest,
-      { Pitch: -0.2, Elbow: -1.05, Wrist_Pitch: 0.9, duration: 1.15, ease: 'back.out(1.6)' },
+      {
+        Rotation: 1.5,
+        Pitch: -0.1,
+        Elbow: -1.05,
+        Wrist_Pitch: 0.9,
+        duration: 1.15,
+        ease: 'back.out(1.6)',
+      },
       1.68,
     )
 
@@ -171,6 +180,7 @@ export default function ArmAssembly() {
   const liveJoints = useRef<Joints | null>(null)
   const liveAt = useRef(0)
   const jawLink = useRef<THREE.Object3D | null>(null)
+  const handle = useRef<THREE.Group | null>(null)
   const gripV = useMemo(() => new THREE.Vector3(), [])
   const gest = useMemo(makeGesture, [])
   const cardTl = useRef<gsap.core.Timeline | null>(null)
@@ -181,6 +191,10 @@ export default function ArmAssembly() {
     return () => {
       cardTl.current?.kill()
       cardTl.current = null
+      if (handle.current) {
+        handle.current.parent?.remove(handle.current)
+        handle.current = null
+      }
       session.grip.active = false
       session.gripHold = false
     }
@@ -400,19 +414,60 @@ export default function ArmAssembly() {
        height with room below it for the hanging card. */
     if (root.current) {
       const unified = smooth01((p - 0.9) / 0.1)
+      const pull = smooth01(session.cardPull)
       root.current.rotation.z = Math.sin(t * 0.5) * 0.008 * unified
-      root.current.position.y = -2.15 - smooth01(session.cardPull) * 0.55 + Math.sin(t * 0.8) * 0.02 * unified
+      /* during the pull the whole machine settles and slides right,
+         clearing the left half of the frame for the placard it sets down */
+      root.current.position.x = 1.7 + pull * 1.2
+      root.current.position.y = -2.15 - pull * 0.05 + Math.sin(t * 0.8) * 0.02 * unified
       root.current.scale.setScalar(1 + lockPulse.current.s)
     }
 
-    /* project the claw tip into CSS pixels for the card to hang from.
-       The pose and root were just written, so refresh matrices first. */
+    /* The claw grips a real 3D crossbar, added as a child of the jaw so
+       it tracks the gripper exactly. The DOM card's rope ties to this
+       bar, so the machine is holding an actual object rather than a
+       projected point that drifts off the claw. Project the bar's centre
+       into CSS pixels for the rope's top anchor. */
     if (locked.current && root.current && liveRobot.current?.visible) {
       if (!jawLink.current) jawLink.current = liveRobot.current.getObjectByName('jaw') ?? null
       const link = jawLink.current
-      if (link) {
+      if (link && !handle.current) {
+        const g = new THREE.Group()
+        /* seat it in the throat of the gripper, along the pinch line */
+        g.position.set(-0.055, 0.012, 0)
+        const barMat = new THREE.MeshStandardMaterial({
+          color: '#c8ccd6',
+          metalness: 0.85,
+          roughness: 0.28,
+          envMapIntensity: 1.1,
+        })
+        const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.14, 16), barMat)
+        bar.rotation.z = Math.PI / 2 // lie across the jaws
+        g.add(bar)
+        /* a small loop under the bar where the rope knots on */
+        const loop = new THREE.Mesh(
+          new THREE.TorusGeometry(0.012, 0.0035, 10, 20),
+          new THREE.MeshStandardMaterial({ color: '#9aa0ae', metalness: 0.8, roughness: 0.35 }),
+        )
+        loop.position.y = -0.016
+        loop.rotation.x = Math.PI / 2
+        g.add(loop)
+        g.scale.setScalar(0.001)
+        link.add(g)
+        handle.current = g
+      }
+      const bar = handle.current
+      if (bar) {
+        /* the bar appears as the jaws close on it and rides the grip */
+        const want = session.gripHold ? 1 : 0
+        const cur = bar.scale.x
+        const s = cur + (want - cur) * Math.min(1, dt * 9)
+        bar.scale.setScalar(Math.max(0.001, s))
+        bar.visible = s > 0.02
+
         root.current.updateMatrixWorld(true)
-        gripV.set(-0.055, 0.012, 0).applyMatrix4(link.matrixWorld).project(camera)
+        /* anchor the rope at the loop, a touch below the bar centre */
+        gripV.set(-0.055, -0.004, 0).applyMatrix4(link.matrixWorld).project(camera)
         session.grip.x = ((gripV.x + 1) / 2) * size.width
         session.grip.y = ((1 - gripV.y) / 2) * size.height
         session.grip.active = true

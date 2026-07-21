@@ -558,65 +558,144 @@
    from the claw's projected grip point, rotating around its top centre
    where the claw holds it. It starts parked below the viewport - never
    faded, never revealed in place. */
+/* the cord: a full-viewport overlay whose single path is redrawn each
+   frame from the gripped bar to the placard's grommet */
+.oc-rope {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 12;
+  pointer-events: none;
+  overflow: visible;
+}
+.oc-rope-path {
+  fill: none;
+  stroke: #aeb9d2;
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  opacity: 0;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
+  transition: opacity 0.3s var(--ease-mech);
+}
+
+/* the placard: a machined hanging tag. Positioned entirely by the pull
+   loop; starts parked far below the viewport, never faded in place. */
 .oc-card {
   position: fixed;
   left: 0;
   top: 0;
-  z-index: 3;
-  width: min(340px, 82vw);
-  padding: 28px 30px;
-  border-radius: 16px;
-  transform: translate3d(-100vw, 120vh, 0);
-  transform-origin: 50% 0;
-  background: linear-gradient(178deg, rgba(255, 255, 255, 0.08) 0%, rgba(255, 255, 255, 0) 12%),
-    linear-gradient(180deg, #232c3f 0%, #131a28 55%, #0c111d 100%);
-  border: 2px solid rgba(130, 150, 190, 0.22);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14), 0 24px 60px rgba(0, 0, 0, 0.6);
+  z-index: 13;
+  width: min(322px, 80vw);
+  padding: 26px 26px 22px;
+  border-radius: 18px;
+  transform: translate3d(-100vw, 130vh, 0);
+  transform-origin: 50% 6px;
+  isolation: isolate;
+  background: radial-gradient(120% 80% at 50% -8%, rgba(110, 140, 255, 0.14), transparent 60%),
+    linear-gradient(180deg, rgba(38, 48, 70, 0.96) 0%, rgba(19, 26, 42, 0.97) 46%, rgba(9, 13, 24, 0.98) 100%);
+  border: 2px solid rgba(140, 162, 214, 0.26);
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.16), inset 0 0 0 1px rgba(120, 145, 205, 0.1),
+    inset 0 -30px 60px rgba(3, 5, 11, 0.5), 0 30px 70px rgba(0, 0, 0, 0.66),
+    0 6px 16px rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+/* the lit top rim of the card, a hair of light along the bevel */
+.oc-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(180deg, rgba(226, 236, 255, 0.5), rgba(120, 145, 205, 0.05) 40%, transparent 75%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+}
+/* the eyelet the cord threads through, punched into the top edge */
+.oc-grommet {
+  position: absolute;
+  top: -9px;
+  left: 50%;
+  width: 26px;
+  height: 18px;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, #05070d 0 42%, rgba(150, 172, 224, 0.7) 52%, rgba(90, 108, 150, 0.4) 66%, transparent 72%);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
+}
+.oc-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
 }
 .oc-kicker {
   font-family: var(--font-mono);
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   font-weight: 700;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
   color: var(--signal);
-  line-height: 1.1;
+}
+.oc-serial {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--ice-600);
 }
 .oc-title {
-  margin-top: 8px;
+  margin-top: 10px;
   font-family: var(--font-display);
-  font-size: 1.8rem;
+  font-size: 1.6rem;
   font-weight: 600;
   letter-spacing: -0.02em;
+  line-height: 1.06;
   color: var(--ice-100);
 }
 .oc-list {
   list-style: none;
-  margin-top: 20px;
+  margin-top: 18px;
   display: flex;
   flex-direction: column;
 }
 .oc-list li {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 12px 0;
-  border-top: 1px solid rgba(130, 150, 190, 0.12);
+  gap: 13px;
+  padding: 11px 0;
+  border-top: 1.5px solid rgba(140, 162, 214, 0.12);
   font-family: var(--font-display);
-  font-size: 1.05rem;
+  font-size: 1.02rem;
   font-weight: 500;
   color: var(--ice-200);
 }
+.oc-list li:first-child {
+  border-top: 0;
+}
 .oc-icon {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   line-height: 1;
-  filter: saturate(0.9);
+  width: 1.5rem;
+  text-align: center;
+  filter: saturate(0.92);
+}
+.oc-item {
+  position: relative;
 }
 .oc-foot {
-  margin-top: 22px;
-  font-family: var(--font-display);
-  font-size: 0.95rem;
-  font-weight: 400;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1.5px solid rgba(140, 162, 214, 0.12);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  font-weight: 500;
   color: var(--ice-400);
 }
 
