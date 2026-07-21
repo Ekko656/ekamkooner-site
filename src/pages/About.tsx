@@ -72,12 +72,61 @@ function splitWords(el: HTMLElement): HTMLElement[] {
   return words
 }
 
+/* Line icons rather than emoji. Emoji render as full-colour glyphs that
+   drag the card toward looking like a notification popup; a single
+   consistent 2px stroke family keeps it reading as instrument labelling. */
+const ICON = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
 const OFF_CLOCK = [
-  { icon: '🏐', label: 'Volleyball' },
-  { icon: '🏀', label: 'NBA' },
-  { icon: '🎮', label: 'League of Legends' },
-  { icon: '🎵', label: 'Drake' },
-  { icon: '🥊', label: 'Boxing' },
+  {
+    label: 'Volleyball',
+    svg: (
+      <>
+        <circle cx="12" cy="12" r="9" {...ICON} />
+        <path d="M12 3c3 4 3.5 9 1 17" {...ICON} />
+        <path d="M3.6 9.2c4.6-1 9.3.6 15.4 5.6" {...ICON} />
+        <path d="M20.5 8.4c-4.4 1.6-8.2 4.7-10.8 11.9" {...ICON} />
+      </>
+    ),
+  },
+  {
+    label: 'NBA',
+    svg: (
+      <>
+        <circle cx="12" cy="12" r="9" {...ICON} />
+        <path d="M12 3v18M3 12h18" {...ICON} />
+        <path d="M5.6 5.6c3.6 3.6 3.6 9.2 0 12.8M18.4 5.6c-3.6 3.6-3.6 9.2 0 12.8" {...ICON} />
+      </>
+    ),
+  },
+  {
+    label: 'League of Legends',
+    svg: (
+      <>
+        <path d="M7.5 8h9a4.5 4.5 0 0 1 4.4 5.4l-.7 3.4A2.6 2.6 0 0 1 16 18l-1.4-2h-5.2L8 18a2.6 2.6 0 0 1-4.2-1.2l-.7-3.4A4.5 4.5 0 0 1 7.5 8Z" {...ICON} />
+        <path d="M8 11.5v2M7 12.5h2M15.5 11.5h.01M17.5 13.5h.01" {...ICON} />
+      </>
+    ),
+  },
+  {
+    label: 'Drake',
+    svg: (
+      <>
+        <path d="M9 18V6l11-2v12" {...ICON} />
+        <circle cx="6.5" cy="18" r="2.5" {...ICON} />
+        <circle cx="17.5" cy="16" r="2.5" {...ICON} />
+      </>
+    ),
+  },
+  {
+    label: 'Boxing',
+    svg: (
+      <>
+        <path d="M6 9a4 4 0 0 1 4-4h4a5 5 0 0 1 5 5v2.5a3.5 3.5 0 0 1-3.5 3.5H10a4 4 0 0 1-4-4Z" {...ICON} />
+        <path d="M8 16v1.5A2.5 2.5 0 0 0 10.5 20h4a2.5 2.5 0 0 0 2.5-2.5V16" {...ICON} />
+        <path d="M15 5.5v4" {...ICON} />
+      </>
+    ),
+  },
 ]
 
 export default function About() {
@@ -163,6 +212,30 @@ export default function About() {
     let vy = 0
     let spin = 0
     let spinV = 0
+    /* cursor tilt, the same gesture the project cards use. It has to be
+       folded into the transform this loop writes each frame, or the two
+       would overwrite each other. */
+    let tiltX = 0
+    let tiltY = 0
+    let wantX = 0
+    let wantY = 0
+    const onPointer = (e: PointerEvent) => {
+      const el = card.current
+      if (!el || mode !== 'toss') {
+        wantX = wantY = 0
+        return
+      }
+      const r = el.getBoundingClientRect()
+      const inside =
+        e.clientX >= r.left - 40 && e.clientX <= r.right + 40 && e.clientY >= r.top - 40 && e.clientY <= r.bottom + 40
+      if (!inside) {
+        wantX = wantY = 0
+        return
+      }
+      wantY = ((e.clientX - r.left) / r.width - 0.5) * 8
+      wantX = -((e.clientY - r.top) / r.height - 0.5) * 8
+    }
+    window.addEventListener('pointermove', onPointer)
     const tick = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.05)
       last = now
@@ -233,8 +306,16 @@ export default function About() {
         vx = vy = spin = spinV = 0
       }
 
+      /* the tilt eases toward the cursor only once the card has landed */
+      if (mode !== 'toss') wantX = wantY = 0
+      const k = Math.min(1, dt * 7)
+      tiltX += (wantX - tiltX) * k
+      tiltY += (wantY - tiltY) * k
+
       el.style.transformOrigin = '50% 50%'
-      el.style.transform = `translate3d(${cx - w / 2}px, ${cy - h / 2}px, 0) rotate(${spin}deg)`
+      el.style.transform =
+        `perspective(780px) translate3d(${cx - w / 2}px, ${cy - h / 2}px, 0) ` +
+        `rotate(${spin}deg) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`
       el.style.pointerEvents = mode === 'toss' && session.cardPull > 0.98 ? 'auto' : 'none'
       raf = requestAnimationFrame(tick)
     }
@@ -243,6 +324,7 @@ export default function About() {
     return () => {
       ctx.revert()
       cancelAnimationFrame(raf)
+      window.removeEventListener('pointermove', onPointer)
     }
   }, [])
 
@@ -311,7 +393,9 @@ export default function About() {
           <ul className="oc-list">
             {OFF_CLOCK.map((o) => (
               <li key={o.label}>
-                <span className="oc-icon">{o.icon}</span>
+                <svg className="oc-icon" viewBox="0 0 24 24" aria-hidden>
+                  {o.svg}
+                </svg>
                 <span className="oc-item">{o.label}</span>
               </li>
             ))}

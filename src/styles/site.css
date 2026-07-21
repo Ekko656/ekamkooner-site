@@ -561,39 +561,77 @@
 /* the placard: a machined tag the arm hauls up and tosses into place.
    Positioned entirely by the pull loop; starts parked below the
    viewport, never faded in place. */
+/* Built in the same machined-glass language as the landing keys: a
+   top-lit face over a darkened base, a bevelled edge drawn as a masked
+   gradient border that is bright along the top and fades under the
+   bottom, and a fixed diagonal sheen across the face. */
 .oc-card {
   position: fixed;
   left: 0;
   top: 0;
   z-index: 13;
-  width: min(322px, 80vw);
-  padding: 26px 26px 22px;
-  border-radius: 18px;
+  width: min(318px, 80vw);
+  padding: 24px 24px 20px;
+  border-radius: 16px;
   transform: translate3d(-100vw, 130vh, 0);
   transform-origin: 50% 50%;
+  transform-style: preserve-3d;
   isolation: isolate;
-  background: radial-gradient(120% 80% at 50% -8%, rgba(110, 140, 255, 0.14), transparent 60%),
-    linear-gradient(180deg, rgba(38, 48, 70, 0.96) 0%, rgba(19, 26, 42, 0.97) 46%, rgba(9, 13, 24, 0.98) 100%);
-  border: 2px solid rgba(140, 162, 214, 0.26);
-  box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.16), inset 0 0 0 1px rgba(120, 145, 205, 0.1),
-    inset 0 -30px 60px rgba(3, 5, 11, 0.5), 0 30px 70px rgba(0, 0, 0, 0.66),
-    0 6px 16px rgba(0, 0, 0, 0.5);
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  background: linear-gradient(
+      171deg,
+      rgba(206, 221, 255, 0.14) 0%,
+      rgba(150, 170, 220, 0.05) 30%,
+      rgba(112, 132, 184, 0.018) 62%,
+      rgba(92, 112, 165, 0.055) 100%
+    ),
+    linear-gradient(180deg, rgba(22, 30, 50, 0.97), rgba(9, 13, 24, 0.98));
+  border: 0;
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.26),
+    inset 0 0 0 1.5px rgba(158, 180, 236, 0.14), inset 0 -34px 64px rgba(3, 5, 11, 0.55),
+    0 28px 64px rgba(0, 0, 0, 0.62), 0 4px 12px rgba(0, 0, 0, 0.5);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
 }
-/* the lit top rim of the card, a hair of light along the bevel */
+/* the lit bevel: bright along the top rim, gone by the bottom */
 .oc-card::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 2px;
-  background: linear-gradient(180deg, rgba(226, 236, 255, 0.5), rgba(120, 145, 205, 0.05) 40%, transparent 75%);
+  padding: 1.5px;
+  background: linear-gradient(
+    180deg,
+    rgba(226, 236, 255, 0.62) 0%,
+    rgba(150, 172, 224, 0.2) 34%,
+    rgba(110, 130, 180, 0.07) 70%,
+    rgba(90, 108, 156, 0.15) 100%
+  );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
   pointer-events: none;
+  z-index: 1;
+}
+/* the same polished sheen the keys carry */
+.oc-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: linear-gradient(
+    114deg,
+    transparent 40%,
+    rgba(216, 228, 255, 0.075) 49%,
+    rgba(216, 228, 255, 0.015) 56%,
+    transparent 63%
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+.oc-card > * {
+  position: relative;
+  z-index: 2;
 }
 .oc-head {
   display: flex;
@@ -646,12 +684,17 @@
 .oc-list li:first-child {
   border-top: 0;
 }
+/* one consistent 2px line family, seated in its own recessed well so the
+   rows read as labelled instrument channels rather than a bullet list */
 .oc-icon {
-  font-size: 1.15rem;
-  line-height: 1;
-  width: 1.5rem;
-  text-align: center;
-  filter: saturate(0.92);
+  flex: none;
+  width: 30px;
+  height: 30px;
+  padding: 5px;
+  border-radius: 8px;
+  color: var(--signal);
+  background: linear-gradient(180deg, rgba(150, 172, 224, 0.1), rgba(120, 145, 205, 0.03));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), inset 0 0 0 1.5px rgba(150, 172, 224, 0.14);
 }
 .oc-item {
   position: relative;
