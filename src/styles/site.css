@@ -764,8 +764,15 @@
   gap: var(--s-3);
   perspective: 1400px;
 }
+/* A button vertically centres its content when the grid stretches it, so
+   a card whose title wrapped to two lines pushed every shorter-titled
+   card's image down by the difference. Laying it out as a column pins the
+   image to the top of every card and drops the title row to the bottom,
+   so the images (and the status badges sitting on them) line up across
+   the whole board however the titles wrap. */
 .card {
-  display: block;
+  display: flex;
+  flex-direction: column;
   text-align: left;
   border: 2px solid var(--navy-600);
   background: rgba(16, 22, 42, 0.55);
@@ -843,6 +850,8 @@
   transform: scale(1.04);
 }
 .card-row {
+  /* sits at the bottom so the image above it always starts flush */
+  margin-top: auto;
   display: grid;
   grid-template-columns: 40px 1fr auto;
   align-items: center;
