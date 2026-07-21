@@ -24,6 +24,10 @@ class Session {
   /** true from the frame the claw closes on the card until it lets go.
       While held, the card is rigidly attached to the grip point. */
   gripHold = false
+  /** true once the closing performance is past the release point. The
+      card watches this so it still lands if a stutter or a backgrounded
+      tab made the whole grab-to-release window pass between two frames. */
+  cardTossed = false
   /** page scroll velocity, for the grid hum */
   velocity = 0
   /** pointer in normalized device coords */

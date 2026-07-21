@@ -153,7 +153,7 @@ export default function About() {
        into its resting spot with a little arc and settle. Once it never
        has to stay locked to the moving claw, the flat-card / 3D-claw
        mismatch never gets a chance to show. */
-    const REST = () => ({ x: window.innerWidth * 0.6, y: window.innerHeight * 0.31 })
+    const REST = () => ({ x: window.innerWidth * 0.27, y: window.innerHeight * 0.46 })
     let raf = 0
     let last = performance.now()
     let mode: 'stowed' | 'held' | 'toss' = 'stowed'
@@ -179,6 +179,20 @@ export default function About() {
       /* scrolled back out of the closing zone: stow it again */
       if (session.cardPull < 0.04 && mode !== 'held') mode = 'stowed'
 
+      /* Safety net: gsap runs with lagSmoothing off, so one long frame
+         (a backgrounded tab, a stutter) can advance the performance past
+         the whole grab-to-release window between two ticks of this loop.
+         If the release has already happened and we never saw the hold,
+         drop the card straight into its resting spot rather than leaving
+         it parked off screen forever. */
+      if (mode === 'stowed' && session.cardTossed) {
+        const rest = REST()
+        cx = rest.x
+        cy = rest.y
+        vx = vy = spin = spinV = 0
+        mode = 'toss'
+      }
+
       if (holdNow) {
         /* the jaws hold the card's top edge, so its centre rides half a
            card-height below the gripper */
@@ -192,11 +206,13 @@ export default function About() {
         spin += (targetSpin - spin) * Math.min(1, dt * 9)
         mode = 'held'
       } else if (mode === 'held') {
-        /* just let go at the top of the haul: toss it, keeping momentum */
+        /* The jaw snapped open mid-swing, so the card leaves on the arc
+           it was already travelling: it keeps the upward speed it had and
+           is thrown left, across the frame to its resting spot. */
         mode = 'toss'
-        vy -= 90
-        vx += 40
-        spinV = Math.max(-40, Math.min(40, -vx * 0.05))
+        vy -= 120
+        vx -= 620
+        spinV = 26
       }
 
       if (mode === 'toss') {

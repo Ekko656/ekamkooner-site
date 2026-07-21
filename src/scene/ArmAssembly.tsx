@@ -75,15 +75,16 @@ const JOINT_NAMES = ['Rotation', 'Pitch', 'Elbow', 'Wrist_Pitch', 'Wrist_Roll', 
    straightens the arm into the vertical stance this page must not show. */
 type Gesture = Record<string, number> & { grab01: number }
 const makeGesture = (): Gesture => ({ ...DISPLAY_POSE, grab01: 0 }) as Gesture
-/* the settled stance the arm returns to after the toss: retracted low
-   and compact, so the upper-right where the card lands stays clear */
+/* the stance the arm holds after the toss: the proud finished display
+   stance, not a droop. It follows through past the release and settles
+   back up, the way a hand does after letting something go. */
 const AFTER_POSE: Record<string, number> = {
   Rotation: 0.8,
-  Pitch: 1.02,
-  Elbow: -0.5,
-  Wrist_Pitch: 1.5,
+  Pitch: 0.42,
+  Elbow: -0.82,
+  Wrist_Pitch: 1.22,
   Wrist_Roll: 0,
-  Jaw: 0.7,
+  Jaw: 0.55,
 }
 const buildCardTimeline = (gest: Gesture) =>
   gsap
@@ -92,16 +93,22 @@ const buildCardTimeline = (gest: Gesture) =>
     .to(gest, { Pitch: 0.2, Elbow: -0.85, Jaw: 1.5, duration: 0.45, ease: 'power2.out' }, 0)
     /* the dive: plunge the claw down out of the bottom of the frame */
     .to(gest, { Pitch: 1.3, Elbow: -0.5, Wrist_Pitch: 1.55, duration: 0.55, ease: 'power3.in' }, 0.42)
-    /* GRAB: the jaw slams shut on the card, hard */
+    /* GRAB: the jaw slams shut on the back of the card, hard. -0.14 is
+       almost the closed limit, so the gripper visibly clamps down. */
     .to(gest, { Jaw: -0.14, grab01: 1, duration: 0.13, ease: 'power4.out' }, 1.02)
     /* the strain: heavier than it looks, it resists before it gives */
     .to(gest, { Pitch: 1.18, duration: 0.24, ease: 'power2.inOut' }, 1.22)
-    /* the haul: raise the card up into full view, jaw stays clamped */
-    .to(gest, { Pitch: -0.4, Elbow: -1.18, Wrist_Pitch: 0.78, duration: 1.0, ease: 'power2.out' }, 1.52)
-    /* TOSS: flick the jaw open at the top and release the card */
-    .to(gest, { Jaw: 1.35, grab01: 0, duration: 0.16, ease: 'power3.out' }, 2.46)
-    /* settle: the arm eases back down, clear of the card's resting spot */
-    .to(gest, { ...AFTER_POSE, duration: 0.95, ease: 'power2.inOut' }, 2.66)
+    /* the haul: swing up hard and fast, carrying the card with it */
+    .to(gest, { Pitch: -0.3, Elbow: -1.15, Wrist_Pitch: 0.82, duration: 0.95, ease: 'power2.out' }, 1.52)
+    /* RELEASE mid-swing, not at the top: the jaw snaps open while the
+       claw is still travelling, so the card leaves on the arc's momentum
+       and is thrown clear. Holding it to the top of the reach is exactly
+       where the flat card and the 3D claw stop lining up. */
+    .to(gest, { Jaw: 1.3, grab01: 0, duration: 0.12, ease: 'power4.out' }, 1.94)
+    /* follow through past the release, then settle back to the proud
+       finished stance - the arm never droops */
+    .to(gest, { Pitch: -0.42, Elbow: -1.2, duration: 0.4, ease: 'power2.out' }, 2.06)
+    .to(gest, { ...AFTER_POSE, duration: 1.0, ease: 'power2.inOut' }, 2.5)
 
 /* light airy idle drift: layered slow sines per joint, tiny amplitudes */
 /* kept small on Rotation and Wrist_Roll: a wide yaw drift swings the
@@ -405,6 +412,8 @@ export default function ArmAssembly() {
         liveJoints.current[name]?.setJointValue(v)
       }
       session.gripHold = gest.grab01 > 0.5
+      /* the release sits at 1.94s of the 3.5s performance */
+      session.cardTossed = !!tl && tl.progress() > 0.56
     }
 
     /* unified breathing plus the closing reframe: during the pull the
@@ -461,6 +470,7 @@ export default function ArmAssembly() {
       Object.assign(gest, makeGesture())
       inZone.current = false
       session.gripHold = false
+      session.cardTossed = false
       if (liveJoints.current)
         Object.entries(DISPLAY_POSE).forEach(([n, v]) => liveJoints.current![n]?.setJointValue(v))
     }
