@@ -513,6 +513,13 @@
   font-style: italic;
   color: var(--ice-200);
   letter-spacing: 0.01em;
+  /* held to two balanced lines rather than one long run, so the copy
+     keeps to its own half and the machine gets more of the frame */
+  max-width: 34ch;
+  text-wrap: balance;
+}
+.beat-right .a-soft {
+  margin-left: auto;
 }
 
 /* unblur reveal base state (GSAP scrubs it to sharp on scroll) */
@@ -593,7 +600,12 @@
   -webkit-backdrop-filter: blur(26px) saturate(1.7) brightness(1.06);
   backdrop-filter: blur(26px) saturate(1.7) brightness(1.06);
 }
-/* the specular the key light throws across the top-left corner */
+/* The specular. Its position is driven per frame from --gx/--gy, which
+   combine the card's tilt with a slow independent drift, so the highlight
+   slides across the surface the way light does on a real panel instead of
+   sitting painted in one corner. A second, cooler pool trails it as a
+   bounce, and a fine grain over the top gives the glass a material rather
+   than a perfectly clean gradient. */
 .oc-card > .oc-gloss {
   position: absolute;
   inset: 0;
@@ -601,18 +613,26 @@
   overflow: hidden;
   pointer-events: none;
   z-index: 1;
+  background: radial-gradient(
+      44% 36% at var(--gx, 32%) var(--gy, 20%),
+      rgba(234, 244, 255, 0.22),
+      rgba(226, 238, 255, 0.07) 46%,
+      transparent 74%
+    ),
+    radial-gradient(
+      34% 30% at calc(var(--gx, 32%) + 34%) calc(var(--gy, 20%) + 52%),
+      rgba(120, 152, 255, 0.13),
+      transparent 72%
+    );
 }
-.oc-card > .oc-gloss::before {
+/* the grain: fine static noise, the texture real glass has under light */
+.oc-card > .oc-gloss::after {
   content: '';
   position: absolute;
-  top: -58%;
-  left: -22%;
-  width: 96%;
-  height: 132%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, rgba(226, 238, 255, 0.16), rgba(226, 238, 255, 0.05) 58%, transparent 76%);
-  transform: rotate(-19deg);
-  filter: blur(6px);
+  inset: 0;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.32'/%3E%3C/svg%3E");
 }
 /* The refracted edge. Real glass is thickest at the rim, so light bends
    and pools there: bright along the top where the key light enters, and

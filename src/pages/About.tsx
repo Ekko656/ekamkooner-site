@@ -334,6 +334,16 @@ export default function About() {
       tiltX += (wantX - tiltX) * k
       tiltY += (wantY - tiltY) * k
 
+      /* Move the highlight. It answers the tilt, so leaning the card
+         slides the specular across it the way a real panel catches a
+         lamp, and a slow independent drift keeps the surface alive even
+         when the cursor is nowhere near it. */
+      const ts = now / 1000
+      const gx = 32 - tiltY * 3.4 + Math.sin(ts * 0.11) * 9
+      const gy = 20 - tiltX * 3.2 + Math.cos(ts * 0.083) * 7
+      el.style.setProperty('--gx', `${gx}%`)
+      el.style.setProperty('--gy', `${gy}%`)
+
       el.style.transformOrigin = '50% 50%'
       el.style.transform =
         `perspective(780px) translate3d(${cx - w / 2}px, ${cy - h / 2}px, 0) ` +

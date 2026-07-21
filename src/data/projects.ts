@@ -49,7 +49,7 @@ export const PROJECTS: Project[] = [
       'A vision language action model trained on teleoperation data I recorded myself, driving a follower arm through an SO-ARM101 leader. The arm learns the task from demonstration instead of from control code I write by hand.',
     stack: ['PyTorch', 'LeRobot', 'SO-ARM101', 'Imitation Learning'],
     preview: '/projects/vla-teleop.jpg',
-    media: { type: 'video', src: '/projects/vla-teleop.mov', poster: '/projects/vla-teleop.jpg' },
+    media: { type: 'video', src: '/projects/vla-teleop.webm', poster: '/projects/vla-teleop.jpg' },
     links: [{ label: 'GitHub', href: 'https://github.com/Ekko656' }],
   },
   {

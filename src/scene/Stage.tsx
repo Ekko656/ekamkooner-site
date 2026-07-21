@@ -51,8 +51,11 @@ const KEYS: Key[] = [
   { t: 0.0, theta: -0.1, r: 9.6, y: 1.15, lat: -LAT_R },
   { t: 0.28, theta: -0.08, r: 8.9, y: 1.0, lat: -LAT_R },
   /* rotate: theta swings the camera around to the machine's far side */
-  { t: 0.41, theta: 0.9, r: 8.7, y: 0.85, lat: LAT_L },
-  { t: 0.73, theta: 0.92, r: 8.5, y: 0.7, lat: LAT_L },
+  /* a touch closer through the rotation: the copy on the right is held
+     to two balanced lines there, which frees the left half for a larger
+     read of the machine */
+  { t: 0.41, theta: 0.9, r: 8.15, y: 0.85, lat: LAT_L },
+  { t: 0.73, theta: 0.92, r: 8.05, y: 0.7, lat: LAT_L },
   /* slide: theta held, lateral truck only, done before the left-hand
      copy arrives */
   { t: 0.84, theta: 0.92, r: 8.2, y: 0.55, lat: -LAT_R },

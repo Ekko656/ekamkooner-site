@@ -421,18 +421,23 @@ export default function ArmAssembly() {
       const perf = smooth01(prog / 0.12)
       const settled = smooth01((prog - 0.86) / 0.14)
       const drift = wake * (1 - 0.8 * perf * (1 - settled))
-      /* the gripper works away on its own: a slow flex, opening and
-         closing like a hand with nothing to do */
-      const claw = settled * (0.34 + 0.3 * Math.sin(t * 0.85)) * (0.5 + 0.5 * Math.sin(t * 0.29 + 1.7))
-      /* Once the card is delivered the machine is free to look around. It
-         sweeps its base left and right rather than staying pointed at what
-         it just put down, on three sine rates that never line up, so the
-         wandering never falls into an obvious loop. */
-      const look =
-        settled *
-        (0.62 * Math.sin(t * 0.13 + 0.4) +
-          0.26 * Math.sin(t * 0.31 + 2.1) +
-          0.12 * Math.sin(t * 0.73 + 4.3))
+      /* The gripper works away on its own. Shaping the sine toward a
+         squarer wave gives it a bit of bite: the jaw snaps between open
+         and shut rather than drifting smoothly through the middle. */
+      const bite = Math.sin(t * 1.02)
+      const chomp = Math.sign(bite) * Math.abs(bite) ** 0.6
+      const claw = settled * (0.3 + 0.26 * chomp) * (0.55 + 0.45 * Math.sin(t * 0.29 + 1.7))
+      /* Once the card is delivered the machine looks around instead of
+         staying pointed at what it put down: three sine rates that never
+         line up, so the wandering has no obvious loop. Positive yaw swings
+         it right, into the open half, so the whole sweep is biased that
+         way and floored - a wide swing must never carry the arm back
+         across the card sitting on the left. */
+      const wander =
+        0.42 * Math.sin(t * 0.13 + 0.4) +
+        0.2 * Math.sin(t * 0.31 + 2.1) +
+        0.1 * Math.sin(t * 0.73 + 4.3)
+      const look = settled * Math.max(-0.1, wander + 0.32)
       for (const name of JOINT_NAMES) {
         /* amplitudes swell after the toss: the arm bends around casually
            instead of holding the tight pose it needed for the gesture */
