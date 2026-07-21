@@ -122,6 +122,16 @@ const IDLE_AMP: Record<string, number> = {
   Wrist_Roll: 0.06,
   Jaw: 0.08,
 }
+/* the freer idle the machine falls into once the card is delivered and it
+   has nothing left to do: wider, lazier travel on every joint */
+const IDLE_LIVE: Record<string, number> = {
+  Rotation: 0.15,
+  Pitch: 0.13,
+  Elbow: 0.19,
+  Wrist_Pitch: 0.27,
+  Wrist_Roll: 0.24,
+  Jaw: 0.1,
+}
 const IDLE_SPD: Record<string, number> = {
   Rotation: 0.11,
   Pitch: 0.09,
@@ -405,10 +415,21 @@ export default function ArmAssembly() {
       /* idle drift dims while the arm is performing or holding, but never
          fully dies: the held card keeps breathing with the machine */
       const wake = smooth01((t - liveAt.current) / 3)
-      const perf = tl ? smooth01(tl.progress() / 0.12) : 0
-      const drift = wake * (1 - 0.8 * perf)
+      const prog = tl ? tl.progress() : 0
+      /* damp the drift while the show is running so the performance reads
+         clean, then hand the machine back its own life once it is over */
+      const perf = smooth01(prog / 0.12)
+      const settled = smooth01((prog - 0.86) / 0.14)
+      const drift = wake * (1 - 0.8 * perf * (1 - settled))
+      /* the gripper works away on its own: a slow flex, opening and
+         closing like a hand with nothing to do */
+      const claw = settled * (0.34 + 0.3 * Math.sin(t * 0.85)) * (0.5 + 0.5 * Math.sin(t * 0.29 + 1.7))
       for (const name of JOINT_NAMES) {
-        const v = gest[name] + IDLE_AMP[name] * drift * fbm(t * IDLE_SPD[name] * Math.PI * 2, IDLE_SEED[name])
+        /* amplitudes swell after the toss: the arm bends around casually
+           instead of holding the tight pose it needed for the gesture */
+        const amp = IDLE_AMP[name] + settled * (IDLE_LIVE[name] - IDLE_AMP[name])
+        let v = gest[name] + amp * drift * fbm(t * IDLE_SPD[name] * Math.PI * 2, IDLE_SEED[name])
+        if (name === 'Jaw') v += claw
         liveJoints.current[name]?.setJointValue(v)
       }
       session.gripHold = gest.grab01 > 0.5
@@ -423,9 +444,9 @@ export default function ArmAssembly() {
       const unified = smooth01((p - 0.9) / 0.1)
       const pull = smooth01(session.cardPull)
       root.current.rotation.z = Math.sin(t * 0.5) * 0.008 * unified
-      root.current.position.x = 1.7 + pull * 1.05
+      root.current.position.x = 1.7 + pull * 1.55
       root.current.position.y = -2.15 - pull * 0.45 + Math.sin(t * 0.8) * 0.02 * unified
-      root.current.scale.setScalar(1 + pull * 0.42 + lockPulse.current.s)
+      root.current.scale.setScalar(1 + pull * 0.46 + lockPulse.current.s)
     }
 
     /* Project the gripper's pinch point into CSS pixels. While the card

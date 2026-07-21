@@ -203,6 +203,9 @@ export default function About() {
        has to stay locked to the moving claw, the flat-card / 3D-claw
        mismatch never gets a chance to show. */
     const REST = () => ({ x: window.innerWidth * 0.27, y: window.innerHeight * 0.46 })
+    /* downward acceleration for the thrown card, in px/s^2 */
+    const GRAV = 2400
+    const FLIGHT = 0.9
     let raf = 0
     let last = performance.now()
     let mode: 'stowed' | 'held' | 'toss' = 'stowed'
@@ -212,6 +215,7 @@ export default function About() {
     let vy = 0
     let spin = 0
     let spinV = 0
+    let tossT = 0
     /* cursor tilt, the same gesture the project cards use. It has to be
        folded into the transform this loop writes each frame, or the two
        would overwrite each other. */
@@ -263,6 +267,8 @@ export default function About() {
         cx = rest.x
         cy = rest.y
         vx = vy = spin = spinV = 0
+        /* past the flight window, so it goes straight to the settle */
+        tossT = FLIGHT + 1
         mode = 'toss'
       }
 
@@ -279,26 +285,42 @@ export default function About() {
         spin += (targetSpin - spin) * Math.min(1, dt * 9)
         mode = 'held'
       } else if (mode === 'held') {
-        /* The jaw snapped open mid-swing, so the card leaves on the arc
-           it was already travelling: it keeps the upward speed it had and
-           is thrown left, across the frame to its resting spot. */
+        /* A real throw, not a pull. Springing the card toward its resting
+           spot drags it there in a straight line, which is what read as
+           flinging sideways. Instead, solve the launch velocity that puts
+           a projectile under constant gravity exactly on the resting spot
+           after FLIGHT seconds, then just integrate it. The card leaves
+           the claw on a genuine parabola: up, over the top, and down onto
+           its mark. */
+        const rest = REST()
+        vx = (rest.x - cx) / FLIGHT
+        vy = (rest.y - cy - 0.5 * GRAV * FLIGHT * FLIGHT) / FLIGHT
+        spinV = vx * 0.05
+        tossT = 0
         mode = 'toss'
-        vy -= 120
-        vx -= 620
-        spinV = 26
       }
 
       if (mode === 'toss') {
-        /* underdamped spring to the resting spot: a soft arc and settle */
-        const rest = REST()
-        const k = 46
-        const c = 9.5
-        vx += (k * (rest.x - cx) - c * vx) * dt
-        vy += (k * (rest.y - cy) - c * vy) * dt
-        cx += vx * dt
-        cy += vy * dt
-        spinV += (-k * spin - c * spinV) * dt
-        spin += spinV * dt
+        tossT += dt
+        if (tossT < FLIGHT) {
+          /* ballistic: the only force is gravity */
+          vy += GRAV * dt
+          cx += vx * dt
+          cy += vy * dt
+          spin += spinV * dt
+          spinV *= Math.exp(-1.7 * dt)
+        } else {
+          /* landed: a tight settle so it comes to rest square */
+          const rest = REST()
+          const k = 60
+          const c = 15
+          vx += (k * (rest.x - cx) - c * vx) * dt
+          vy += (k * (rest.y - cy) - c * vy) * dt
+          cx += vx * dt
+          cy += vy * dt
+          spinV += (-k * spin - c * spinV) * dt
+          spin += spinV * dt
+        }
       } else if (mode === 'stowed') {
         /* parked below the frame, under where the claw will dive */
         cx = g.active ? g.x : window.innerWidth * 0.6
@@ -383,6 +405,8 @@ export default function About() {
           project detail panel hits; do not move this back inside. */}
       {createPortal(
         <aside className="oc-card" ref={card}>
+          {/* the key light's specular sweep across the glass */}
+          <span className="oc-gloss" aria-hidden />
           <div className="oc-head">
             <p className="oc-kicker">Off the clock</p>
             <span className="oc-serial" aria-hidden>

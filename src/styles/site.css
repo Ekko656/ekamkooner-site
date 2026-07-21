@@ -570,27 +570,49 @@
   left: 0;
   top: 0;
   z-index: 13;
-  width: min(318px, 80vw);
-  padding: 24px 24px 20px;
-  border-radius: 16px;
+  width: min(404px, 86vw);
+  padding: 30px 30px 26px;
+  border-radius: 20px;
   transform: translate3d(-100vw, 130vh, 0);
   transform-origin: 50% 50%;
   transform-style: preserve-3d;
   isolation: isolate;
-  background: linear-gradient(
-      171deg,
-      rgba(206, 221, 255, 0.14) 0%,
-      rgba(150, 170, 220, 0.05) 30%,
-      rgba(112, 132, 184, 0.018) 62%,
-      rgba(92, 112, 165, 0.055) 100%
-    ),
-    linear-gradient(180deg, rgba(22, 30, 50, 0.97), rgba(9, 13, 24, 0.98));
+  /* Real glass: the panel is genuinely translucent so the starfield and
+     the machine behind it blur through, rather than a dark plate faking
+     it. A soft key light falls from the upper left, a cooler bounce
+     lifts the lower right, and the body stays only lightly tinted. */
+  background: radial-gradient(130% 90% at 18% -6%, rgba(214, 230, 255, 0.2), transparent 58%),
+    radial-gradient(120% 80% at 92% 108%, rgba(110, 140, 255, 0.14), transparent 62%),
+    linear-gradient(168deg, rgba(150, 174, 230, 0.1) 0%, rgba(90, 110, 165, 0.035) 52%, rgba(70, 88, 140, 0.06) 100%),
+    linear-gradient(180deg, rgba(16, 23, 40, 0.62), rgba(7, 11, 21, 0.72));
   border: 0;
-  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.26),
-    inset 0 0 0 1.5px rgba(158, 180, 236, 0.14), inset 0 -34px 64px rgba(3, 5, 11, 0.55),
-    0 28px 64px rgba(0, 0, 0, 0.62), 0 4px 12px rgba(0, 0, 0, 0.5);
-  -webkit-backdrop-filter: blur(14px) saturate(1.3);
-  backdrop-filter: blur(14px) saturate(1.3);
+  box-shadow: inset 0 1.5px 0 rgba(255, 255, 255, 0.34),
+    inset 0 0 0 1.5px rgba(158, 180, 236, 0.13), inset 0 -40px 70px rgba(3, 5, 11, 0.42),
+    inset 22px 0 60px -34px rgba(150, 180, 255, 0.28),
+    0 34px 80px rgba(0, 0, 0, 0.6), 0 6px 18px rgba(0, 0, 0, 0.46);
+  -webkit-backdrop-filter: blur(26px) saturate(1.7) brightness(1.06);
+  backdrop-filter: blur(26px) saturate(1.7) brightness(1.06);
+}
+/* the specular the key light throws across the top-left corner */
+.oc-card > .oc-gloss {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 1;
+}
+.oc-card > .oc-gloss::before {
+  content: '';
+  position: absolute;
+  top: -58%;
+  left: -22%;
+  width: 96%;
+  height: 132%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(226, 238, 255, 0.16), rgba(226, 238, 255, 0.05) 58%, transparent 76%);
+  transform: rotate(-19deg);
+  filter: blur(6px);
 }
 /* the lit bevel: bright along the top rim, gone by the bottom */
 .oc-card::before {
@@ -656,9 +678,9 @@
   color: var(--ice-600);
 }
 .oc-title {
-  margin-top: 10px;
+  margin-top: 12px;
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.95rem;
   font-weight: 600;
   letter-spacing: -0.02em;
   line-height: 1.06;
@@ -673,11 +695,11 @@
 .oc-list li {
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 11px 0;
+  gap: 15px;
+  padding: 13px 0;
   border-top: 1.5px solid rgba(140, 162, 214, 0.12);
   font-family: var(--font-display);
-  font-size: 1.02rem;
+  font-size: 1.12rem;
   font-weight: 500;
   color: var(--ice-200);
 }
