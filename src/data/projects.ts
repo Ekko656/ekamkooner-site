@@ -9,6 +9,8 @@ export type Project = {
   category: 'Robotics' | 'Software' | 'Hardware' 
   description: string
   stack: string[]
+  /* Set on work that is still being built, and shown as a badge. */
+  status?: string
   /* The still shown on the board. Previews are always images: video only
      ever plays inside the detail popup, once a card is opened. */
   preview: string
@@ -23,9 +25,37 @@ export type Project = {
 
 export const PROJECTS: Project[] = [
   {
-    id: 'arm-sim',
+    id: 'force-gripper',
     category: 'Robotics',
     index: '01',
+    title: 'Force Controlled Gripper',
+    tag: 'Control',
+    status: 'In progress',
+    description:
+      'A gripper that works out how hard to hold something. Two force sensitive resistors feed a PID loop I wrote, so the jaws settle on just enough pressure to lift an object without crushing it, and a vision tracker keeps the target centred so the gripper knows where to close.',
+    stack: ['Python', 'OpenCV', 'PID', 'FSR', 'Fusion 360'],
+    preview: '/projects/force-gripper.png',
+    media: { type: 'image', src: '/projects/force-gripper.png' },
+    links: [{ label: 'GitHub', href: 'https://github.com/Ekko656' }],
+  },
+  {
+    id: 'vla-teleop',
+    category: 'Robotics',
+    index: '02',
+    title: 'VLA Teleoperation',
+    tag: 'Learning',
+    status: 'In progress',
+    description:
+      'A vision language action model trained on teleoperation data I recorded myself, driving a follower arm through an SO-ARM101 leader. The arm learns the task from demonstration instead of from control code I write by hand.',
+    stack: ['PyTorch', 'LeRobot', 'SO-ARM101', 'Imitation Learning'],
+    preview: '/projects/vla-teleop.jpg',
+    media: { type: 'video', src: '/projects/vla-teleop.mov', poster: '/projects/vla-teleop.jpg' },
+    links: [{ label: 'GitHub', href: 'https://github.com/Ekko656' }],
+  },
+  {
+    id: 'arm-sim',
+    category: 'Robotics',
+    index: '03',
     title: 'Arm Sim',
     tag: 'Simulation',
     description:
@@ -38,7 +68,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'ubc-bionics',
     category: 'Robotics',
-    index: '02',
+    index: '04',
     title: 'UBC Bionics',
     tag: 'Embedded',
     description:
@@ -54,7 +84,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'honeykey',
     category: 'Software',
-    index: '03',
+    index: '05',
     title: 'HoneyKey',
     tag: 'Security',
     description:
@@ -71,7 +101,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'barrage',
     category: 'Software',
-    index: '04',
+    index: '06',
     title: 'Barrage',
     tag: 'Backend',
     description:
@@ -84,7 +114,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'vex',
     category: 'Robotics',
-    index: '05',
+    index: '07',
     title: 'VEX Robotics',
     tag: 'Robotics',
     description:
@@ -115,7 +145,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'ultrasonic-claw',
     category: 'Hardware',
-    index: '06',
+    index: '08',
     title: 'Ultrasonic Claw',
     tag: 'Hardware',
     description:
@@ -128,7 +158,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'rc-car',
     category: 'Hardware',
-    index: '07',
+    index: '09',
     title: 'Arduino RC Car',
     tag: 'Hardware',
     description:

@@ -38,6 +38,7 @@ function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
       {/* strictly a still. Video only ever plays in the detail popup. */}
       <figure className="card-media">
         <img src={p.preview} alt={p.title} loading="lazy" />
+        {p.status && <span className="card-status">{p.status}</span>}
       </figure>
       <span className="card-row">
         <span className="card-index">{p.index}</span>
@@ -156,6 +157,7 @@ function Detail({ p, onClose }: { p: Project; onClose: () => void }) {
         <div className="detail-body">
           <p className="detail-index">
             {p.index} <span>{p.tag}</span>
+            {p.status && <span className="detail-status">{p.status}</span>}
           </p>
           <h2 className="detail-title">{p.title}</h2>
           <p className="detail-desc">{p.description}</p>

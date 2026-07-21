@@ -424,12 +424,22 @@ export default function ArmAssembly() {
       /* the gripper works away on its own: a slow flex, opening and
          closing like a hand with nothing to do */
       const claw = settled * (0.34 + 0.3 * Math.sin(t * 0.85)) * (0.5 + 0.5 * Math.sin(t * 0.29 + 1.7))
+      /* Once the card is delivered the machine is free to look around. It
+         sweeps its base left and right rather than staying pointed at what
+         it just put down, on three sine rates that never line up, so the
+         wandering never falls into an obvious loop. */
+      const look =
+        settled *
+        (0.62 * Math.sin(t * 0.13 + 0.4) +
+          0.26 * Math.sin(t * 0.31 + 2.1) +
+          0.12 * Math.sin(t * 0.73 + 4.3))
       for (const name of JOINT_NAMES) {
         /* amplitudes swell after the toss: the arm bends around casually
            instead of holding the tight pose it needed for the gesture */
         const amp = IDLE_AMP[name] + settled * (IDLE_LIVE[name] - IDLE_AMP[name])
         let v = gest[name] + amp * drift * fbm(t * IDLE_SPD[name] * Math.PI * 2, IDLE_SEED[name])
         if (name === 'Jaw') v += claw
+        if (name === 'Rotation') v += look
         liveJoints.current[name]?.setJointValue(v)
       }
       session.gripHold = gest.grab01 > 0.5
@@ -444,7 +454,7 @@ export default function ArmAssembly() {
       const unified = smooth01((p - 0.9) / 0.1)
       const pull = smooth01(session.cardPull)
       root.current.rotation.z = Math.sin(t * 0.5) * 0.008 * unified
-      root.current.position.x = 1.7 + pull * 1.55
+      root.current.position.x = 1.7 + pull * 2.05
       root.current.position.y = -2.15 - pull * 0.45 + Math.sin(t * 0.8) * 0.02 * unified
       root.current.scale.setScalar(1 + pull * 0.46 + lockPulse.current.s)
     }

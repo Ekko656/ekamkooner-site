@@ -570,9 +570,9 @@
   left: 0;
   top: 0;
   z-index: 13;
-  width: min(404px, 86vw);
-  padding: 30px 30px 26px;
-  border-radius: 20px;
+  width: min(468px, 88vw);
+  padding: 34px 34px 28px;
+  border-radius: 24px;
   transform: translate3d(-100vw, 130vh, 0);
   transform-origin: 50% 50%;
   transform-style: preserve-3d;
@@ -614,19 +614,24 @@
   transform: rotate(-19deg);
   filter: blur(6px);
 }
-/* the lit bevel: bright along the top rim, gone by the bottom */
+/* The refracted edge. Real glass is thickest at the rim, so light bends
+   and pools there: bright along the top where the key light enters, and
+   picked up again along the bottom edge where it exits. That double
+   catch is what gives the panel actual thickness rather than the look of
+   a flat pane with a line drawn round it. */
 .oc-card::before {
   content: '';
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  padding: 1.5px;
+  padding: 2px;
   background: linear-gradient(
-    180deg,
-    rgba(226, 236, 255, 0.62) 0%,
-    rgba(150, 172, 224, 0.2) 34%,
-    rgba(110, 130, 180, 0.07) 70%,
-    rgba(90, 108, 156, 0.15) 100%
+    172deg,
+    rgba(238, 246, 255, 0.78) 0%,
+    rgba(186, 206, 255, 0.34) 18%,
+    rgba(120, 142, 200, 0.08) 46%,
+    rgba(104, 126, 186, 0.14) 74%,
+    rgba(198, 216, 255, 0.42) 100%
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -755,14 +760,54 @@
    carries the card's own surface, so the space around a mismatched
    aspect reads as the card, not as grey letterbox bars. */
 .card-media {
-  aspect-ratio: 16 / 10;
+  position: relative;
+  /* a definite height on purpose: the child's max-height percentage
+     cannot resolve against a height derived from aspect-ratio, which is
+     what let tall portrait shots overflow and get clipped */
+  height: 232px;
   overflow: hidden;
-  display: grid;
-  place-items: center;
-  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
   border-bottom: 2px solid var(--navy-600);
   background: radial-gradient(120% 100% at 50% 0%, rgba(38, 49, 79, 0.5), rgba(9, 13, 24, 0.6));
 }
+/* work that is still being built, marked on the tile itself */
+.card-status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 6px 11px;
+  border-radius: 999px;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ice-100);
+  background: linear-gradient(180deg, rgba(110, 140, 255, 0.42), rgba(70, 96, 200, 0.34));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.34), inset 0 0 0 1.5px rgba(150, 178, 255, 0.4),
+    0 4px 14px rgba(0, 0, 0, 0.45);
+  -webkit-backdrop-filter: blur(10px) saturate(1.4);
+  backdrop-filter: blur(10px) saturate(1.4);
+}
+.detail-status {
+  margin-left: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: var(--ice-100);
+  background: rgba(110, 140, 255, 0.24);
+  box-shadow: inset 0 0 0 1.5px rgba(150, 178, 255, 0.42);
+}
+/* Anchored to the tile rather than sized in percentages. The tile's own
+   height comes from `aspect-ratio`, and a percentage height on a child
+   cannot resolve against that, so it silently fell back to `auto` and
+   tall portrait shots grew past the tile and were clipped at the bottom.
+   Absolute insets give a definite box, and `contain` fits the whole
+   picture inside it, centred and never cropped. */
 .card-media img {
   max-width: 100%;
   max-height: 100%;
