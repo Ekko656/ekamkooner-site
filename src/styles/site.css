@@ -558,29 +558,9 @@
    from the claw's projected grip point, rotating around its top centre
    where the claw holds it. It starts parked below the viewport - never
    faded, never revealed in place. */
-/* the cord: a full-viewport overlay whose single path is redrawn each
-   frame from the gripped bar to the placard's grommet */
-.oc-rope {
-  position: fixed;
-  inset: 0;
-  width: 100vw;
-  height: 100vh;
-  z-index: 12;
-  pointer-events: none;
-  overflow: visible;
-}
-.oc-rope-path {
-  fill: none;
-  stroke: #aeb9d2;
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  opacity: 0;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.6));
-  transition: opacity 0.3s var(--ease-mech);
-}
-
-/* the placard: a machined hanging tag. Positioned entirely by the pull
-   loop; starts parked far below the viewport, never faded in place. */
+/* the placard: a machined tag the arm hauls up and tosses into place.
+   Positioned entirely by the pull loop; starts parked below the
+   viewport, never faded in place. */
 .oc-card {
   position: fixed;
   left: 0;
@@ -590,7 +570,7 @@
   padding: 26px 26px 22px;
   border-radius: 18px;
   transform: translate3d(-100vw, 130vh, 0);
-  transform-origin: 50% 6px;
+  transform-origin: 50% 50%;
   isolation: isolate;
   background: radial-gradient(120% 80% at 50% -8%, rgba(110, 140, 255, 0.14), transparent 60%),
     linear-gradient(180deg, rgba(38, 48, 70, 0.96) 0%, rgba(19, 26, 42, 0.97) 46%, rgba(9, 13, 24, 0.98) 100%);
@@ -614,18 +594,6 @@
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   mask-composite: exclude;
   pointer-events: none;
-}
-/* the eyelet the cord threads through, punched into the top edge */
-.oc-grommet {
-  position: absolute;
-  top: -9px;
-  left: 50%;
-  width: 26px;
-  height: 18px;
-  transform: translateX(-50%);
-  border-radius: 50%;
-  background: radial-gradient(closest-side, #05070d 0 42%, rgba(150, 172, 224, 0.7) 52%, rgba(90, 108, 150, 0.4) 66%, transparent 72%);
-  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.5);
 }
 .oc-head {
   display: flex;

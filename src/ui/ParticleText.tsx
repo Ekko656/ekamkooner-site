@@ -124,26 +124,12 @@ export default function ParticleText({
           if (img[(py * off.width + px) * 4 + 3] < 128) continue
           const hx = px / dpr
           const hy = py / dpr
-          /* Graded like stars so it belongs to the sky, but the type has
-             to stay legible first: every mote sits high in the range and
-             only the tint varies, rather than the brightness. */
-          const roll = Math.random()
-          let mix: number
-          let a: number
-          let r: number
-          if (roll < 0.4) {
-            mix = 0.78 + Math.random() * 0.12
-            a = 0.9 + Math.random() * 0.08
-            r = 0.55 + Math.random() * 0.3
-          } else if (roll < 0.82) {
-            mix = 0.9 + Math.random() * 0.08
-            a = 0.96 + Math.random() * 0.04
-            r = 0.66 + Math.random() * 0.3
-          } else {
-            mix = 1
-            a = 1
-            r = 0.82 + Math.random() * 0.4
-          }
+          /* Solid white type that happens to be built from motes. The
+             tint barely varies and the sizes stay close together, so it
+             reads as clean lettering rather than a field of glitter. */
+          const mix = 0.94 + Math.random() * 0.06
+          const a = 0.97 + Math.random() * 0.03
+          const r = 0.72 + Math.random() * 0.16
           next.push({
             hx,
             hy,
@@ -202,9 +188,9 @@ export default function ParticleText({
           p.y += p.vy * dt
         }
 
-        /* barely-there twinkle: the name should read as solid white type
-           that happens to be built from motes, not as a field of stars */
-        const tw = reduced ? 1 : 0.94 + 0.06 * Math.sin(ts * p.tw + p.ph)
+        /* almost no twinkle: just enough that the letters are alive, far
+           too little to glint like a disco ball */
+        const tw = reduced ? 1 : 0.985 + 0.015 * Math.sin(ts * p.tw + p.ph)
         const alpha = live * p.a * tw
         if (alpha <= 0.01) continue
         ctx.beginPath()

@@ -57,47 +57,51 @@ const JOINT_NAMES = ['Rotation', 'Pitch', 'Elbow', 'Wrist_Pitch', 'Wrist_Roll', 
 
 /* ---- the closing performance ----
    Not scrubbed by scroll. When the reader reaches the end zone the arm
-   performs once, on its own clock, like a studio-logo animation: a small
-   breath of anticipation, an eager dive below the bottom of the frame,
-   the claw closing on the card waiting down there, two strained tugs
-   because the thing is heavier than it looks, then one proud hauling
-   lift with an overshoot that settles. Leaving the zone reverses it, a
-   touch faster, so the card is set back down out of frame.
+   performs once, on its own clock, like a studio-logo animation:
+     anticipation - coil back, jaw yawns wide open
+     dive         - plunge the claw down below the bottom of the frame
+     GRAB         - the jaw clamps hard shut on the card waiting there
+     strain       - it is heavier than it looks; a brief pull before it gives
+     haul         - lift the card up into full view, jaw still clamped
+     TOSS         - at the top, snap the jaw open and let the card fly to
+                    its resting place
+     settle       - the arm eases back down out of the card's way
 
-   Joint targets solved with scripts/arm-pose-probe.mjs; the elbow keeps
-   the same sign throughout, because passing through zero straightens the
-   arm into exactly the vertical stance this page must never show.
-   `grab01` rides in the same tweened object: the card is rigidly held
-   while it is past a half. */
+   The card is only held during grab -> toss, briefly and in motion, so
+   the flat card and the 3D claw never have to line up while static. The
+   Jaw clamps to near its closed limit (-0.14) so the gripper visibly
+   grips down, and opens wide (1.35) to release. `grab01` is 1 only while
+   the card is held. Elbow keeps one sign throughout: crossing zero
+   straightens the arm into the vertical stance this page must not show. */
 type Gesture = Record<string, number> & { grab01: number }
 const makeGesture = (): Gesture => ({ ...DISPLAY_POSE, grab01: 0 }) as Gesture
+/* the settled stance the arm returns to after the toss: retracted low
+   and compact, so the upper-right where the card lands stays clear */
+const AFTER_POSE: Record<string, number> = {
+  Rotation: 0.8,
+  Pitch: 1.02,
+  Elbow: -0.5,
+  Wrist_Pitch: 1.5,
+  Wrist_Roll: 0,
+  Jaw: 0.7,
+}
 const buildCardTimeline = (gest: Gesture) =>
   gsap
     .timeline({ paused: true })
-    /* anticipation: rise a touch, jaw opens wide */
-    .to(gest, { Pitch: 0.32, Jaw: 1.25, duration: 0.4, ease: 'power2.out' }, 0)
-    /* the dive, eager, accelerating out of the bottom of the frame */
-    .to(gest, { Pitch: 1.15, Elbow: -0.6, Wrist_Pitch: 1.5, duration: 0.55, ease: 'power3.in' }, 0.38)
-    /* the claw closes on the card edge */
-    .to(gest, { Jaw: 0.16, grab01: 1, duration: 0.16, ease: 'power3.out' }, 0.98)
-    /* two tugs: heavier than expected */
-    .to(gest, { Pitch: 0.98, duration: 0.24, ease: 'power2.out' }, 1.2)
-    .to(gest, { Pitch: 1.12, duration: 0.2, ease: 'power2.in' }, 1.44)
-    /* the haul, with a proud overshoot that settles. Rotation swings the
-       whole arm toward screen-left so the hoisted placard hangs clear of
-       the machine body rather than in front of it. */
-    .to(
-      gest,
-      {
-        Rotation: 1.5,
-        Pitch: -0.1,
-        Elbow: -1.05,
-        Wrist_Pitch: 0.9,
-        duration: 1.15,
-        ease: 'back.out(1.6)',
-      },
-      1.68,
-    )
+    /* anticipation: coil back, jaw yawns wide */
+    .to(gest, { Pitch: 0.2, Elbow: -0.85, Jaw: 1.5, duration: 0.45, ease: 'power2.out' }, 0)
+    /* the dive: plunge the claw down out of the bottom of the frame */
+    .to(gest, { Pitch: 1.3, Elbow: -0.5, Wrist_Pitch: 1.55, duration: 0.55, ease: 'power3.in' }, 0.42)
+    /* GRAB: the jaw slams shut on the card, hard */
+    .to(gest, { Jaw: -0.14, grab01: 1, duration: 0.13, ease: 'power4.out' }, 1.02)
+    /* the strain: heavier than it looks, it resists before it gives */
+    .to(gest, { Pitch: 1.18, duration: 0.24, ease: 'power2.inOut' }, 1.22)
+    /* the haul: raise the card up into full view, jaw stays clamped */
+    .to(gest, { Pitch: -0.4, Elbow: -1.18, Wrist_Pitch: 0.78, duration: 1.0, ease: 'power2.out' }, 1.52)
+    /* TOSS: flick the jaw open at the top and release the card */
+    .to(gest, { Jaw: 1.35, grab01: 0, duration: 0.16, ease: 'power3.out' }, 2.46)
+    /* settle: the arm eases back down, clear of the card's resting spot */
+    .to(gest, { ...AFTER_POSE, duration: 0.95, ease: 'power2.inOut' }, 2.66)
 
 /* light airy idle drift: layered slow sines per joint, tiny amplitudes */
 /* kept small on Rotation and Wrist_Roll: a wide yaw drift swings the
@@ -180,7 +184,6 @@ export default function ArmAssembly() {
   const liveJoints = useRef<Joints | null>(null)
   const liveAt = useRef(0)
   const jawLink = useRef<THREE.Object3D | null>(null)
-  const handle = useRef<THREE.Group | null>(null)
   const gripV = useMemo(() => new THREE.Vector3(), [])
   const gest = useMemo(makeGesture, [])
   const cardTl = useRef<gsap.core.Timeline | null>(null)
@@ -191,10 +194,6 @@ export default function ArmAssembly() {
     return () => {
       cardTl.current?.kill()
       cardTl.current = null
-      if (handle.current) {
-        handle.current.parent?.remove(handle.current)
-        handle.current = null
-      }
       session.grip.active = false
       session.gripHold = false
     }
@@ -408,66 +407,28 @@ export default function ArmAssembly() {
       session.gripHold = gest.grab01 > 0.5
     }
 
-    /* unified breathing on the root, felt in both representations. As the
-       card is pulled the whole rig settles noticeably lower, which both
-       frames the machine deeper in the shot and leaves the claw's lift
-       height with room below it for the hanging card. */
+    /* unified breathing plus the closing reframe: during the pull the
+       machine grows, settles down and slides right, so it reads big in
+       the lower-right of the frame while it hoists the card. */
     if (root.current) {
       const unified = smooth01((p - 0.9) / 0.1)
       const pull = smooth01(session.cardPull)
       root.current.rotation.z = Math.sin(t * 0.5) * 0.008 * unified
-      /* during the pull the whole machine settles and slides right,
-         clearing the left half of the frame for the placard it sets down */
-      root.current.position.x = 1.7 + pull * 1.2
-      root.current.position.y = -2.15 - pull * 0.05 + Math.sin(t * 0.8) * 0.02 * unified
-      root.current.scale.setScalar(1 + lockPulse.current.s)
+      root.current.position.x = 1.7 + pull * 1.05
+      root.current.position.y = -2.15 - pull * 0.45 + Math.sin(t * 0.8) * 0.02 * unified
+      root.current.scale.setScalar(1 + pull * 0.42 + lockPulse.current.s)
     }
 
-    /* The claw grips a real 3D crossbar, added as a child of the jaw so
-       it tracks the gripper exactly. The DOM card's rope ties to this
-       bar, so the machine is holding an actual object rather than a
-       projected point that drifts off the claw. Project the bar's centre
-       into CSS pixels for the rope's top anchor. */
+    /* Project the gripper's pinch point into CSS pixels. While the card
+       is held (grab -> toss) the DOM card is pinned here by its top edge,
+       so the claw reads as clamping the card's top; once tossed the card
+       flies free and this is ignored. No 3D prop to clip into anything. */
     if (locked.current && root.current && liveRobot.current?.visible) {
       if (!jawLink.current) jawLink.current = liveRobot.current.getObjectByName('jaw') ?? null
       const link = jawLink.current
-      if (link && !handle.current) {
-        const g = new THREE.Group()
-        /* seat it in the throat of the gripper, along the pinch line */
-        g.position.set(-0.055, 0.012, 0)
-        const barMat = new THREE.MeshStandardMaterial({
-          color: '#c8ccd6',
-          metalness: 0.85,
-          roughness: 0.28,
-          envMapIntensity: 1.1,
-        })
-        const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.008, 0.008, 0.14, 16), barMat)
-        bar.rotation.z = Math.PI / 2 // lie across the jaws
-        g.add(bar)
-        /* a small loop under the bar where the rope knots on */
-        const loop = new THREE.Mesh(
-          new THREE.TorusGeometry(0.012, 0.0035, 10, 20),
-          new THREE.MeshStandardMaterial({ color: '#9aa0ae', metalness: 0.8, roughness: 0.35 }),
-        )
-        loop.position.y = -0.016
-        loop.rotation.x = Math.PI / 2
-        g.add(loop)
-        g.scale.setScalar(0.001)
-        link.add(g)
-        handle.current = g
-      }
-      const bar = handle.current
-      if (bar) {
-        /* the bar appears as the jaws close on it and rides the grip */
-        const want = session.gripHold ? 1 : 0
-        const cur = bar.scale.x
-        const s = cur + (want - cur) * Math.min(1, dt * 9)
-        bar.scale.setScalar(Math.max(0.001, s))
-        bar.visible = s > 0.02
-
+      if (link) {
         root.current.updateMatrixWorld(true)
-        /* anchor the rope at the loop, a touch below the bar centre */
-        gripV.set(-0.055, -0.004, 0).applyMatrix4(link.matrixWorld).project(camera)
+        gripV.set(-0.05, 0.006, 0).applyMatrix4(link.matrixWorld).project(camera)
         session.grip.x = ((gripV.x + 1) / 2) * size.width
         session.grip.y = ((1 - gripV.y) / 2) * size.height
         session.grip.active = true

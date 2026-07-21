@@ -11,11 +11,6 @@ import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { session } from '../lib/session'
 
-const smooth01 = (x: number) => {
-  const t = Math.min(Math.max(x, 0), 1)
-  return t * t * (3 - 2 * t)
-}
-
 function Beat({
   side,
   children,
@@ -87,7 +82,6 @@ const OFF_CLOCK = [
 
 export default function About() {
   const card = useRef<HTMLElement>(null)
-  const rope = useRef<SVGPathElement>(null)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -150,84 +144,82 @@ export default function About() {
       })
     })
 
-    /* ---- the card on the rope ----
-       The claw grips a real 3D crossbar (in the scene); a cord ties from
-       that bar down to the card, which hangs from the cord like a placard.
-       This is what makes the hold read: the machine clamps an actual
-       object, and the flat card just dangles from it, always facing the
-       reader the way a hanging sign does.
-
-       session.grip is the bar's projected screen point (top of the cord).
-       The card hangs a fixed cord length below it and swings as a lightly
-       damped pendulum pivoting at the bar, so the dive, the two tugs and
-       the hauling overshoot all travel down the cord into the card. */
-    const ROPE_LEN = () => Math.max(48, Math.min(84, window.innerHeight * 0.08))
+    /* ---- the card: hauled up, then tossed into place ----
+       No rope, no permanent grip. The card waits below the frame. When
+       the jaws clamp (session.gripHold) the card is pinned by its TOP
+       edge to the gripper's projected point, so the claw reads as holding
+       the card's top while it hauls it up into view. The instant the jaws
+       snap open the card is released with the velocity it had, and springs
+       into its resting spot with a little arc and settle. Once it never
+       has to stay locked to the moving claw, the flat-card / 3D-claw
+       mismatch never gets a chance to show. */
+    const REST = () => ({ x: window.innerWidth * 0.6, y: window.innerHeight * 0.31 })
     let raf = 0
     let last = performance.now()
-    let theta = 0
-    let thetaV = 0
-    let prevGX = 0
-    let held = false
-    const setRope = (x1: number, y1: number, x2: number, y2: number) => {
-      const r = rope.current
-      if (!r) return
-      /* a draped cord: the wider the span, the more it sags under its own
-         weight, so a diagonal run reads as slack rope rather than a taut
-         wire being yanked sideways */
-      const span = Math.hypot(x2 - x1, y2 - y1)
-      const mx = (x1 + x2) / 2
-      const my = (y1 + y2) / 2 + Math.min(46, span * 0.14)
-      r.setAttribute('d', `M ${x1} ${y1} Q ${mx} ${my} ${x2} ${y2}`)
-    }
+    let mode: 'stowed' | 'held' | 'toss' = 'stowed'
+    let cx = 0
+    let cy = 0
+    let vx = 0
+    let vy = 0
+    let spin = 0
+    let spinV = 0
     const tick = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.05)
       last = now
       const el = card.current
-      if (el) {
-        const g = session.grip
-        const holdNow = session.gripHold && g.active
-        const w = el.offsetWidth
-        const ropeEl = rope.current
-        if (holdNow) {
-          const vx = held ? (g.x - prevGX) / Math.max(dt, 1e-3) : 0
-          prevGX = g.x
-          /* the swing target trails the bar's sideways motion */
-          const targetA = Math.max(-0.16, Math.min(0.16, -vx * 0.0016))
-          const wn = 4.8
-          const zeta = 0.34
-          thetaV += (wn * wn * (targetA - theta) - 2 * zeta * wn * thetaV) * dt
-          theta += thetaV * dt
-          const len = ROPE_LEN()
-          /* The bar is up on the right with the machine; the placard is
-             set down into the open left of the frame. As the pull
-             finishes, the grommet eases from straight under the bar to a
-             fixed left-of-centre resting spot, so the arm "places" the
-             card to the side rather than dangling it over its own body.
-             The cord drapes from the bar to wherever the grommet rests. */
-          const place = smooth01((session.cardPull - 0.86) / 0.13)
-          const restX = window.innerWidth * 0.32
-          const anchorX = g.x + (restX - g.x) * place
-          /* the grommet hangs down the cord, swung by theta */
-          const gx = anchorX + Math.sin(theta) * len
-          const gy = g.y + Math.cos(theta) * len
-          el.style.transformOrigin = '50% 6px'
-          el.style.transform = `translate3d(${gx - w / 2}px, ${gy}px, 0) rotate(${theta * 57.3}deg)`
-          if (ropeEl) {
-            ropeEl.style.opacity = '1'
-            setRope(g.x, g.y, gx, gy)
-          }
-        } else {
-          theta *= 0.9
-          thetaV = 0
-          prevGX = g.x
-          if (ropeEl) ropeEl.style.opacity = '0'
-          /* parked out of sight below the frame, under the dive point */
-          const px = (g.active ? g.x : window.innerWidth * 0.6) - w / 2
-          el.style.transform = `translate3d(${px}px, ${window.innerHeight + 120}px, 0)`
-        }
-        held = holdNow
-        el.style.pointerEvents = holdNow && session.cardPull > 0.9 ? 'auto' : 'none'
+      if (!el) {
+        raf = requestAnimationFrame(tick)
+        return
       }
+      const w = el.offsetWidth
+      const h = el.offsetHeight
+      const g = session.grip
+      const holdNow = session.gripHold && g.active
+
+      /* scrolled back out of the closing zone: stow it again */
+      if (session.cardPull < 0.04 && mode !== 'held') mode = 'stowed'
+
+      if (holdNow) {
+        /* the jaws hold the card's top edge, so its centre rides half a
+           card-height below the gripper */
+        const nx = g.x
+        const ny = g.y + h / 2
+        vx = (nx - cx) / Math.max(dt, 1e-3)
+        vy = (ny - cy) / Math.max(dt, 1e-3)
+        cx = nx
+        cy = ny
+        const targetSpin = Math.max(-7, Math.min(7, -vx * 0.02))
+        spin += (targetSpin - spin) * Math.min(1, dt * 9)
+        mode = 'held'
+      } else if (mode === 'held') {
+        /* just let go at the top of the haul: toss it, keeping momentum */
+        mode = 'toss'
+        vy -= 90
+        vx += 40
+        spinV = Math.max(-40, Math.min(40, -vx * 0.05))
+      }
+
+      if (mode === 'toss') {
+        /* underdamped spring to the resting spot: a soft arc and settle */
+        const rest = REST()
+        const k = 46
+        const c = 9.5
+        vx += (k * (rest.x - cx) - c * vx) * dt
+        vy += (k * (rest.y - cy) - c * vy) * dt
+        cx += vx * dt
+        cy += vy * dt
+        spinV += (-k * spin - c * spinV) * dt
+        spin += spinV * dt
+      } else if (mode === 'stowed') {
+        /* parked below the frame, under where the claw will dive */
+        cx = g.active ? g.x : window.innerWidth * 0.6
+        cy = window.innerHeight + h / 2 + 70
+        vx = vy = spin = spinV = 0
+      }
+
+      el.style.transformOrigin = '50% 50%'
+      el.style.transform = `translate3d(${cx - w / 2}px, ${cy - h / 2}px, 0) rotate(${spin}deg)`
+      el.style.pointerEvents = mode === 'toss' && session.cardPull > 0.98 ? 'auto' : 'none'
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
@@ -292,32 +284,24 @@ export default function About() {
           screen, so the pull looked like it never happened. Same trap the
           project detail panel hits; do not move this back inside. */}
       {createPortal(
-        <>
-          {/* the cord from the gripped bar down to the placard's grommet */}
-          <svg className="oc-rope" aria-hidden>
-            <path ref={rope} className="oc-rope-path" />
-          </svg>
-          <aside className="oc-card" ref={card}>
-            {/* the eyelet the cord threads through */}
-            <span className="oc-grommet" aria-hidden />
-            <div className="oc-head">
-              <p className="oc-kicker">Off the clock</p>
-              <span className="oc-serial" aria-hidden>
-                EK · 05
-              </span>
-            </div>
-            <p className="oc-title">When I&rsquo;m not building</p>
-            <ul className="oc-list">
-              {OFF_CLOCK.map((o) => (
-                <li key={o.label}>
-                  <span className="oc-icon">{o.icon}</span>
-                  <span className="oc-item">{o.label}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="oc-foot">Thanks for reading this far.</p>
-          </aside>
-        </>,
+        <aside className="oc-card" ref={card}>
+          <div className="oc-head">
+            <p className="oc-kicker">Off the clock</p>
+            <span className="oc-serial" aria-hidden>
+              EK · 05
+            </span>
+          </div>
+          <p className="oc-title">When I&rsquo;m not building</p>
+          <ul className="oc-list">
+            {OFF_CLOCK.map((o) => (
+              <li key={o.label}>
+                <span className="oc-icon">{o.icon}</span>
+                <span className="oc-item">{o.label}</span>
+              </li>
+            ))}
+          </ul>
+          <p className="oc-foot">Thanks for reading this far.</p>
+        </aside>,
         document.body,
       )}
     </div>
