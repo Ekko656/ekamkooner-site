@@ -42,11 +42,11 @@ export const PROJECTS: Project[] = [
     id: 'vla-teleop',
     category: 'Robotics',
     index: '02',
-    title: 'VLA Teleoperation',
+    title: 'VLA Robot Arm',
     tag: 'Learning',
     status: 'In progress',
     description:
-      'A vision-language-action (VLA) model made for autonomous applications, trained on teleoperation data collected via the SO-ARM101. Computer vision grounds each instruction in what the arm is actually looking at, so it works from demonstration rather than hand written control code.',
+      'A vision-language-action (VLA) model made for autonomous applications, trained on teleoperation data collected via the SO-ARM101. Natural language instructions paired with computer vision drive a visuomotor neural network allowing autonomous actions.',
     stack: ['Computer Vision', 'LeRobot', 'SO-ARM101', 'Imitation Learning'],
     preview: '/projects/vla-teleop.jpg',
     media: { type: 'video', src: '/projects/vla-teleop.webm', poster: '/projects/vla-teleop.jpg' },

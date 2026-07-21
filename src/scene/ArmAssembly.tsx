@@ -426,9 +426,13 @@ export default function ArmAssembly() {
       /* The gripper works away on its own. Shaping the sine toward a
          squarer wave gives it a bit of bite: the jaw snaps between open
          and shut rather than drifting smoothly through the middle. */
-      const bite = Math.sin(t * 1.02)
-      const chomp = Math.sign(bite) * Math.abs(bite) ** 0.6
-      const claw = settled * (0.3 + 0.26 * chomp) * (0.55 + 0.45 * Math.sin(t * 0.29 + 1.7))
+      /* Chompier: faster, and shaped much closer to a square wave so the
+         jaw snaps between open and shut. The slow amplitude modulation
+         that used to ride on top is gone, since fading the bite in and
+         out is exactly what made it read as floaty. */
+      const bite = Math.sin(t * 1.65)
+      const chomp = Math.sign(bite) * Math.abs(bite) ** 0.4
+      const claw = settled * (0.34 + 0.3 * chomp)
       /* Once the card is delivered the machine looks around instead of
          staying pointed at what it put down: three sine rates that never
          line up, so the wandering has no obvious loop. The sum is
@@ -437,23 +441,25 @@ export default function ArmAssembly() {
          LOOK_MAX it turns about 22 degrees each way, nowhere near far
          enough to present its side to the camera or to reach back across
          the card sitting off to the left. */
-      const LOOK_BIAS = 0.16
-      const LOOK_RIGHT = 0.52
-      const LOOK_LEFT = 0.08
+      /* Measured, not guessed. Sweeping this offset and projecting the
+         claw against the base shows the yaw runs the opposite way to what
+         it looks like: raising it swings the claw LEFT, and the gripper
+         points straight down the camera at about -0.41, moving roughly
+         550px of screen per radian either side of that.
+
+         Earlier versions biased "right" by going positive, which drove it
+         further left every time, so the arm sat turned away and clipped
+         behind the card. Centring on the measured forward angle with a
+         small excursion keeps it facing front nearly all the time and
+         only glancing off to either side. */
+      const LOOK_FORWARD = -0.41
+      const LOOK_SWAY = 0.2
       const wander =
         (0.55 * Math.sin(t * 0.13 + 0.4) +
           0.28 * Math.sin(t * 0.31 + 2.1) +
           0.14 * Math.sin(t * 0.73 + 4.3)) /
         0.97
-      /* The sway used to be symmetric, but the finished stance is already
-         turned toward the card, so an even swing spent nearly all of its
-         time pointing that way and kept clipping behind it. The signal is
-         mapped asymmetrically instead: a wide arc into the open right, a
-         sliver back toward the left, over a small rightward bias. The
-         machine now sits front-facing on average and never crosses back
-         over the card, with the far edge still short of 45 degrees. */
-      const look =
-        settled * (LOOK_BIAS + (wander >= 0 ? wander * LOOK_RIGHT : wander * LOOK_LEFT))
+      const look = settled * (LOOK_FORWARD + LOOK_SWAY * wander)
       for (const name of JOINT_NAMES) {
         /* amplitudes swell after the toss: the arm bends around casually
            instead of holding the tight pose it needed for the gesture */
