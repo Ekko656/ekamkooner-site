@@ -10,7 +10,6 @@ const TAGS = ['All', 'Robotics', 'Software', 'Hardware']
 
 function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
   const el = useRef<HTMLButtonElement>(null)
-  const vid = useRef<HTMLVideoElement>(null)
 
   useEffect(() => {
     const card = el.current
@@ -22,49 +21,23 @@ function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
       rx(((e.clientX - r.left) / r.width - 0.5) * 7)
       ry(-((e.clientY - r.top) / r.height - 0.5) * 7)
     }
-    const enter = () => vid.current?.play().catch(() => {})
     const leave = () => {
       rx(0)
       ry(0)
-      const v = vid.current
-      if (v) {
-        v.pause()
-        /* park back on the representative still, not the black frame 0 */
-        if (v.duration) v.currentTime = Math.min(1.2, v.duration * 0.1)
-      }
     }
     card.addEventListener('pointermove', move)
-    card.addEventListener('pointerenter', enter)
     card.addEventListener('pointerleave', leave)
     return () => {
       card.removeEventListener('pointermove', move)
-      card.removeEventListener('pointerenter', enter)
       card.removeEventListener('pointerleave', leave)
     }
   }, [])
 
   return (
     <button ref={el} className="card" data-cursor="Open" onClick={() => onOpen(p)}>
+      {/* strictly a still. Video only ever plays in the detail popup. */}
       <figure className="card-media">
-        {p.media.type === 'video' ? (
-          <video
-            ref={vid}
-            src={p.media.src}
-            poster={p.media.poster}
-            muted
-            loop
-            playsInline
-            preload="metadata"
-            /* many of these clips open on a black frame; seek to a real
-               one so the resting card is never a dark rectangle */
-            onLoadedMetadata={(e) => {
-              const v = e.currentTarget
-              if (v.duration) v.currentTime = Math.min(1.2, v.duration * 0.1)
-            }}
-          />
-        ) : (
-          <img src={p.media.src} alt={p.title} loading="lazy" />
-        )}
+        <img src={p.preview} alt={p.title} loading="lazy" />
       </figure>
       <span className="card-row">
         <span className="card-index">{p.index}</span>

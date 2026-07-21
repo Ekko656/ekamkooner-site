@@ -4,6 +4,10 @@ import { CONTACT } from '../data/projects'
 export default function Contact() {
   return (
     <div className="page page-contact">
+      {/* the section index, same as every other page */}
+      <p className="section-index reveal">
+        <span className="index-num">04</span> Contact
+      </p>
       <a className="contact-cta" href={`mailto:${CONTACT.email}`} data-cursor="Send" data-magnetic>
         <span className="mask-line">
           <span className="reveal-line">Let's build.</span>
