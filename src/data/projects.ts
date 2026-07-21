@@ -34,8 +34,8 @@ export const PROJECTS: Project[] = [
     description:
       'A gripper that works out how hard to hold something. Two force sensitive resistors feed a PID loop I wrote, so the jaws settle on just enough pressure to lift an object without crushing it, and a vision tracker keeps the target centred so the gripper knows where to close.',
     stack: ['Python', 'OpenCV', 'PID', 'FSR', 'Fusion 360'],
-    preview: '/projects/force-gripper.png',
-    media: { type: 'image', src: '/projects/force-gripper.png' },
+    preview: '/projects/force-gripper.webp',
+    media: { type: 'image', src: '/projects/force-gripper.webp' },
     links: [{ label: 'GitHub', href: 'https://github.com/Ekko656' }],
   },
   {

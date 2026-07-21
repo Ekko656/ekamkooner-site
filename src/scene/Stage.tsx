@@ -37,7 +37,10 @@ const ARM_CENTER = new THREE.Vector3(1.7, -0.3, 0)
    machine's far edge off the frame - 2.45 keeps it clear of the copy
    AND entirely on screen. */
 const LAT_R = 3.0
-const LAT_L = 2.3
+/* the left phase sits closer to centre: the copy there is held to two
+   balanced lines, so the machine does not need to be pushed as far over,
+   and at 2.3 the outer parts of the exploded cloud ran off the frame */
+const LAT_L = 0.72
 /* Swaps are timed to the measured beat centres, converted to orbit time
    (orbitT = progress / 0.82). Measured centres: copy sits left through
    progress .197, right from .352 to .556, left again from .711 to .814.

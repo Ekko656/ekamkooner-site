@@ -125,7 +125,9 @@ const IDLE_AMP: Record<string, number> = {
 /* the freer idle the machine falls into once the card is delivered and it
    has nothing left to do: wider, lazier travel on every joint */
 const IDLE_LIVE: Record<string, number> = {
-  Rotation: 0.15,
+  /* kept small: this rides on top of the look sway, and the two together
+     must stay well inside the bound that keeps the machine facing front */
+  Rotation: 0.09,
   Pitch: 0.13,
   Elbow: 0.19,
   Wrist_Pitch: 0.27,
@@ -429,15 +431,19 @@ export default function ArmAssembly() {
       const claw = settled * (0.3 + 0.26 * chomp) * (0.55 + 0.45 * Math.sin(t * 0.29 + 1.7))
       /* Once the card is delivered the machine looks around instead of
          staying pointed at what it put down: three sine rates that never
-         line up, so the wandering has no obvious loop. Positive yaw swings
-         it right, into the open half, so the whole sweep is biased that
-         way and floored - a wide swing must never carry the arm back
-         across the card sitting on the left. */
+         line up, so the wandering has no obvious loop. The sum is
+         normalised to -1..1 and then scaled, so the yaw is a bounded sway
+         either side of the stance rather than an open-ended swing. At
+         LOOK_MAX it turns about 22 degrees each way, nowhere near far
+         enough to present its side to the camera or to reach back across
+         the card sitting off to the left. */
+      const LOOK_MAX = 0.38
       const wander =
-        0.42 * Math.sin(t * 0.13 + 0.4) +
-        0.2 * Math.sin(t * 0.31 + 2.1) +
-        0.1 * Math.sin(t * 0.73 + 4.3)
-      const look = settled * Math.max(-0.1, wander + 0.32)
+        (0.55 * Math.sin(t * 0.13 + 0.4) +
+          0.28 * Math.sin(t * 0.31 + 2.1) +
+          0.14 * Math.sin(t * 0.73 + 4.3)) /
+        0.97
+      const look = settled * LOOK_MAX * wander
       for (const name of JOINT_NAMES) {
         /* amplitudes swell after the toss: the arm bends around casually
            instead of holding the tight pose it needed for the gesture */
