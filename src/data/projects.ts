@@ -136,7 +136,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'ultrasonic-claw',
-    categories: ['Hardware', 'Robotics'],
+    categories: ['Hardware'],
     index: '07',
     title: 'Ultrasonic Claw',
     tag: 'Hardware',
@@ -162,7 +162,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'rc-car',
-    categories: ['Hardware', 'Robotics'],
+    categories: ['Hardware'],
     index: '09',
     title: 'Arduino RC Car',
     tag: 'Hardware',

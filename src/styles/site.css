@@ -792,6 +792,7 @@
      cannot resolve against a height derived from aspect-ratio, which is
      what let tall portrait shots overflow and get clipped */
   height: 232px;
+  flex: none;
   overflow: hidden;
   display: flex;
   align-items: center;
@@ -850,8 +851,11 @@
   transform: scale(1.04);
 }
 .card-row {
-  /* sits at the bottom so the image above it always starts flush */
-  margin-top: auto;
+  /* Fills whatever height is left under the image and centres the title
+     in it. Pushing the row to the bottom instead dumped all the slack
+     from taller neighbours into a gap above the title, which is what
+     left short titles floating low with dead space over them. */
+  flex: 1;
   display: grid;
   grid-template-columns: 40px 1fr auto;
   align-items: center;
