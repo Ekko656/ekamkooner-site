@@ -6,7 +6,9 @@ export type Project = {
   index: string
   title: string
   tag: string
-  category: 'Robotics' | 'Software' | 'Hardware' | 'Research'
+  /* A project can sit in more than one: plenty of the robotics work is
+     equally hardware or software, and the filters should reflect that. */
+  categories: ('Robotics' | 'Software' | 'Hardware')[]
   description: string
   stack: string[]
   /* Set on work that is still being built, and shown as a badge. */
@@ -26,7 +28,7 @@ export type Project = {
 export const PROJECTS: Project[] = [
   {
     id: 'force-gripper',
-    category: 'Robotics',
+    categories: ['Robotics', 'Hardware', 'Software'],
     index: '01',
     title: 'Force Controlled Gripper',
     tag: 'Control',
@@ -40,7 +42,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'vla-teleop',
-    category: 'Robotics',
+    categories: ['Robotics', 'Software'],
     index: '02',
     title: 'VLA Robot Arm',
     tag: 'Learning',
@@ -54,7 +56,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'ubc-bionics',
-    category: 'Robotics',
+    categories: ['Robotics', 'Software', 'Hardware'],
     index: '03',
     title: 'UBC Bionics',
     tag: 'Embedded',
@@ -70,7 +72,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'honeykey',
-    category: 'Software',
+    categories: ['Software'],
     index: '04',
     title: 'HoneyKey',
     tag: 'Security',
@@ -87,7 +89,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'barrage',
-    category: 'Software',
+    categories: ['Software'],
     index: '05',
     title: 'Barrage',
     tag: 'Backend',
@@ -103,7 +105,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'vex',
-    category: 'Robotics',
+    categories: ['Robotics', 'Software'],
     index: '06',
     title: 'VEX Robotics',
     tag: 'Robotics',
@@ -134,7 +136,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'ultrasonic-claw',
-    category: 'Hardware',
+    categories: ['Hardware', 'Robotics'],
     index: '07',
     title: 'Ultrasonic Claw',
     tag: 'Hardware',
@@ -147,7 +149,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'arm-sim',
-    category: 'Robotics',
+    categories: ['Robotics', 'Software'],
     index: '08',
     title: 'Arm Sim',
     tag: 'Simulation',
@@ -160,7 +162,7 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'rc-car',
-    category: 'Hardware',
+    categories: ['Hardware', 'Robotics'],
     index: '09',
     title: 'Arduino RC Car',
     tag: 'Hardware',
@@ -173,10 +175,10 @@ export const PROJECTS: Project[] = [
   },
   {
     id: 'cryptography-paper',
-    category: 'Research',
+    categories: [],
     index: '10',
     title: 'Cryptographic Methods Paper',
-    tag: 'Mathematics',
+    tag: 'Security',
     description:
       'A written investigation into historical cryptography and the mathematics holding it up, working forward from the Caesar shift through successively harder ciphers. Modular arithmetic, probability and frequency analysis are used both to build the ciphers and to break them, including a full cryptanalysis of an intercepted message with no key.',
     stack: ['Modular Arithmetic', 'Frequency Analysis', 'Probability', 'Cryptanalysis'],

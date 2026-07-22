@@ -426,13 +426,20 @@ export default function ArmAssembly() {
       /* The gripper works away on its own. Shaping the sine toward a
          squarer wave gives it a bit of bite: the jaw snaps between open
          and shut rather than drifting smoothly through the middle. */
-      /* Chompier: faster, and shaped much closer to a square wave so the
-         jaw snaps between open and shut. The slow amplitude modulation
-         that used to ride on top is gone, since fading the bite in and
-         out is exactly what made it read as floaty. */
-      const bite = Math.sin(t * 1.65)
-      const chomp = Math.sign(bite) * Math.abs(bite) ** 0.4
-      const claw = settled * (0.34 + 0.3 * chomp)
+      /* The gripper works away on its own. Driven by layered noise rather
+         than a sine, so the rhythm never repeats and the timing between
+         bites genuinely varies. Squaring a sine made it flick between two
+         positions, which read as mechanical rather than idle, so this is
+         a continuous signal again, a little slower, and it travels almost
+         the jaw's whole range: the limits are -0.175 shut and 1.745 wide,
+         and the previous offset never took it below 0.59, which is why
+         the claw was only ever seen part-open. Smoothstepped so it dwells
+         briefly at each end the way a hand does gripping and letting go. */
+      const JAW_SHUT = -0.1
+      const JAW_WIDE = 1.45
+      const nz = fbm(t * 0.85, 12.3)
+      const u = Math.min(1, Math.max(0, 0.5 + 0.72 * nz))
+      const jawIdle = JAW_SHUT + (JAW_WIDE - JAW_SHUT) * (u * u * (3 - 2 * u))
       /* Once the card is delivered the machine looks around instead of
          staying pointed at what it put down: three sine rates that never
          line up, so the wandering has no obvious loop. The sum is
@@ -465,7 +472,11 @@ export default function ArmAssembly() {
            instead of holding the tight pose it needed for the gesture */
         const amp = IDLE_AMP[name] + settled * (IDLE_LIVE[name] - IDLE_AMP[name])
         let v = gest[name] + amp * drift * fbm(t * IDLE_SPD[name] * Math.PI * 2, IDLE_SEED[name])
-        if (name === 'Jaw') v += claw
+        /* the jaw is driven to its idle outright rather than nudged from
+           the pose, which is what kept it stuck near the open end. It
+           blends in with `settled`, so the performance still owns the jaw
+           through the grab and the release. */
+        if (name === 'Jaw') v = gest.Jaw + (jawIdle - gest.Jaw) * settled
         if (name === 'Rotation') v += look
         liveJoints.current[name]?.setJointValue(v)
       }

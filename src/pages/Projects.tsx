@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { PROJECTS, type Project } from '../data/projects'
 
-const TAGS = ['All', 'Robotics', 'Software', 'Hardware', 'Research']
+const TAGS = ['All', 'Robotics', 'Software', 'Hardware']
 
 function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
   const el = useRef<HTMLButtonElement>(null)
@@ -200,7 +200,9 @@ export default function Projects() {
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase()
     return PROJECTS.filter((p) => {
-      if (tag !== 'All' && p.category !== tag) return false
+      /* a project can carry several categories, so it surfaces under each
+         filter it genuinely belongs to */
+      if (tag !== 'All' && !p.categories.includes(tag as (typeof p.categories)[number])) return false
       if (!q) return true
       return [p.title, p.tag, ...p.stack].join(' ').toLowerCase().includes(q)
     })
