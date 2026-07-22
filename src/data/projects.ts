@@ -6,7 +6,7 @@ export type Project = {
   index: string
   title: string
   tag: string
-  category: 'Robotics' | 'Software' | 'Hardware' 
+  category: 'Robotics' | 'Software' | 'Hardware' | 'Research'
   description: string
   stack: string[]
   /* Set on work that is still being built, and shown as a badge. */
@@ -53,22 +53,9 @@ export const PROJECTS: Project[] = [
     links: [],
   },
   {
-    id: 'arm-sim',
-    category: 'Robotics',
-    index: '03',
-    title: 'Arm Sim',
-    tag: 'Simulation',
-    description:
-      'A 7 DOF humanoid arm simulated in MuJoCo. I wrote the forward kinematics, the Jacobian, and damped least squares IK from scratch in NumPy, then verified my math against MuJoCo to a millionth of a metre over 50 random poses.',
-    stack: ['Python', 'NumPy', 'MuJoCo', 'MJCF'],
-    preview: '/projects/arm-sim.jpg',
-    media: { type: 'video', src: '/projects/arm-sim.webm' },
-    links: [{ label: 'GitHub', href: 'https://github.com/Ekko656/arm-sim' }],
-  },
-  {
     id: 'ubc-bionics',
     category: 'Robotics',
-    index: '04',
+    index: '03',
     title: 'UBC Bionics',
     tag: 'Embedded',
     description:
@@ -84,7 +71,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'honeykey',
     category: 'Software',
-    index: '05',
+    index: '04',
     title: 'HoneyKey',
     tag: 'Security',
     description:
@@ -101,7 +88,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'barrage',
     category: 'Software',
-    index: '06',
+    index: '05',
     title: 'Barrage',
     tag: 'Backend',
     description:
@@ -117,7 +104,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'vex',
     category: 'Robotics',
-    index: '07',
+    index: '06',
     title: 'VEX Robotics',
     tag: 'Robotics',
     description:
@@ -148,7 +135,7 @@ export const PROJECTS: Project[] = [
   {
     id: 'ultrasonic-claw',
     category: 'Hardware',
-    index: '08',
+    index: '07',
     title: 'Ultrasonic Claw',
     tag: 'Hardware',
     description:
@@ -157,6 +144,19 @@ export const PROJECTS: Project[] = [
     preview: '/projects/claw.jpg',
     media: { type: 'video', src: '/projects/claw.mp4', poster: '/projects/claw.jpg' },
     links: [],
+  },
+  {
+    id: 'arm-sim',
+    category: 'Robotics',
+    index: '08',
+    title: 'Arm Sim',
+    tag: 'Simulation',
+    description:
+      'A 7 DOF humanoid arm simulated in MuJoCo. I wrote the forward kinematics, the Jacobian, and damped least squares IK from scratch in NumPy, then verified my math against MuJoCo to a millionth of a metre over 50 random poses.',
+    stack: ['Python', 'NumPy', 'MuJoCo', 'MJCF'],
+    preview: '/projects/arm-sim.jpg',
+    media: { type: 'video', src: '/projects/arm-sim.webm' },
+    links: [{ label: 'GitHub', href: 'https://github.com/Ekko656/arm-sim' }],
   },
   {
     id: 'rc-car',
@@ -170,6 +170,19 @@ export const PROJECTS: Project[] = [
     preview: '/projects/rc-car.jpg',
     media: { type: 'image', src: '/projects/rc-car.jpg' },
     links: [],
+  },
+  {
+    id: 'cryptography-paper',
+    category: 'Research',
+    index: '10',
+    title: 'Cryptographic Methods Paper',
+    tag: 'Mathematics',
+    description:
+      'A written investigation into historical cryptography and the mathematics holding it up, working forward from the Caesar shift through successively harder ciphers. Modular arithmetic, probability and frequency analysis are used both to build the ciphers and to break them, including a full cryptanalysis of an intercepted message with no key.',
+    stack: ['Modular Arithmetic', 'Frequency Analysis', 'Probability', 'Cryptanalysis'],
+    preview: '/projects/cryptography-paper.jpg',
+    media: { type: 'image', src: '/projects/cryptography-paper.jpg' },
+    links: [{ label: 'Read the paper', href: '/projects/cryptography-paper.pdf' }],
   },
 ]
 

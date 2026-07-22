@@ -6,7 +6,7 @@ import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { PROJECTS, type Project } from '../data/projects'
 
-const TAGS = ['All', 'Robotics', 'Software', 'Hardware']
+const TAGS = ['All', 'Robotics', 'Software', 'Hardware', 'Research']
 
 function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
   const el = useRef<HTMLButtonElement>(null)
