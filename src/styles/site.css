@@ -451,9 +451,13 @@
   margin-top: 46vh;
 }
 /* the words of a line, revealed in a cascade as the line enters */
+/* No `will-change` here. The About page holds several hundred word spans,
+   and a blanket hint promotes every one of them to its own composited
+   layer for the whole life of the page, most of them waiting to animate.
+   The tween sets the hint on the words it is about to move and clears it
+   on completion, so at most one beat's worth is promoted at a time. */
 .unblur .w {
   display: inline-block;
-  will-change: filter, transform, opacity;
 }
 /* the split preserves the em, which must not become a block */
 .unblur em .w {
@@ -1277,4 +1281,56 @@
   .jump-item {
     font-size: 0.6875rem;
   }
+}
+
+/* ============================================================
+   Low tier: no hardware acceleration, or a machine that measured
+   too slow to hold a frame rate. See src/lib/perf.ts.
+
+   Every rule here removes a *cost*, never a piece of the design's
+   meaning. Backdrop blur is the expensive one - a software
+   renderer re-blurs everything behind the panel on the CPU every
+   frame the panel moves - so the glass surfaces keep their light,
+   their bevel and their gradient, and only lose the see-through,
+   sitting on a more opaque ground instead.
+   ============================================================ */
+html[data-perf='low'] .glass-btn,
+html[data-perf='low'] .oc-card,
+html[data-perf='low'] .detail,
+html[data-perf='low'] .media-sound,
+html[data-perf='low'] .card-status {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+html[data-perf='low'] .glass-btn {
+  background: linear-gradient(
+      171deg,
+      rgba(206, 221, 255, 0.15) 0%,
+      rgba(150, 170, 220, 0.055) 30%,
+      rgba(112, 132, 184, 0.02) 62%,
+      rgba(92, 112, 165, 0.06) 100%
+    ),
+    linear-gradient(180deg, rgba(18, 25, 42, 0.92), rgba(9, 13, 24, 0.94));
+}
+html[data-perf='low'] .oc-card {
+  background: radial-gradient(130% 90% at 18% -6%, rgba(214, 230, 255, 0.2), transparent 58%),
+    radial-gradient(120% 80% at 92% 108%, rgba(110, 140, 255, 0.14), transparent 62%),
+    linear-gradient(168deg, rgba(150, 174, 230, 0.1) 0%, rgba(90, 110, 165, 0.035) 52%, rgba(70, 88, 140, 0.06) 100%),
+    linear-gradient(180deg, rgba(16, 23, 40, 0.95), rgba(7, 11, 21, 0.97));
+}
+html[data-perf='low'] .detail {
+  background: rgba(6, 9, 18, 0.96);
+}
+html[data-perf='low'] .media-sound {
+  background: rgba(6, 9, 18, 0.94);
+}
+/* the word cascade's blur is a per-word filter on hundreds of spans; the
+   words still rise and fade in, they just resolve without the softness */
+html[data-perf='low'] .unblur .w {
+  filter: none !important;
+}
+/* the glass grain is a full-size noise bitmap composited in `overlay`
+   under a moving specular - the texture is not worth the blend */
+html[data-perf='low'] .oc-card > .oc-gloss::after {
+  display: none;
 }

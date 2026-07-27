@@ -10,6 +10,7 @@ import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { session } from '../lib/session'
+import { perf } from '../lib/perf'
 
 function Beat({
   side,
@@ -153,12 +154,18 @@ export default function About() {
         const delay = inView ? 0.25 + lineDelay : lineDelay
         const trigger = inView ? undefined : { trigger: el, start: 'top 84%' }
 
+        /* the blur is the expensive half of this reveal: a per-word filter
+           on every span in the beat, re-rasterised each frame. The low
+           tier keeps the rise and the fade and drops only the softness. */
+        const blurFrom = perf.low ? {} : { filter: 'blur(9px)' }
+        const blurTo = perf.low ? {} : { filter: 'blur(0px)' }
+
         gsap.fromTo(
           words,
-          { opacity: 0, filter: 'blur(9px)', yPercent: soft ? 0 : 34, xPercent: soft ? 12 : 0 },
+          { opacity: 0, ...blurFrom, yPercent: soft ? 0 : 34, xPercent: soft ? 12 : 0 },
           {
             opacity: 1,
-            filter: 'blur(0px)',
+            ...blurTo,
             yPercent: 0,
             xPercent: 0,
             duration: soft ? 1.2 : 0.85,
@@ -170,6 +177,11 @@ export default function About() {
                rest play as they scroll into view */
             delay,
             scrollTrigger: trigger,
+            /* promote only while this beat is actually moving; holding the
+               hint on every word in the document costs a layer apiece */
+            onStart: () => {
+              for (const wsp of words) wsp.style.willChange = 'transform, opacity, filter'
+            },
             /* never clearProps the filter: it strips the inline blur(0)
                and the CSS base blur takes over, leaving text fuzzy */
             onComplete: () => {
@@ -223,6 +235,10 @@ export default function About() {
     let tiltY = 0
     let wantX = 0
     let wantY = 0
+    /* last values actually written to the element, so a still card is not
+       re-styled sixty times a second */
+    let lastTransform = ''
+    let lastPointerEvents = ''
     const onPointer = (e: PointerEvent) => {
       const el = card.current
       if (!el || mode !== 'toss') {
@@ -337,18 +353,35 @@ export default function About() {
       /* Move the highlight. It answers the tilt, so leaning the card
          slides the specular across it the way a real panel catches a
          lamp, and a slow independent drift keeps the surface alive even
-         when the cursor is nowhere near it. */
-      const ts = now / 1000
-      const gx = 32 - tiltY * 3.4 + Math.sin(ts * 0.11) * 9
-      const gy = 20 - tiltX * 3.2 + Math.cos(ts * 0.083) * 7
-      el.style.setProperty('--gx', `${gx}%`)
-      el.style.setProperty('--gy', `${gy}%`)
+         when the cursor is nowhere near it.
+
+         Only while the card is on stage. This is a backdrop-blurred
+         panel, so every write here forces the whole area behind it to be
+         re-blurred; doing that all the way down the page for a card that
+         is parked below the fold is pure cost. */
+      if (mode !== 'stowed') {
+        const ts = now / 1000
+        const gx = 32 - tiltY * 3.4 + Math.sin(ts * 0.11) * 9
+        const gy = 20 - tiltX * 3.2 + Math.cos(ts * 0.083) * 7
+        el.style.setProperty('--gx', `${gx}%`)
+        el.style.setProperty('--gy', `${gy}%`)
+      }
 
       el.style.transformOrigin = '50% 50%'
-      el.style.transform =
+      const next =
         `perspective(780px) translate3d(${cx - w / 2}px, ${cy - h / 2}px, 0) ` +
         `rotate(${spin}deg) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`
-      el.style.pointerEvents = mode === 'toss' && session.cardPull > 0.98 ? 'auto' : 'none'
+      /* stowed, the card sits still: writing the same transform every
+         frame still dirties the layer, so only write on a real change */
+      if (next !== lastTransform) {
+        lastTransform = next
+        el.style.transform = next
+      }
+      const pe = mode === 'toss' && session.cardPull > 0.98 ? 'auto' : 'none'
+      if (pe !== lastPointerEvents) {
+        lastPointerEvents = pe
+        el.style.pointerEvents = pe
+      }
       raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)

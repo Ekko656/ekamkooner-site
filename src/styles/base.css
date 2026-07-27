@@ -103,6 +103,13 @@ button {
     animation: none;
   }
 }
+/* The grain jitter repaints a full-viewport noise bitmap four times a
+   second. That is a composited transform on an accelerated machine and a
+   full-screen CPU raster without one, so the low tier keeps the texture
+   and drops the movement. */
+html[data-perf='low'] .layer-grain {
+  animation: none;
+}
 
 /* masked line reveal container */
 .mask-line {

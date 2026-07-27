@@ -48,17 +48,24 @@ export default function Dust() {
     const t = clock.elapsedTime
     const arr = (p.geometry.attributes.position as THREE.BufferAttribute).array as Float32Array
 
+    /* The pointer ray, once per frame. The unprojection depends only on
+       the pointer and the camera, so it is the same answer for every
+       particle - it used to be solved six hundred times a frame, two
+       matrix multiplies and a normalise each. Each particle still gets
+       its own depth plane below; only the ray is shared. */
+    ndc.set(session.pointer.x, -session.pointer.y, 0.5)
+    ndc.unproject(camera)
+    dirV.copy(ndc).sub(camera.position).normalize()
+    const camZ = camera.position.z
+
     for (let i = 0; i < COUNT; i++) {
       const s = seeds[i]
       let x = positions[i * 3] + Math.sin(t * 0.05 + s) * 0.6
       let y = positions[i * 3 + 1] + Math.sin(t * 0.04 + s * 2.1) * 0.5
       let z = positions[i * 3 + 2] + Math.cos(t * 0.045 + s * 1.3) * 0.4
 
-      /* unproject the pointer onto THIS particle's depth plane */
-      ndc.set(session.pointer.x, -session.pointer.y, 0.5)
-      ndc.unproject(camera)
-      dirV.copy(ndc).sub(camera.position).normalize()
-      const dist = (z - camera.position.z) / dirV.z
+      /* walk the shared ray out to THIS particle's depth plane */
+      const dist = (z - camZ) / dirV.z
       if (dist > 0) {
         world.copy(camera.position).addScaledVector(dirV, dist)
         const dx = x - world.x
