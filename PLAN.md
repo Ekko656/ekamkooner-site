@@ -4,7 +4,7 @@ Running backlog for ekamkooner.com. Ekam should not have to repeat an item
 that is written here. Tick items off only after verifying in the live
 preview at 1280x800 (laptop aspect), never from code alone.
 
-Last updated 2026-07-20, after commit `ed5251d`.
+Last updated 2026-07-22, after commit `0dee822`.
 
 ---
 
@@ -73,12 +73,8 @@ probe of an animated value as a still frame, not the settled result.
   shows no control.
 - [x] **Wrong aspect ratios / grey bars** — fixed. The frame takes the
   media's real aspect from its natural size, so nothing letterboxes.
-- [ ] **HoneyKey has no video — blocked, needs Ekam.** This is not a bug in
-  the code. `src/data/projects.ts` declares HoneyKey as `type: 'image'`
-  pointing at `honeykey.png`, and there is no HoneyKey video anywhere in
-  `public/projects`. The asset does not exist. Barrage, VEX and the RC car
-  are stills for the same reason. **Need the video file** (or confirmation
-  that a still is intended), then switch the entry to `type: 'video'`.
+- [x] **HoneyKey video** — resolved via a YouTube embed (`embed: {provider:'youtube', id:'37EOq--P9oo'}`)
+  instead of a local file. Barrage, VEX and the RC car remain stills; that's accepted, not blocked.
 
 ## 5. Audio, later
 
