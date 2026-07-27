@@ -68,6 +68,15 @@ round.
 9. **Verify in the live preview before claiming something is fixed.** He has
    caught unverified claims repeatedly.
 10. **Commit and push frequently** — he wants a green contribution graph.
+11. **The site must stay usable without hardware acceleration.** Reported
+    real: it was very laggy for people whose machines fall back to a
+    software renderer. `src/lib/perf.ts` picks a `high`/`low` tier and
+    mirrors it onto `<html data-perf>`; `?perf=low` forces it so the
+    degraded site is actually viewable. Anything new that adds a WebGL
+    context, a `backdrop-filter`, a per-frame DOM write or a full-screen
+    animated layer needs a low-tier answer at the same time. The low tier
+    is a real fallback, not a stripped one: surfaces keep their light and
+    their bevel, reveals keep their movement, and only the cost goes.
 
 ---
 
@@ -239,6 +248,15 @@ The browser tooling fights this site. Symptoms that are **not real bugs**:
   Clear `node_modules/.vite` and hard reload before chasing one.
 - **HMR doesn't re-run `useEffect`s** that set debug hooks on `window`, so a
   freshly added hook is often `undefined` until a full reload.
+- **The r3f stage canvas never initialises in the in-app preview pane.** It
+  sits at the default 300x150 with no renderer, on every page, at every
+  tier, on a clean checkout too. So the arm and the starfield are simply
+  invisible there and "the 3D disappeared" from a pane screenshot means
+  nothing. Confirm it by reading `canvas.width` — 300x150 is the dead one.
+  Anything in that canvas has to be checked in a real browser.
+  A trap this already caused: the specks on the landing page come from the
+  **Spline** canvas, not the stage. Removing Spline removes them, which
+  looks exactly like breaking the starfield and is not.
 - The arm's STLs take **~15 seconds** to load. Wait before judging.
 
 ---

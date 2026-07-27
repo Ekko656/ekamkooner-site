@@ -60,6 +60,56 @@ rAF-driven animation is frozen between captures, so:
 Judge motion by pumping several screenshots in a row, and treat a single
 probe of an animated value as a still frame, not the settled result.
 
+Worse than that: the r3f stage canvas never initialises in the pane at
+all. It stays at the default 300x150 with no renderer attached, on every
+page and every tier, and this is true of a clean checkout too - so the
+arm and the starfield simply cannot be seen there. Anything that renders
+in that canvas has to be checked in a real browser. What looks like
+"the stars disappeared" in a pane screenshot is this, not a regression.
+
+## 7. Performance on machines without graphics acceleration
+
+Reported: the site is very laggy for some people, especially with
+hardware acceleration off. Root causes found and addressed:
+
+- [x] **A quality tier** (`src/lib/perf.ts`). Detects a software
+  renderer (SwiftShader / llvmpipe / basic render), a thin CPU, low
+  memory or reduced-motion, and mirrors `high` / `low` onto
+  `<html data-perf>`. A watchdog watches 90 real frames and demotes a
+  machine that measures slower than ~42fps anyway. Hidden tabs are not
+  counted, or every background tab would demote itself.
+- [x] **`?perf=low` / `?perf=high` forces a tier.** Use this to look at
+  the degraded site - otherwise nobody ever sees it.
+- [x] **Two WebGL renderers on the landing page.** The stage canvas and
+  the Spline humanoid both ran live loops, plus the particle name's 2D
+  canvas. Low tier drops Spline (which also skips its ~2MB of chunks)
+  and sets the name as real type.
+- [x] **Backdrop blur** on the glass buttons, the off-clock card, the
+  project detail overlay and the status pills. Software rendering
+  re-blurs everything behind them on the CPU. Low tier keeps every
+  surface's light and bevel and only loses the see-through.
+- [x] **The stage canvas** is dpr 1, no antialias, no dust, and drawn on
+  demand off About at low tier. About keeps a live loop and the arm.
+- [x] **Lenis smooth scroll** is a hijack that feels broken below about
+  30fps; low tier gets native scrolling back.
+- [x] **The custom cursor** is off at low tier - its lag IS the
+  pointer's lag.
+- [x] Every tier: the particle name batches its draw into one fill per
+  alpha bucket instead of one per mote; the dust field solved the same
+  pointer unprojection 620 times a frame; `.unblur .w` promoted all 121
+  word spans to layers for the life of the About page; the off-clock
+  card rewrote its transform and specular every frame while parked
+  below the fold.
+- [ ] **For Ekam:** load `?perf=low` and confirm the degraded site is
+  still one you're happy to ship. It is a real fallback, not a
+  stripped one, but it is your call whether losing the Spline humanoid
+  and the particle gather on those machines is the right trade.
+- [ ] **Not measured:** the WebGL stage cannot be verified in the
+  in-app preview pane at all - its canvas never initialises there and
+  stays 300x150 (this predates the perf work; confirmed against a clean
+  checkout). Everything above was verified in the DOM/CSS; the 3D half
+  of the low tier needs a real browser.
+
 ## 3. Contact page
 
 - [x] **Everything above "Let's build" removed**, all centred.
