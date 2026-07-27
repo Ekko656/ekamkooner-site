@@ -11,6 +11,7 @@ import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react'
 import gsap from 'gsap'
 import GlassButton from '../ui/GlassButton'
 import ParticleText from '../ui/ParticleText'
+import { perf } from '../lib/perf'
 
 const Spline = lazy(() => import('@splinetool/react-spline'))
 
@@ -47,14 +48,20 @@ export default function Landing() {
 
   return (
     <div className="page page-landing" ref={root}>
-      <div className={`landing-robot${ready ? ' is-ready' : ''}`} aria-hidden>
-        <Suspense fallback={null}>
-          <Spline
-            scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
-            onLoad={() => setReady(true)}
-          />
-        </Suspense>
-      </div>
+      {/* The humanoid is a Spline scene: its own WebGL renderer and its
+          own render loop, running alongside the stage canvas behind it.
+          Two live contexts is fine on a GPU and hopeless without one, so
+          the low tier opens on the stars and the name alone. */}
+      {!perf.low && (
+        <div className={`landing-robot${ready ? ' is-ready' : ''}`} aria-hidden>
+          <Suspense fallback={null}>
+            <Spline
+              scene="https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode"
+              onLoad={() => setReady(true)}
+            />
+          </Suspense>
+        </div>
+      )}
       <div className="landing-intro">
         <ParticleText
           as="h1"

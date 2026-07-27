@@ -8,6 +8,7 @@
    name reads as part of the same sky rather than a separate white effect
    sitting on top of it. */
 import { useEffect, useRef, type ElementType, type Ref } from 'react'
+import { perf } from '../lib/perf'
 
 type P = {
   hx: number
@@ -18,9 +19,6 @@ type P = {
   vy: number
   r: number
   /* star grading */
-  cr: number
-  cg: number
-  cb: number
   a: number
   tw: number
   ph: number
@@ -41,9 +39,12 @@ type Props = {
   delay?: number
 }
 
-/* the two background star layers, for reference:
-   colour #9daccf at opacity .32 and .18 */
-const STAR = { r: 157, g: 172, b: 207 }
+/* One tint for the whole field. Motes used to carry their own colour,
+   mixed 94-100% of the way from the background stars (#9daccf) to white
+   - a spread of about four values per channel, invisible at this size,
+   and the only thing standing in the way of batching the draw. The
+   variation that actually reads is in size and alpha, and both are kept. */
+const TINT = { r: 252, g: 253, b: 254 }
 
 export default function ParticleText({
   lines,
@@ -58,6 +59,9 @@ export default function ParticleText({
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
+    /* On the low tier the name is set as real type instead (see the
+       render below), so there is no canvas to drive. */
+    if (perf.low) return
     const host = wrap.current
     const canvas = canvasRef.current
     if (!host || !canvas) return
@@ -127,7 +131,6 @@ export default function ParticleText({
           /* Solid white type that happens to be built from motes. The
              tint barely varies and the sizes stay close together, so it
              reads as clean lettering rather than a field of glitter. */
-          const mix = 0.94 + Math.random() * 0.06
           const a = 0.97 + Math.random() * 0.03
           const r = 0.72 + Math.random() * 0.16
           next.push({
@@ -138,9 +141,6 @@ export default function ParticleText({
             vx: 0,
             vy: 0,
             r: r * (fontSize > 40 ? 1 : 0.78),
-            cr: Math.round(STAR.r + (255 - STAR.r) * mix),
-            cg: Math.round(STAR.g + (255 - STAR.g) * mix),
-            cb: Math.round(STAR.b + (255 - STAR.b) * mix),
             a,
             /* stars twinkle slowly and out of step with each other */
             tw: 0.35 + Math.random() * 1.1,
@@ -153,6 +153,21 @@ export default function ParticleText({
       t0 = performance.now() / 1000
     }
 
+    /* ---- batching ----
+       The name is a few thousand motes. Giving each one its own
+       beginPath / arc / fill means a few thousand rasteriser setups a
+       frame, which is what made this the most expensive thing on the
+       landing page.
+
+       The motes are graded so narrowly - every one of them is within a
+       few percent of white, and alpha only wanders on the twinkle - that
+       the whole field can be sorted into a handful of alpha buckets and
+       drawn with one fill each. Same pixels, three orders of magnitude
+       fewer draw calls. */
+    const BUCKETS = 24
+    const paths: Path2D[] = []
+    const used: boolean[] = []
+
     const tick = (now: number) => {
       const ts = now / 1000
       const dt = Math.min((now - last) / 1000, 0.04)
@@ -162,6 +177,11 @@ export default function ParticleText({
       ctx.setTransform(1, 0, 0, 1, 0, 0)
       ctx.clearRect(0, 0, canvas.width, canvas.height)
       ctx.scale(dpr, dpr)
+
+      for (let b = 0; b < BUCKETS; b++) {
+        paths[b] = new Path2D()
+        used[b] = false
+      }
 
       for (const p of particles) {
         const live = Math.min(1, Math.max(0, (age - p.delay) / 0.9))
@@ -193,10 +213,18 @@ export default function ParticleText({
         const tw = reduced ? 1 : 0.985 + 0.015 * Math.sin(ts * p.tw + p.ph)
         const alpha = live * p.a * tw
         if (alpha <= 0.01) continue
-        ctx.beginPath()
-        ctx.fillStyle = `rgba(${p.cr},${p.cg},${p.cb},${alpha})`
-        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2)
-        ctx.fill()
+        const b = Math.min(BUCKETS - 1, (alpha * BUCKETS) | 0)
+        paths[b].moveTo(p.x + p.r, p.y)
+        paths[b].arc(p.x, p.y, p.r, 0, Math.PI * 2)
+        used[b] = true
+      }
+
+      /* the tint varies by a couple of values across the whole field, so
+         one colour for the lot is indistinguishable from per-mote tinting */
+      for (let b = 0; b < BUCKETS; b++) {
+        if (!used[b]) continue
+        ctx.fillStyle = `rgba(${TINT.r},${TINT.g},${TINT.b},${(b + 0.5) / BUCKETS})`
+        ctx.fill(paths[b])
       }
 
       raf = requestAnimationFrame(tick)
@@ -246,6 +274,21 @@ export default function ParticleText({
      of the resulting element. Widening it here keeps the call sites typed
      while letting the tag stay configurable. */
   const Host = Tag as 'div'
+  /* The low tier sets the name in the real face rather than sampling it
+     into a few thousand motes and redrawing them sixty times a second.
+     The letterforms and the placement are identical - the canvas was
+     drawing this exact type - so the page loses the gather, not the name. */
+  if (perf.low) {
+    return (
+      <Host className={className} ref={wrap as Ref<HTMLDivElement>}>
+        {lines.map((l, i) => (
+          <span key={i} style={{ display: 'block' }}>
+            {l}
+          </span>
+        ))}
+      </Host>
+    )
+  }
   return (
     <Host className={className} ref={wrap as Ref<HTMLDivElement>} aria-label={label}>
       <canvas ref={canvasRef} className="particle-canvas" aria-hidden />

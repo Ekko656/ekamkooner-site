@@ -5,11 +5,12 @@
    every other page the stage holds a calm wide frame with dust,
    stars and glow keeping the navy alive.
    ============================================================ */
-import { Suspense, useMemo } from 'react'
-import { Canvas, useFrame } from '@react-three/fiber'
+import { Suspense, useEffect, useMemo, useState } from 'react'
+import { Canvas, useFrame, useThree } from '@react-three/fiber'
 import { Environment, Lightformer } from '@react-three/drei'
 import * as THREE from 'three'
 import { session } from '../lib/session'
+import { perf, onTier } from '../lib/perf'
 import ArmAssembly from './ArmAssembly'
 import Dust from './Dust'
 
@@ -144,6 +145,22 @@ function CameraRig() {
   return null
 }
 
+/* Under `frameloop="demand"` the scene is only drawn when something asks
+   for it. The single automatic draw at mount happens before the pieces
+   that make the frame worth looking at exist - the environment map is
+   still rendering to its target, the star geometry is still being built -
+   so the canvas comes up empty and stays that way. Ask for a few frames
+   over the first second, then stop. */
+function PaintOnSettle() {
+  const invalidate = useThree((s) => s.invalidate)
+  useEffect(() => {
+    const at = [0, 60, 200, 500, 1000]
+    const ids = at.map((ms) => window.setTimeout(invalidate, ms))
+    return () => ids.forEach(clearTimeout)
+  }, [invalidate])
+  return null
+}
+
 function Glow() {
   const tex = useMemo(() => {
     const c = document.createElement('canvas')
@@ -175,6 +192,10 @@ function Glow() {
    slowly so the background is never a dead poster */
 function Starfield({ count, depth, size, opacity, speed }: { count: number; depth: [number, number]; size: number; opacity: number; speed: number }) {
   const ref = useMemo(() => ({ points: null as THREE.Object3D | null }), [])
+  /* No pixel-ratio compensation here, deliberately. Three computes
+     gl_PointSize in device pixels from the drawing buffer's height, so
+     the ratio cancels: a star covers the same CSS area at dpr 1 as at
+     dpr 2. Dropping the tier's dpr does not shrink the sky. */
   const geom = useMemo(() => {
     const pos = new Float32Array(count * 3)
     for (let i = 0; i < count; i++) {
@@ -203,11 +224,32 @@ function Starfield({ count, depth, size, opacity, speed }: { count: number; dept
 
 export default function Stage({ showArm }: { showArm: boolean }) {
   session.armVisible = showArm
+  const [tier, setTier] = useState(perf.tier)
+  useEffect(() => {
+    const off = onTier(setTier)
+    return () => {
+      off()
+    }
+  }, [])
+  const low = tier === 'low'
+
+  /* No context, no stage. A machine that cannot give us WebGL would
+     otherwise get a dead canvas element and a console full of warnings;
+     the navy ground and the DOM layers carry the page on their own. */
+  if (!perf.webgl) return null
+
   return (
     <div className="layer-canvas">
       <Canvas
-        dpr={[1, 2]}
-        gl={{ antialias: true, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
+        /* a software rasteriser pays for every pixel it fills, and at
+           dpr 2 that is four times the work for the same frame */
+        dpr={low ? 1 : [1, 2]}
+        /* Off About the scene is background only: drifting dust, stars,
+           a glow pool. On the low tier that is not worth sixty renders a
+           second, so it is drawn once and left. About keeps a live loop
+           either way - the machine building itself IS the page. */
+        frameloop={low && !showArm ? 'demand' : 'always'}
+        gl={{ antialias: !low, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
         camera={{ position: IDLE_FRAME.pos.toArray(), fov: 38, near: 0.1, far: 60 }}
       >
         <ambientLight intensity={0.34} color={'#c2cee8'} />
@@ -215,7 +257,7 @@ export default function Stage({ showArm }: { showArm: boolean }) {
         <directionalLight position={[4, 6, 7]} intensity={1.5} color={'#f4f7ff'} />
         <directionalLight position={[-6, 2, -4]} intensity={0.32} color={'#6e8cff'} />
         <directionalLight position={[0, -1, 8]} intensity={0.24} color={'#9fb2e8'} />
-        <Environment resolution={128}>
+        <Environment resolution={low ? 32 : 128}>
           <Lightformer intensity={1.1} position={[-4, 3, 4]} scale={[7, 5, 1]} color={'#e8eeff'} />
           <Lightformer intensity={0.5} position={[5, 1, -3]} scale={[5, 4, 1]} color={'#6e8cff'} />
           <Lightformer intensity={0.7} position={[0, 6, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[8, 8, 1]} color={'#cfd9f4'} />
@@ -225,11 +267,15 @@ export default function Stage({ showArm }: { showArm: boolean }) {
             <ArmAssembly />
           </Suspense>
         )}
-        <Dust />
-        <Starfield count={620} depth={[-7, -12]} size={0.028} opacity={0.32} speed={1} />
-        <Starfield count={420} depth={[-13, -20]} size={0.04} opacity={0.18} speed={0.5} />
+        {/* the dust rewrites 620 positions every frame and reads the
+            camera to do it; the stars are static geometry by comparison,
+            so the low tier keeps the sky and loses the motes */}
+        {!low && <Dust />}
+        <Starfield count={low ? 260 : 620} depth={[-7, -12]} size={0.028} opacity={0.32} speed={1} />
+        <Starfield count={low ? 180 : 420} depth={[-13, -20]} size={0.04} opacity={0.18} speed={0.5} />
         <Glow />
         <CameraRig />
+        <PaintOnSettle />
       </Canvas>
     </div>
   )

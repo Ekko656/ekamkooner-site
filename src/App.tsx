@@ -5,6 +5,7 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
 import './lib/eases'
 import { session } from './lib/session'
+import { perf } from './lib/perf'
 import Stage from './scene/Stage'
 import Cursor from './ui/Cursor'
 import { Grain, Nav, Readouts, Clock } from './ui/Chrome'
@@ -31,14 +32,40 @@ function Shell() {
       session.cardPull = 0
     }
 
-    const lenis = new Lenis({ lerp: 0.1 })
-    lenis.on('scroll', (e: { velocity: number }) => {
-      session.velocity = e.velocity
-      ScrollTrigger.update()
-    })
-    const tick = (time: number) => lenis.raf(time * 1000)
-    gsap.ticker.add(tick)
+    /* Smooth scroll is a hijack: the wheel stops moving the page and
+       starts feeding an interpolator that repositions it every frame. It
+       feels like silk at sixty frames and like a stuck wheel at fifteen,
+       so a machine that cannot hold the rate gets its native scroll back
+       - which is the one thing on the page the compositor can still do
+       well without help. */
+    let lenis: Lenis | null = null
+    let tick: ((time: number) => void) | null = null
+    let onNativeScroll: (() => void) | null = null
+    /* Both tiers, not just the smooth-scroll one. gsap's lag smoothing
+       clamps a long frame to a short one, which means a page that
+       stutters also runs its entrance in slow motion - and the About
+       card's fallback is written assuming real elapsed time. */
     gsap.ticker.lagSmoothing(0)
+    if (perf.low) {
+      let lastY = window.scrollY
+      let lastT = performance.now()
+      onNativeScroll = () => {
+        const now = performance.now()
+        const dt = Math.max(now - lastT, 1)
+        session.velocity = ((window.scrollY - lastY) / dt) * 16
+        lastY = window.scrollY
+        lastT = now
+      }
+      window.addEventListener('scroll', onNativeScroll, { passive: true })
+    } else {
+      lenis = new Lenis({ lerp: 0.1 })
+      lenis.on('scroll', (e: { velocity: number }) => {
+        session.velocity = e.velocity
+        ScrollTrigger.update()
+      })
+      tick = (time: number) => lenis!.raf(time * 1000)
+      gsap.ticker.add(tick)
+    }
 
     const ctx = gsap.context(() => {
       /* page entrance: rise and settle */
@@ -93,8 +120,9 @@ function Shell() {
 
     return () => {
       ctx.revert()
-      gsap.ticker.remove(tick)
-      lenis.destroy()
+      if (tick) gsap.ticker.remove(tick)
+      lenis?.destroy()
+      if (onNativeScroll) window.removeEventListener('scroll', onNativeScroll)
       ScrollTrigger.getAll().forEach((t) => t.kill())
     }
   }, [pathname])

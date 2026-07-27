@@ -32,6 +32,16 @@ body {
     cursor: none;
   }
 }
+/* no custom reticle on the low tier, so the real one has to come back */
+html[data-perf='low'] body,
+html[data-perf='low'] body a,
+html[data-perf='low'] body button {
+  cursor: auto;
+}
+html[data-perf='low'] body a,
+html[data-perf='low'] body button {
+  cursor: pointer;
+}
 
 ::selection {
   background: var(--signal);

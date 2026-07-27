@@ -57,6 +57,11 @@ function initialTier(): State {
   if (typeof window === 'undefined') return { tier: 'high', webgl: false, reduced: false }
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
   const { webgl, software } = probeRenderer()
+  /* ?perf=low / ?perf=high forces a tier. The degraded site is otherwise
+     only reachable by actually turning acceleration off, which makes it
+     the one version of the page nobody ever looks at. */
+  const forced = new URLSearchParams(window.location.search).get('perf')
+  if (forced === 'low' || forced === 'high') return { tier: forced, webgl, reduced }
   /* a phone with eight small cores is not the target here; this is aimed
      at the desktop that reports two or four and no GPU */
   const thin = (navigator.hardwareConcurrency ?? 8) <= 4
@@ -114,6 +119,9 @@ export const perf = {
    tab the moment it was opened. */
 export function startWatchdog() {
   if (state.tier === 'low') return
+  /* an explicit ?perf=high means "show me the full site"; it should not
+     be second-guessed by the very measurement it was used to override */
+  if (new URLSearchParams(window.location.search).get('perf')) return
   const NEED = 90 // frames of evidence before deciding
   const SLOW = 24 // ms per frame; about 42fps
   let counted = 0
