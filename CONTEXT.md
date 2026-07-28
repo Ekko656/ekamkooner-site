@@ -112,45 +112,88 @@ The 3D arm only renders on `/about` (`<Stage showArm={pathname === '/about'} />`
 
 ---
 
-## 5. Design system
+## 5. Design system  — REWRITTEN 2026-07-27, supersedes everything navy
 
-`src/styles/tokens.css`
+The site is **paper and ink**, not a dark interface. `src/styles/tokens.css`.
 
-- **Colour:** `--navy-950 #04060c` (near-black ground) → `--navy-600 #26314f`.
-  Text `--ice-100/200/400/600`. One accent `--signal #6e8cff`, used sparingly.
-- **Fonts (all self-hosted woff2 in `public/fonts`):**
-  - `--font-display` **Schibsted Grotesk** — UI, landing, headings, chrome.
-  - `--font-mono` **Martian Mono** — labels, readouts, indices.
-  - `--font-serif` **Zilla Slab** — the About narrative voice. *This is the one
-    Ekam approved.*
-  - `--font-hand` (Shantell Sans) and `--font-story` (Figtree) are still declared
-    but **no longer used** — safe to delete.
-- **Motion:** one ease family in `src/lib/eases.ts` (`mech`, `mechOut`,
-  `mechHeavy`, `mechSnap`), registered as GSAP CustomEase and referenced by name.
+- **Colour:** `--paper #faf9f7` ground, `--ink #131316` text, `--ink-2/-3` for
+  supporting and labelling text, `--rule`/`--rule-strong` for the only two
+  border weights. One accent: **royal purple** `--accent #6b3fa0`,
+  `--accent-deep #4b2e83`, `--accent-wash #f0ebf8`.
+- **The accent means exactly one thing: state.** This is live, this is
+  hovered, or this is where you are. It appears on hover, focus, the active
+  page, live status badges, the read-progress bar, and the arm's gripper.
+  It NEVER tints static text. Recolouring words purple was tried and
+  rejected by Ekam — it reads as a broken link, not as weight.
+- **Emphasis is the italic.** `em` is italic in the inherited ink. That is the
+  whole emphasis system.
+- **Fonts — three, self-hosted, roles are fixed and never swap:**
+  - `--font-display` **Old Standard TT** (400/400i/700) — the writing and every
+    heading: landing name, page titles, project and detail titles, the whole
+    About manifesto, pull copy.
+  - `--font-voice` **Forum** (400) — the second voice, used small and
+    letter-spaced to *name* things: section indices, card categories, status
+    badges, datelines, footers.
+  - `--font-ui` **Schibsted Grotesk** (400/500/600) — anything you operate:
+    nav, buttons, fields, links, meta.
+  - Martian Mono, Zilla Slab, Shantell Sans and Figtree are **deleted** from
+    `public/fonts` and from the tokens. Do not reintroduce a fourth family.
+- **Never full uppercase, never a weight under 400.** Both are AI-portfolio
+  tells and Ekam called them out by name.
+- **One radius (4px), one hairline, one shadow pair (`--lift`/`--lift-high`),
+  one ease family.**
+- **One link gesture, site-wide** (`.link` in `base.css`): a hairline wipes in
+  from the left in the accent while the ink turns. The masthead's active-page
+  marker is the same movement. There must never be a second link treatment.
+- **Buttons** are `.btn` + `.btn-primary|secondary|ghost` in `base.css`. One
+  shape, one press (1px down).
+
+### Deleted in the same pass — do not bring any of these back
+Particle name (`ParticleText`), custom reticle cursor (`Cursor`), dust field
+(`Dust`), film-grain overlay, humming column guides, the `BUILD 000` readout,
+the Vancouver clock, magnetic buttons, 3D cursor-tilt on project cards and on
+the off-clock card, glassmorphism (`GlassButton`, backdrop blurs, specular
+sweeps). Ekam's words: "a bunch of random cool gimmicks stuck together."
 
 ---
 
 ## 6. The hero (`/`)
 
-- **Spline humanoid robot** on the right, from the 21st.dev "Splite" component:
-  scene `https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode`. It tracks
-  the cursor. Absolutely positioned, full page height, left and top edges masked
-  so it dissolves into the ground rather than looking pasted on. Fades in only
-  once `onLoad` fires. The legs being cut at the bottom of the viewport is
-  expected and accepted.
-- **Name** uses a brushed-metal gradient with `background-clip: text`. Important:
-  the gradient must sit on `.landing-name .reveal-line` (the element that holds
-  the glyphs), **not** on the parent — the masked-reveal wrappers break the clip
-  otherwise, and the name renders invisible.
-- **Buttons** are fluid-glass keys (`.glass-btn`): frosted translucent panel,
-  backdrop blur, light sweep on hover, signal glow, index + arrow. Modelled on
-  the Framer "fluid glass button". Deliberately small.
-- Background: near-black, blue radial pool toned down and shifted up-right to
-  match where the light hits the robot. **All vertical grid lines removed** (the
-  `GridLines` component still exists in `ui/Chrome.tsx` but is no longer
-  rendered).
+- **Top bar on every page including the landing** (`ui/Chrome.tsx` `Nav`).
+  Same height, same margins, same four links in the same place. Only the
+  left-hand slot differs: interior pages show "Ekam Kooner" linking home, the
+  landing shows the dateline "Calgary → Vancouver" — because the landing
+  already sets the name six times larger a few hundred pixels below.
+- **The name's character is a vertical ink ramp**, near-black at the cap
+  line into a deep violet at the baseline, set with `background-clip:
+  text` on `.reveal-line` (never the parent — the masked-reveal wrapper
+  breaks the clip and the name vanishes). An offset purple OUTLINE was
+  tried here and rejected by Ekam: it read as a printing error.
+- **The masthead nav links are set in Forum**, the second voice, like
+  every other word whose job is to name a place.
+- **The name block is centred inside the left column and sits low**
+  (`align-self: end` + `padding-bottom: 12vh`), so the eye lands on the
+  machine first and reads the name second. It is NOT centred on the page —
+  Ekam chose the two-column version.
+- Order inside the block: name → role line → sub-line → quick links.
+  - Role line: "Biomedical Engineering (Robotics Specialization) · UBC".
+  - Sub-line, Ekam's pick, broken on the sentence with an explicit `<br/>`:
+    "Robot arms and grippers, for now. / Humanoids are the point."
+  - Quick links: GitHub, LinkedIn, Email, carrying the shared `.link` gesture.
+- **Spline humanoid** on the right (scene
+  `https://prod.spline.design/kZDDjO5HuC9GJUM2/scene.splinecode`), 46% wide so
+  its column starts clear of the type. The scene animates its own camera
+  between a bust and a full-body framing — that variation is the scene's, not
+  a bug, and it cannot be reframed from CSS. A glossy black machine on white
+  paper is the whole idea; do not add a mask, a fog, or a painted shadow (a
+  fixed ellipse was tried and never sits under the moving feet).
+- The landing is exactly one screen, `overflow: hidden`, and does not scroll.
+- The ruled "door index" (01 About / 02 Projects …) that briefly replaced the
+  glass keys is **gone** — Ekam wanted the top bar instead, and two navigations
+  to the same four places was the problem it created.
 
 ---
+
 
 ## 7. The About page — the centrepiece
 
@@ -160,9 +203,9 @@ The manifesto from the current site, near-verbatim ("Who is engineering for?" �
 with UBC Bionics", etc.) were **explicitly removed** — do not reintroduce them.
 
 ### Typography
-One serif (Zilla Slab), two sizes only: `.a-lead` (statement) and `.a-body`
-(everything else). `.a-soft` is the same size as body, just lighter with a signal
-rule on the leading edge — never shrunken grey text.
+One serif (**Old Standard TT**), two sizes only: `.a-lead` (statement) and
+`.a-body` (everything else). `.a-soft` is the same size as body, just lighter
+and italic with a hairline rule on the leading edge — never shrunken grey text.
 
 ### Reveal
 `.unblur` — each line resolves from `blur(10px)` + rise as it enters. Two

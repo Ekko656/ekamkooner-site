@@ -8,33 +8,13 @@ import { PROJECTS, type Project } from '../data/projects'
 
 const TAGS = ['All', 'Robotics', 'Software', 'Hardware']
 
+/* A card is a still and a ruled caption. It used to tilt toward the
+   pointer in 3D; a photograph pinned to a page does not do that, and
+   doing it on nine cards at once was most of what made the board feel
+   like a demo. The hover is a lift and a rule that takes the accent. */
 function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
-  const el = useRef<HTMLButtonElement>(null)
-
-  useEffect(() => {
-    const card = el.current
-    if (!card) return
-    const rx = gsap.quickTo(card, 'rotationY', { duration: 0.5, ease: 'mechOut' })
-    const ry = gsap.quickTo(card, 'rotationX', { duration: 0.5, ease: 'mechOut' })
-    const move = (e: PointerEvent) => {
-      const r = card.getBoundingClientRect()
-      rx(((e.clientX - r.left) / r.width - 0.5) * 7)
-      ry(-((e.clientY - r.top) / r.height - 0.5) * 7)
-    }
-    const leave = () => {
-      rx(0)
-      ry(0)
-    }
-    card.addEventListener('pointermove', move)
-    card.addEventListener('pointerleave', leave)
-    return () => {
-      card.removeEventListener('pointermove', move)
-      card.removeEventListener('pointerleave', leave)
-    }
-  }, [])
-
   return (
-    <button ref={el} className="card" data-cursor="Open" onClick={() => onOpen(p)}>
+    <button className="card" onClick={() => onOpen(p)}>
       {/* strictly a still. Video only ever plays in the detail popup. */}
       <figure className="card-media">
         <img src={p.preview} alt={p.title} loading="lazy" />
@@ -103,7 +83,7 @@ function Detail({ p, onClose }: { p: Project; onClose: () => void }) {
   return createPortal(
     <div className="detail" role="dialog" aria-label={p.title} onClick={(e) => e.target === e.currentTarget && onClose()}>
       <div className="detail-panel" ref={panel} data-lenis-prevent>
-        <button className="detail-close" data-cursor="Close" onClick={onClose} aria-label="Close">
+        <button className="detail-close" onClick={onClose} aria-label="Close">
           <span />
           <span />
         </button>
@@ -146,7 +126,6 @@ function Detail({ p, onClose }: { p: Project; onClose: () => void }) {
           {audio && !p.embed && (
             <button
               className="media-sound"
-              data-cursor={muted ? 'Unmute' : 'Mute'}
               aria-label={muted ? 'Unmute video' : 'Mute video'}
               onClick={() => setMuted((m) => !m)}
             >
@@ -179,7 +158,7 @@ function Detail({ p, onClose }: { p: Project; onClose: () => void }) {
           {p.links.length > 0 && (
             <div className="sheet-links">
               {p.links.map((l) => (
-                <a key={l.label} href={l.href} target="_blank" rel="noreferrer" className="link-wipe" data-cursor="Open">
+                <a key={l.label} href={l.href} target="_blank" rel="noreferrer" className="link">
                   {l.label}
                 </a>
               ))}
@@ -233,7 +212,6 @@ export default function Projects() {
               <button
                 key={t}
                 className={`board-tag${tag === t ? ' is-active' : ''}`}
-                data-cursor="Filter"
                 onClick={() => setTag(t)}
               >
                 {t}

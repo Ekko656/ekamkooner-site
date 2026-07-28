@@ -8,7 +8,7 @@ export default function Contact() {
       <p className="section-index reveal">
         <span className="index-num">04</span> Contact
       </p>
-      <a className="contact-cta" href={`mailto:${CONTACT.email}`} data-cursor="Send" data-magnetic>
+      <a className="contact-cta" href={`mailto:${CONTACT.email}`}>
         <span className="mask-line">
           <span className="reveal-line">Let's build.</span>
         </span>
@@ -17,13 +17,13 @@ export default function Contact() {
         Robotics, embedded systems, internships, or whatever you are building.
       </p>
       <div className="contact-links">
-        <a href={CONTACT.github} target="_blank" rel="noreferrer" className="link-wipe" data-cursor="Open">
+        <a href={CONTACT.github} target="_blank" rel="noreferrer" className="link">
           GitHub
         </a>
-        <a href={CONTACT.linkedin} target="_blank" rel="noreferrer" className="link-wipe" data-cursor="Open">
+        <a href={CONTACT.linkedin} target="_blank" rel="noreferrer" className="link">
           LinkedIn
         </a>
-        <a href={`mailto:${CONTACT.email}`} className="link-wipe" data-cursor="Send">
+        <a href={`mailto:${CONTACT.email}`} className="link">
           {CONTACT.email}
         </a>
       </div>

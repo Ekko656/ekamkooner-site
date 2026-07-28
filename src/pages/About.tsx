@@ -143,7 +143,7 @@ export default function About() {
         /* stagger lines that share a beat so they resolve in a small
            cascade rather than all at once */
         const stack = Array.from(el.parentElement?.querySelectorAll(':scope > .unblur') ?? [])
-        const lineDelay = stack.indexOf(el) * 0.14
+        const lineDelay = stack.indexOf(el) * 0.07
         const words = splitWords(el)
         if (!words.length) return
 
@@ -151,8 +151,13 @@ export default function About() {
            motion, not in decoration: its words drift in slower, and the
            whole line breathes in from wide tracking to its resting set */
         const soft = el.classList.contains('a-soft')
-        const delay = inView ? 0.25 + lineDelay : lineDelay
-        const trigger = inView ? undefined : { trigger: el, start: 'top 84%' }
+        const delay = inView ? 0.2 + lineDelay : lineDelay
+        /* Fires earlier and resolves quicker than it used to. At 84% and
+           0.85s a line was still mid-cascade by the time it had scrolled
+           near the top of the screen, which reads as lag rather than as
+           an entrance. It now starts as the line clears the bottom edge
+           and is finished well before it is being read. */
+        const trigger = inView ? undefined : { trigger: el, start: 'top 96%' }
 
         /* the blur is the expensive half of this reveal: a per-word filter
            on every span in the beat, re-rasterised each frame. The low
@@ -168,11 +173,11 @@ export default function About() {
             ...blurTo,
             yPercent: 0,
             xPercent: 0,
-            duration: soft ? 1.2 : 0.85,
+            duration: soft ? 0.7 : 0.5,
             ease: 'mechOut',
             /* words arrive in a cascade; the whole line still resolves
                quickly enough to read as one movement */
-            stagger: soft ? 0.085 : 0.045,
+            stagger: soft ? 0.045 : 0.022,
             /* elements already on screen at load play on their own; the
                rest play as they scroll into view */
             delay,
@@ -195,7 +200,7 @@ export default function About() {
             { letterSpacing: '0.09em' },
             {
               letterSpacing: '0.01em',
-              duration: 1.7,
+              duration: 0.95,
               ease: 'mechOut',
               delay,
               scrollTrigger: trigger ? { ...trigger } : undefined,
@@ -228,34 +233,10 @@ export default function About() {
     let spin = 0
     let spinV = 0
     let tossT = 0
-    /* cursor tilt, the same gesture the project cards use. It has to be
-       folded into the transform this loop writes each frame, or the two
-       would overwrite each other. */
-    let tiltX = 0
-    let tiltY = 0
-    let wantX = 0
-    let wantY = 0
     /* last values actually written to the element, so a still card is not
        re-styled sixty times a second */
     let lastTransform = ''
     let lastPointerEvents = ''
-    const onPointer = (e: PointerEvent) => {
-      const el = card.current
-      if (!el || mode !== 'toss') {
-        wantX = wantY = 0
-        return
-      }
-      const r = el.getBoundingClientRect()
-      const inside =
-        e.clientX >= r.left - 40 && e.clientX <= r.right + 40 && e.clientY >= r.top - 40 && e.clientY <= r.bottom + 40
-      if (!inside) {
-        wantX = wantY = 0
-        return
-      }
-      wantY = ((e.clientX - r.left) / r.width - 0.5) * 8
-      wantX = -((e.clientY - r.top) / r.height - 0.5) * 8
-    }
-    window.addEventListener('pointermove', onPointer)
     const tick = (now: number) => {
       const dt = Math.min((now - last) / 1000, 0.05)
       last = now
@@ -344,33 +325,12 @@ export default function About() {
         vx = vy = spin = spinV = 0
       }
 
-      /* the tilt eases toward the cursor only once the card has landed */
-      if (mode !== 'toss') wantX = wantY = 0
-      const k = Math.min(1, dt * 7)
-      tiltX += (wantX - tiltX) * k
-      tiltY += (wantY - tiltY) * k
-
-      /* Move the highlight. It answers the tilt, so leaning the card
-         slides the specular across it the way a real panel catches a
-         lamp, and a slow independent drift keeps the surface alive even
-         when the cursor is nowhere near it.
-
-         Only while the card is on stage. This is a backdrop-blurred
-         panel, so every write here forces the whole area behind it to be
-         re-blurred; doing that all the way down the page for a card that
-         is parked below the fold is pure cost. */
-      if (mode !== 'stowed') {
-        const ts = now / 1000
-        const gx = 32 - tiltY * 3.4 + Math.sin(ts * 0.11) * 9
-        const gy = 20 - tiltX * 3.2 + Math.cos(ts * 0.083) * 7
-        el.style.setProperty('--gx', `${gx}%`)
-        el.style.setProperty('--gy', `${gy}%`)
-      }
-
+      /* The card is a sheet of paper the machine is carrying, so the
+         only thing it does is move and turn. It used to lean toward the
+         cursor and slide a specular highlight across a glass surface;
+         both went with the glass. */
       el.style.transformOrigin = '50% 50%'
-      const next =
-        `perspective(780px) translate3d(${cx - w / 2}px, ${cy - h / 2}px, 0) ` +
-        `rotate(${spin}deg) rotateX(${tiltX}deg) rotateY(${tiltY}deg)`
+      const next = `translate3d(${cx - w / 2}px, ${cy - h / 2}px, 0) rotate(${spin}deg)`
       /* stowed, the card sits still: writing the same transform every
          frame still dirties the layer, so only write on a real change */
       if (next !== lastTransform) {
@@ -389,7 +349,6 @@ export default function About() {
     return () => {
       ctx.revert()
       cancelAnimationFrame(raf)
-      window.removeEventListener('pointermove', onPointer)
     }
   }, [])
 
@@ -448,8 +407,6 @@ export default function About() {
           project detail panel hits; do not move this back inside. */}
       {createPortal(
         <aside className="oc-card" ref={card}>
-          {/* the key light's specular sweep across the glass */}
-          <span className="oc-gloss" aria-hidden />
           <div className="oc-head">
             <p className="oc-kicker">Off the clock</p>
             <span className="oc-serial" aria-hidden>

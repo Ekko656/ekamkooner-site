@@ -7,8 +7,7 @@ import './lib/eases'
 import { session } from './lib/session'
 import { perf } from './lib/perf'
 import Stage from './scene/Stage'
-import Cursor from './ui/Cursor'
-import { Grain, Nav, Readouts, Clock } from './ui/Chrome'
+import { Nav, ReadProgress } from './ui/Chrome'
 import Landing from './pages/Landing'
 import About, { bindAboutScroll } from './pages/About'
 import Projects from './pages/Projects'
@@ -30,6 +29,14 @@ function Shell() {
       session.assemblyTarget = 0
       session.assembly = 0
       session.cardPull = 0
+      /* Also clear what the closing performance left behind. `session` is
+         a module singleton, so leaving `cardTossed` true meant that on
+         coming back to About the card's own safety net fired instantly
+         and parked it in its resting spot — visible, mid-page, before the
+         arm had even finished building. */
+      session.cardTossed = false
+      session.gripHold = false
+      session.grip.active = false
     }
 
     /* Smooth scroll is a hijack: the wheel stops moving the page and
@@ -98,23 +105,7 @@ function Shell() {
         })
       })
       /* the landing entrance is choreographed in Landing.tsx, so that the
-         name, the line under it and the keys share one clock */
-      /* magnetic elements */
-      gsap.utils.toArray<HTMLElement>('[data-magnetic]').forEach((el) => {
-        const xTo = gsap.quickTo(el, 'x', { duration: 0.4, ease: 'mechOut' })
-        const yTo = gsap.quickTo(el, 'y', { duration: 0.4, ease: 'mechOut' })
-        const move = (e: PointerEvent) => {
-          const r = el.getBoundingClientRect()
-          xTo((e.clientX - (r.left + r.width / 2)) * 0.08)
-          yTo((e.clientY - (r.top + r.height / 2)) * 0.18)
-        }
-        const leave = () => {
-          xTo(0)
-          yTo(0)
-        }
-        el.addEventListener('pointermove', move)
-        el.addEventListener('pointerleave', leave)
-      })
+         name, the line under it and the doors share one clock */
       if (pathname === '/about') bindAboutScroll()
     }, main)
 
@@ -136,10 +127,18 @@ function Shell() {
     return () => window.removeEventListener('pointermove', onMove)
   }, [])
 
+  /* The 3D stage exists for one reason — the arm — so it is only
+     mounted where the arm is. Every other page is paper and type, and
+     pays nothing for a renderer it does not use. */
+  const onAbout = pathname === '/about'
+
   return (
     <>
-      <Stage showArm={pathname === '/about'} />
-      <main ref={main}>
+      <a className="skip-link" href="#main">
+        Skip to content
+      </a>
+      {onAbout && <Stage showArm />}
+      <main id="main" ref={main}>
         <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/about" element={<About />} />
@@ -149,10 +148,7 @@ function Shell() {
         </Routes>
       </main>
       <Nav />
-      {pathname === '/about' && <Readouts />}
-      <Clock />
-      <Grain />
-      <Cursor />
+      {pathname !== '/' && <ReadProgress />}
     </>
   )
 }

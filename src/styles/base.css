@@ -1,5 +1,10 @@
 /* ============================================================
-   base: reset, page ground, blueprint grid, grain
+   base: reset, the paper ground, and the shared primitives every
+   page is built out of — the page frame, the label, the rule, the
+   button, the link.
+
+   Anything defined here is used on more than one page. If it is
+   only used once it belongs in site.css next to its page.
    ============================================================ */
 
 *,
@@ -12,40 +17,24 @@
 
 html {
   scrollbar-width: thin;
-  scrollbar-color: var(--navy-700) var(--navy-950);
+  scrollbar-color: var(--rule-strong) var(--paper);
 }
 
 html,
 body {
-  background: var(--navy-950);
-  color: var(--ice-200);
-  font-family: var(--font-display);
-  font-size: 16px;
-  line-height: 1.5;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
-}
-
-@media (pointer: fine) {
-  body,
-  body a,
-  body button {
-    cursor: none;
-  }
-}
-/* no custom reticle on the low tier, so the real one has to come back */
-html[data-perf='low'] body,
-html[data-perf='low'] body a,
-html[data-perf='low'] body button {
-  cursor: auto;
-}
-html[data-perf='low'] body a,
-html[data-perf='low'] body button {
-  cursor: pointer;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: var(--signal);
-  color: var(--navy-950);
+  background: var(--accent);
+  color: var(--paper);
 }
 
 a {
@@ -58,10 +47,34 @@ button {
   border: none;
   color: inherit;
   font: inherit;
+  cursor: pointer;
 }
 
-/* ---- fixed layers ---- */
+img,
+video,
+canvas {
+  display: block;
+  max-width: 100%;
+}
 
+/* ---- focus ----
+   One ring, everywhere, in the accent. Keyboard users get the same
+   quality of feedback the pointer gets; that is half of what the
+   accent is for. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ============================================================
+   primitives
+   ============================================================ */
+
+/* the fixed 3D canvas the machines live in */
 .layer-canvas {
   position: fixed;
   inset: 0;
@@ -69,60 +82,210 @@ button {
   pointer-events: none;
 }
 
-/* blueprint column guides: few, weighted, quiet */
-.layer-grid {
-  position: fixed;
-  inset: 0 var(--margin);
-  z-index: var(--z-grid);
-  pointer-events: none;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-}
-.layer-grid span {
-  border-left: 2px solid var(--navy-600);
-  opacity: 0.07;
-  transition: opacity 0.5s var(--ease-mech-out);
-}
-.layer-grid span:last-child {
-  border-right: 2px solid var(--navy-600);
-}
-.layer-grid.is-humming span {
-  opacity: 0.16;
+/* ---- the label ----
+   Forum, small, letter-spaced, title case. This is the only way a
+   thing gets named on this site: section headers, field labels, card
+   categories, footers. Never uppercase — the roman face is already
+   formal enough, and shouting it was the old site's tell. */
+.label {
+  font-family: var(--font-voice);
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
+  line-height: 1.4;
+  color: var(--ink-3);
 }
 
-/* film grain */
-.layer-grain {
-  position: fixed;
-  inset: -100px;
-  z-index: var(--z-grain);
-  pointer-events: none;
-  opacity: 0.045;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  animation: grain-jitter 0.9s steps(4) infinite;
+/* a label with its index, sitting above a page title */
+.section-index {
+  display: flex;
+  align-items: baseline;
+  gap: var(--s-2);
+  font-family: var(--font-voice);
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
+  color: var(--ink-3);
 }
-@keyframes grain-jitter {
-  0% { transform: translate(0, 0); }
-  25% { transform: translate(-32px, 18px); }
-  50% { transform: translate(22px, -26px); }
-  75% { transform: translate(-14px, -12px); }
-  100% { transform: translate(0, 0); }
+/* the numeral is ink like everything else; the accent is reserved
+   for state, and a section index is not a state */
+.section-index .index-num {
+  color: var(--ink);
 }
-
-@media (prefers-reduced-motion: reduce) {
-  .layer-grain {
-    animation: none;
-  }
-}
-/* The grain jitter repaints a full-viewport noise bitmap four times a
-   second. That is a composited transform on an accelerated machine and a
-   full-screen CPU raster without one, so the low tier keeps the texture
-   and drops the movement. */
-html[data-perf='low'] .layer-grain {
-  animation: none;
+.section-index::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+  transform: translateY(-0.25em);
 }
 
-/* masked line reveal container */
+/* ---- the rule ----
+   One hairline weight. It separates; it never decorates. */
+.rule {
+  height: 1px;
+  background: var(--rule);
+  border: 0;
+}
+
+/* ---- buttons ----
+   Three ranks, one shape, one motion. Every pressable thing on the
+   site is one of these, which is what makes a page of controls read
+   as a set instead of a collection. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 0.72em 1.15em;
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  line-height: 1;
+  border: 1px solid transparent;
+  transition:
+    background var(--dur-fast) var(--ease-mech-out),
+    border-color var(--dur-fast) var(--ease-mech-out),
+    color var(--dur-fast) var(--ease-mech-out),
+    transform var(--dur-fast) var(--ease-mech-out);
+}
+/* the press. One pixel, on everything, always the same. */
+.btn:active {
+  transform: translateY(1px);
+}
+
+.btn-primary {
+  background: var(--ink);
+  color: var(--paper);
+}
+.btn-primary:hover {
+  background: var(--accent);
+}
+
+.btn-secondary {
+  background: var(--paper-raised);
+  color: var(--ink);
+  border-color: var(--rule-strong);
+  box-shadow: var(--lift);
+}
+.btn-secondary:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.btn-ghost {
+  background: none;
+  color: var(--ink-2);
+  border-color: var(--rule);
+}
+.btn-ghost:hover {
+  color: var(--ink);
+  border-color: var(--rule-strong);
+}
+.btn-ghost.is-active {
+  background: var(--accent-wash);
+  color: var(--accent-deep);
+  border-color: transparent;
+}
+
+/* ---- links ----
+   ONE link gesture for the whole site: a hairline draws in from the
+   left as the ink turns. It is the same movement as the active-page
+   marker in the masthead, which is what makes a link feel like the
+   same object whether it is under your name, in a project sheet, or
+   on the contact page. There used to be two treatments — a permanent
+   grey underline here and a wipe there — and two is how a site starts
+   feeling assembled rather than designed. */
+.link {
+  position: relative;
+  display: inline-block;
+  color: var(--ink-2);
+  padding-bottom: 4px;
+  transition: color var(--dur-fast) var(--ease-mech-out);
+}
+.link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 1px;
+  background: var(--accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-med) var(--ease-mech-out);
+}
+.link:hover {
+  color: var(--accent-deep);
+}
+.link:hover::after {
+  transform: scaleX(1);
+}
+
+/* a standalone action link, with a mark that shifts */
+.link-out {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.5em;
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink-2);
+  transition: color var(--dur-fast) var(--ease-mech-out);
+}
+.link-out::after {
+  content: '\2192';
+  transition: transform var(--dur-fast) var(--ease-mech-out);
+}
+.link-out:hover {
+  color: var(--accent);
+}
+.link-out:hover::after {
+  transform: translateX(4px);
+}
+
+/* ---- emphasis ----
+   Emphasis is typographic and nothing else: the phrase that carries
+   a line is set in the italic, in the same ink as the rest of it.
+   Recolouring letters was tried and cut — a purple word in a black
+   sentence reads as a broken link, not as weight.
+
+   That leaves the accent meaning exactly one thing everywhere on the
+   site: this is live, this is hovered, or this is where you are. */
+em,
+em.key,
+.key {
+  font-style: italic;
+  color: inherit;
+}
+
+/* ---- reveals ----
+   Two shared entrances, used everywhere. Both are short, both move
+   the same direction, and both are off for anyone who asked for
+   less motion. */
+.reveal {
+  opacity: 0;
+  transform: translateY(16px);
+}
 .mask-line {
   overflow: hidden;
   display: block;
+}
+.reveal-line {
+  display: block;
+  transform: translateY(105%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+  }
+  .reveal-line {
+    transform: none;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

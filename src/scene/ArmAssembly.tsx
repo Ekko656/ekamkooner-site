@@ -18,6 +18,8 @@ import { session } from '../lib/session'
 
 type Part = {
   geom: THREE.BufferGeometry
+  /* the part's silhouette and hard creases, precomputed once — see EDGE_MAT */
+  edges: THREE.BufferGeometry
   mat: THREE.Material
   aPos: THREE.Vector3
   aQuat: THREE.Quaternion
@@ -161,27 +163,43 @@ const smooth01 = (x: number) => {
   return t * t * (3 - 2 * t)
 }
 
-/* colour: warm white printed shell, gunmetal servos, brushed steel base.
-   No blue anywhere on the machine. */
+/* Colour, inverted for paper.
+
+   On the navy site the shell was warm white so it would read against a
+   dark ground. On a white sheet that machine disappears, so the values
+   flip: a graphite printed shell, brushed steel servos, a dark steel
+   base. It is a dark object on a light page, which is the same
+   relationship the humanoid on the landing has.
+
+   One part is not metal-coloured: the jaw. It is anodised in the
+   site's purple, so the accent lands on the part of the machine that
+   actually does the work, and it is the only colour in the scene. */
 function makeMats() {
   const shell = new THREE.MeshStandardMaterial({
-    color: '#e9edf5',
-    metalness: 0.35,
-    roughness: 0.4,
-    envMapIntensity: 0.85,
+    color: '#2b2b32',
+    metalness: 0.3,
+    roughness: 0.45,
+    envMapIntensity: 1.0,
   })
   const servo = new THREE.MeshStandardMaterial({
-    color: '#4a5160',
-    metalness: 0.8,
-    roughness: 0.32,
-    envMapIntensity: 1.25,
+    color: '#9a9aa4',
+    metalness: 0.85,
+    roughness: 0.3,
+    envMapIntensity: 1.2,
   })
   const base = new THREE.MeshStandardMaterial({
-    color: '#b6bcc9',
-    metalness: 0.6,
-    roughness: 0.34,
-    envMapIntensity: 0.95,
+    color: '#3d3d46',
+    metalness: 0.7,
+    roughness: 0.36,
+    envMapIntensity: 1.0,
   })
+  /* The gripper is the same graphite as the rest of the shell.
+
+     It was anodised purple for a while — first the moving jaw alone,
+     then both halves. Both versions were rejected: a coloured claw on a
+     graphite machine reads as a part from a different robot, and it put
+     the accent somewhere the accent has no business being. The machine
+     is one material now, and the only colour on the page is state. */
   const pick = (src: string) => {
     if (src.includes('sts3215')) return servo
     if (src.includes('base_so101') || src.includes('base_motor_holder')) return base
@@ -189,6 +207,23 @@ function makeMats() {
   }
   return { pick }
 }
+
+/* ---- the drawn edge ----
+   Every part carries a line copy of its own silhouette and hard creases,
+   drawn in ink over the shaded solid. It is what makes the machine read
+   as a technical drawing sitting on the paper rather than a render
+   pasted onto it, and it is the same hairline language the page uses
+   everywhere else.
+
+   32 degrees is the crease threshold: high enough that the curved shells
+   and fillets stay smooth, low enough that every machined face, bolt
+   boss and slot still draws its own outline. */
+const EDGE_MAT = new THREE.LineBasicMaterial({
+  color: '#12121a',
+  transparent: true,
+  opacity: 0.42,
+})
+const EDGE_ANGLE = 32
 
 export default function ArmAssembly() {
   const [parts, setParts] = useState<Part[] | null>(null)
@@ -271,10 +306,16 @@ export default function ArmAssembly() {
         const mat = pick(src)
         mesh.material = mat
         mesh.castShadow = true
+        /* one EdgesGeometry per part, shared by the live robot (as a child
+           of the mesh, so it inherits every joint transform for free) and
+           by the baked exploded parts further down */
+        const edges = new THREE.EdgesGeometry(mesh.geometry as THREE.BufferGeometry, EDGE_ANGLE)
+        mesh.add(new THREE.LineSegments(edges, EDGE_MAT))
         mesh.updateWorldMatrix(true, false)
         mesh.matrixWorld.decompose(tmpP, tmpQ, tmpS)
         collected.push({
           geom: mesh.geometry as THREE.BufferGeometry,
+          edges,
           mat,
           aPos: tmpP.clone().multiplyScalar(ARM_SCALE),
           aQuat: tmpQ.clone(),
@@ -526,7 +567,10 @@ export default function ArmAssembly() {
       if (ring.current) {
         const mat = ring.current.material as THREE.MeshBasicMaterial
         ring.current.scale.setScalar(0.2)
-        mat.opacity = 0.9
+        /* a hairline pulse, not a neon shockwave: it reads as the
+           machine confirming it is whole, at the weight of every other
+           rule on the site */
+        mat.opacity = 0.45
         gsap.to(ring.current.scale, { x: 3.4, y: 3.4, z: 3.4, duration: 0.9, ease: 'power3.out' })
         gsap.to(mat, { opacity: 0, duration: 0.9, ease: 'power2.out' })
       }
@@ -557,12 +601,13 @@ export default function ArmAssembly() {
             }}
           >
             <mesh geometry={p.geom} material={p.mat} scale={ARM_SCALE} castShadow />
+            <lineSegments geometry={p.edges} material={EDGE_MAT} scale={ARM_SCALE} />
           </group>
         ))}
       </group>
       <mesh ref={ring} position={[0, 1.1, 0.4]}>
         <ringGeometry args={[0.96, 1, 48]} />
-        <meshBasicMaterial color={'#6e8cff'} transparent opacity={0} side={THREE.DoubleSide} />
+        <meshBasicMaterial color={'#6b3fa0'} transparent opacity={0} side={THREE.DoubleSide} />
       </mesh>
     </group>
   )

@@ -61,7 +61,7 @@ export default function Resume() {
             <span className="reveal-line">The short version, on paper.</span>
           </span>
         </h1>
-        <a className="resume-download link-wipe reveal" href="/resume.pdf" download="Ekam-Kooner-Resume.pdf" data-cursor="Save">
+        <a className="resume-download link-out reveal" href="/resume.pdf" download="Ekam-Kooner-Resume.pdf">
           Download PDF
         </a>
       </header>

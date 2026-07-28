@@ -12,7 +12,6 @@ import * as THREE from 'three'
 import { session } from '../lib/session'
 import { perf, onTier } from '../lib/perf'
 import ArmAssembly from './ArmAssembly'
-import Dust from './Dust'
 
 /* ---- About camera rig ----
    The machine always takes the half of the screen the text is not on.
@@ -161,66 +160,14 @@ function PaintOnSettle() {
   return null
 }
 
-function Glow() {
-  const tex = useMemo(() => {
-    const c = document.createElement('canvas')
-    c.width = 256
-    c.height = 256
-    const ctx = c.getContext('2d')!
-    const g = ctx.createRadialGradient(128, 128, 0, 128, 128, 128)
-    /* a restrained cool pool, dimmer and less saturated so the ground
-       reads near-black and the robot's own reflections carry the scene */
-    g.addColorStop(0, 'rgba(26, 36, 70, 0.34)')
-    g.addColorStop(0.45, 'rgba(14, 20, 42, 0.16)')
-    g.addColorStop(1, 'rgba(5, 8, 15, 0)')
-    ctx.fillStyle = g
-    ctx.fillRect(0, 0, 256, 256)
-    const t = new THREE.CanvasTexture(c)
-    t.colorSpace = THREE.SRGBColorSpace
-    return t
-  }, [])
-  /* sit the pool up and to the right, where the key light hits the robot */
-  return (
-    <mesh position={[2.4, 0.6, -5]}>
-      <planeGeometry args={[22, 16]} />
-      <meshBasicMaterial map={tex} transparent depthWrite={false} />
-    </mesh>
-  )
-}
+/* No ground, deliberately.
 
-/* two star layers: a mid field and a far dim field, both drifting very
-   slowly so the background is never a dead poster */
-function Starfield({ count, depth, size, opacity, speed }: { count: number; depth: [number, number]; size: number; opacity: number; speed: number }) {
-  const ref = useMemo(() => ({ points: null as THREE.Object3D | null }), [])
-  /* No pixel-ratio compensation here, deliberately. Three computes
-     gl_PointSize in device pixels from the drawing buffer's height, so
-     the ratio cancels: a star covers the same CSS area at dpr 1 as at
-     dpr 2. Dropping the tier's dpr does not shrink the sky. */
-  const geom = useMemo(() => {
-    const pos = new Float32Array(count * 3)
-    for (let i = 0; i < count; i++) {
-      pos[i * 3] = (Math.random() - 0.5) * 52
-      pos[i * 3 + 1] = (Math.random() - 0.5) * 30
-      pos[i * 3 + 2] = depth[0] - Math.random() * (depth[1] - depth[0]) * -1
-    }
-    const g = new THREE.BufferGeometry()
-    g.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-    return g
-  }, [count, depth])
-  useFrame(({ clock }) => {
-    if (ref.points) ref.points.rotation.z = Math.sin(clock.elapsedTime * 0.008 * speed) * 0.02 * speed
-  })
-  return (
-    <points
-      geometry={geom}
-      ref={(p) => {
-        ref.points = p
-      }}
-    >
-      <pointsMaterial color={'#9daccf'} size={size} sizeAttenuation transparent opacity={opacity} depthWrite={false} />
-    </points>
-  )
-}
+   A contact shadow was tried here and removed. The machine on this
+   page is being assembled in mid-air out of parts that are still
+   flying into place — it has no floor to cast onto, and the soft
+   ellipse that stood in for one read as a grey smudge across the
+   lower half of the paper. The parts carry their own form from the
+   lighting; the page stays clean sheet. */
 
 export default function Stage({ showArm }: { showArm: boolean }) {
   session.armVisible = showArm
@@ -252,28 +199,32 @@ export default function Stage({ showArm }: { showArm: boolean }) {
         gl={{ antialias: !low, alpha: true, toneMapping: THREE.ACESFilmicToneMapping }}
         camera={{ position: IDLE_FRAME.pos.toArray(), fov: 38, near: 0.1, far: 60 }}
       >
-        <ambientLight intensity={0.34} color={'#c2cee8'} />
-        <hemisphereLight intensity={0.3} color={'#d6e0f5'} groundColor={'#05070d'} />
-        <directionalLight position={[4, 6, 7]} intensity={1.5} color={'#f4f7ff'} />
-        <directionalLight position={[-6, 2, -4]} intensity={0.32} color={'#6e8cff'} />
-        <directionalLight position={[0, -1, 8]} intensity={0.24} color={'#9fb2e8'} />
+        {/* Daylight on paper. The scene used to be lit cold and blue to
+            sit in a navy void; on a white sheet the machine has to be
+            lit the way an object on a desk is lit — a bright key from
+            the front left, a soft bounce off the paper from below, and
+            an overhead softbox for the length of the highlights.
+
+            One light is not white: a low, cool purple from behind,
+            which is where the site's accent shows up in the metal. It
+            is a rim, not a colour cast. */}
+        <ambientLight intensity={0.55} color={'#ffffff'} />
+        <hemisphereLight intensity={0.6} color={'#ffffff'} groundColor={'#e6e2da'} />
+        <directionalLight position={[4, 6, 7]} intensity={1.35} color={'#ffffff'} />
+        <directionalLight position={[-6, 2, -4]} intensity={0.45} color={'#b9a8e0'} />
+        <directionalLight position={[0, -2, 6]} intensity={0.3} color={'#fffaf2'} />
         <Environment resolution={low ? 32 : 128}>
-          <Lightformer intensity={1.1} position={[-4, 3, 4]} scale={[7, 5, 1]} color={'#e8eeff'} />
-          <Lightformer intensity={0.5} position={[5, 1, -3]} scale={[5, 4, 1]} color={'#6e8cff'} />
-          <Lightformer intensity={0.7} position={[0, 6, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[8, 8, 1]} color={'#cfd9f4'} />
+          <Lightformer intensity={1.4} position={[-4, 3, 4]} scale={[7, 5, 1]} color={'#ffffff'} />
+          <Lightformer intensity={0.9} position={[0, 6, 0]} rotation={[Math.PI / 2, 0, 0]} scale={[9, 9, 1]} color={'#ffffff'} />
+          {/* the paper itself, bouncing back up into the underside */}
+          <Lightformer intensity={0.55} position={[0, -5, 1]} rotation={[-Math.PI / 2, 0, 0]} scale={[9, 9, 1]} color={'#f2efe9'} />
+          <Lightformer intensity={0.4} position={[5, 1, -4]} scale={[5, 4, 1]} color={'#8f6fc9'} />
         </Environment>
         {showArm && (
           <Suspense fallback={null}>
             <ArmAssembly />
           </Suspense>
         )}
-        {/* the dust rewrites 620 positions every frame and reads the
-            camera to do it; the stars are static geometry by comparison,
-            so the low tier keeps the sky and loses the motes */}
-        {!low && <Dust />}
-        <Starfield count={low ? 260 : 620} depth={[-7, -12]} size={0.028} opacity={0.32} speed={1} />
-        <Starfield count={low ? 180 : 420} depth={[-13, -20]} size={0.04} opacity={0.18} speed={0.5} />
-        <Glow />
         <CameraRig />
         <PaintOnSettle />
       </Canvas>

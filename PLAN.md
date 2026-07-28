@@ -8,6 +8,147 @@ Last updated 2026-07-22, after commit `0dee822`.
 
 ---
 
+## 0. The paper overhaul (2026-07-27)
+
+Ekam's brief: strip every gimmick, stop looking AI-generated and
+scattered, go black and white, two or three families, no pure
+uppercase, no hairline-thin faces, keep the humanoid hero and the About
+arm assembly, and make the whole thing feel like one coherent object
+instead of cool tricks stuck together.
+
+Locked in this pass — the full rules now live in `CONTEXT.md` §5 and §6:
+
+- [x] **Paper and ink, sitewide.** Navy ground gone. `--paper #faf9f7`,
+  `--ink #131316`, one royal-purple accent that only ever reports state.
+- [x] **Three families.** Old Standard TT (the writing), Forum (naming
+  things), Schibsted Grotesk (anything you operate). Martian Mono, Zilla
+  Slab, Shantell Sans and Figtree deleted from disk.
+- [x] **Emphasis is the italic.** Ekam rejected purple letter-recolouring
+  outright: it reads as a broken link.
+- [x] **Gimmicks deleted:** particle name, custom cursor, dust, grain,
+  humming grid, BUILD readout, clock, magnetic buttons, card 3D tilt,
+  every glass surface.
+- [x] **One link gesture everywhere**, one button system, one focus ring,
+  a skip link, and a read-progress hairline that replaces the HUD.
+- [x] **The machines were re-lit for paper, not recoloured by hand.** The
+  arm's shell flipped from warm white to graphite, servos to brushed
+  steel, and the *jaw* is anodised purple — the accent lands on the part
+  that does the work. Stage lighting is now a white studio with one cool
+  purple rim.
+- [x] **Landing rebuilt twice.** First as a ruled door-index, which Ekam
+  rejected; now a shared top bar, the name centred low in the left
+  column, role line, sub-line, and three quick links.
+
+### Round two (same day) — Ekam's second pass
+
+- [x] **Sub-line** is now "Humanoids are the future."
+- [x] **The door index is gone**; navigation is the shared top bar on
+  every page, landing included. The bar's left slot carries the
+  dateline on the landing and the name everywhere else.
+- [x] **The name is centred in its column and sits low.** Its character
+  went through two versions: an offset purple outline (a registration
+  mark), which Ekam rejected as looking like a printing error, and the
+  one that stuck — a vertical ink ramp from near-black into a deep
+  violet, clipped to the glyphs. Depth in the ink, nothing drawn round
+  it.
+- [x] **Masthead nav links are set in Forum**, matching the labels.
+- [x] **GitHub / LinkedIn / email are marks, not words**, each filling
+  with the accent wash on hover.
+- [x] **Purple letter-recolouring removed everywhere.** `em` is the
+  italic in inherited ink; see CONTEXT.md §5.
+- [x] **CAD outlines on the arm.** Every part carries an EdgesGeometry
+  line copy at 32 degrees, drawn in ink over the shaded solid, on both
+  the exploded parts and the live robot.
+- [x] **Both gripper halves are anodised purple** (`moving_jaw` AND
+  `wrist_roll_follower`). Note the material is the LEAST metallic on
+  the machine on purpose — the studio environment is white, so a high
+  metalness reflected white straight back and the claw rendered silver.
+- [x] **About: body copy is much bigger** (clamp 1.4–1.75rem), the
+  reveals fire at `top 96%` and resolve in 0.5s instead of 0.85s, and
+  the off-clock card is 30rem instead of 20rem.
+- [x] **The card no longer appears on re-entry.** `session` is a module
+  singleton and `cardTossed`/`gripHold`/`grip.active` were not being
+  cleared when leaving About, so its safety net fired instantly on
+  return and parked the card mid-page. App.tsx clears them now.
+- [x] **Project detail media is sized by height** (`min(42vh, 26rem)`)
+  with the width following the media's own aspect, instead of running
+  the full 60rem column.
+- [x] **Resume is centred** — index, title, download and sheets.
+
+### Round three
+
+- [x] **The gripper is graphite again.** Purple on the claw was tried
+  twice (moving jaw alone, then both halves) and rejected both times:
+  a coloured claw on a graphite machine reads as a part off a different
+  robot. The machine is one material; the only colour on the site is
+  state.
+- [x] **The hero robot no longer floats up.** See below.
+- [x] **Links audited.** Every outbound URL resolves. Two look like
+  failures to a command-line check and are not: LinkedIn answers 999
+  and Devpost 403 to non-browser requests (bot-blocking), and the
+  Barrage demo is on Render's free tier, so a cold start takes ~25s
+  before it answers 200. Don't "fix" those.
+
+### How the humanoid was stopped from cropping AND drifting (hard-won, do not redo)
+
+The Spline scene frames itself on the machine's head. None of the
+obvious levers work and each was tried:
+- Resizing the canvas does nothing — a perspective camera's VERTICAL
+  extent is fixed by its field of view, so a taller or shorter box only
+  changes how much is cut off the sides.
+- `setZoom()` has no visible effect.
+- Writing the transform in `onLoad` does not flush: the values read
+  back correctly afterwards while the render still shows the old
+  framing.
+- A guard like `alive()` driven by a mounted-ref never runs, because
+  StrictMode's mount/unmount/mount leaves the flag false at the moment
+  the scene finishes loading.
+
+What works, in `pinRobot()` in `src/pages/Landing.tsx`: turn global
+events OFF (the scene re-frames itself from pointer events anywhere on
+the window — that is the intermittent cropping), then re-assert BOTH
+`Camera 2`'s z and the `Bot` root's scale and y **every frame**, each
+write nudged by a hair so the runtime does not skip it as a no-op. The
+camera pull-back is what actually widens the framing; scaling the model
+alone only makes a cropped machine smaller.
+
+Pinning the camera's **z alone is not enough** — that fixes the crop and
+leaves the drift. The scene flies the camera, so the machine rose about
+215px in five seconds and sailed off the top of the page. The whole
+position has to be held: x, y AND z.
+
+Current values: `CAM_X 0`, `CAM_Y 249`, `CAM_Z 1020`, `BOT_SCALE 0.46`,
+`BOT_Y 215`, measured at 1280x800 and confirmed stable over 8s.
+
+### Still open from this pass
+
+- [ ] **The About closing card gesture was never watched end to end.**
+  Driving the scroll from automation does not reliably enter the trigger
+  zone — the card stayed stowed below the frame in every scripted run.
+  The logic was not changed (only the card's styling, the cursor tilt and
+  the specular sweep were removed), but **Ekam should scroll the About
+  page to the bottom by hand once** and confirm the arm still dives,
+  grips, hauls and throws the card into place.
+- [ ] **The low tier (`?perf=low`) has not been re-checked** since the
+  paper rewrite. Most of what it used to disable (blurs, glass, particle
+  type, the cursor) no longer exists, so its rules in `site.css` are now
+  nearly empty and it may simply be fine — but it is unverified.
+- [ ] **Narrow widths are untested.** The breakpoints were rewritten
+  blind; only 1280x800 was actually looked at.
+
+### A verification method that finally works
+
+`CONTEXT.md` §9 and section 6 below say the WebGL stage cannot be seen —
+its canvas never initialises in the in-app preview pane. **It renders
+fine in real Chrome via the Claude-in-Chrome tools**, which is how the
+arm's new materials and the lock-in pulse were checked this pass. Use
+that for anything on the canvas. Two caveats: the pane's own screenshots
+composite the page into a larger canvas so they are not to scale, and
+synthetic wheel events do not drive Lenis — set `window.scrollTo` from
+`javascript_tool` instead.
+
+---
+
 ## 1. Landing page
 
 - [x] **Particle name** — kept on the name only. A full star-dim palette
