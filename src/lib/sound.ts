@@ -158,4 +158,4 @@ export const release = () =>
    Still well below the click, which is the point — a hover is not an
    event, it is a hint that something is live. */
 export const tick = () =>
-  play({ freq: 900, drop: 820, dur: 0.018, level: 0.077, snap: 0.3, snapHz: 4200 })
+  play({ freq: 900, drop: 820, dur: 0.018, level: 0.08, snap: 0.3, snapHz: 4200 })
