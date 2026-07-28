@@ -790,6 +790,12 @@
   background: var(--paper-raised);
   border-radius: var(--radius);
   box-shadow: var(--lift-high);
+  /* the same printed spine the off-clock card carries, so the two
+     sheets that open on top of the page are recognisably one object.
+     A border rather than a pseudo-element: the panel scrolls inside
+     itself, and an absolutely positioned bar would scroll away with
+     the content. */
+  border-top: 3px solid var(--accent);
 }
 
 .detail-close {

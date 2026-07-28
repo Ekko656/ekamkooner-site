@@ -84,12 +84,12 @@ const makeGesture = (): Gesture => ({ ...DISPLAY_POSE, grab01: 0 }) as Gesture
    back up, the way a hand does after letting something go. */
 const AFTER_POSE: Record<string, number> = {
   Rotation: 0.8,
-  /* held higher than it was. Lower Pitch is further up, and at 0.42 the
-     machine finished the page looking tired — the whole point of the
-     stance is that it is proud after setting the card down. */
-  Pitch: 0.24,
-  Elbow: -0.95,
-  Wrist_Pitch: 1.12,
+  /* Between the two extremes. 0.42 finished the page looking tired;
+     0.24 overshot and had it reaching up out of its own stance. Lower
+     Pitch is further up. */
+  Pitch: 0.34,
+  Elbow: -0.88,
+  Wrist_Pitch: 1.18,
   Wrist_Roll: 0,
   Jaw: 0.55,
 }
@@ -137,11 +137,16 @@ const IDLE_LIVE: Record<string, number> = {
      occasionally; this is only the fine tremor underneath. Raising it
      to 0.36 stacked on top of the glance and swung the machine clean
      out of frame. */
-  Rotation: 0.05,
-  Pitch: 0.13,
-  Elbow: 0.19,
-  Wrist_Pitch: 0.27,
-  Wrist_Roll: 0.24,
+  /* Rebalanced away from the vertical. Pitch and Elbow are the two that
+     raise and lower the claw, and at 0.13/0.19 the machine bobbed up and
+     down like it was breathing hard. They come down; the yaw comes up a
+     little, so what life it has reads as looking around rather than
+     nodding. The yaw budget still holds — see PLAN.md. */
+  Rotation: 0.09,
+  Pitch: 0.07,
+  Elbow: 0.11,
+  Wrist_Pitch: 0.2,
+  Wrist_Roll: 0.22,
   Jaw: 0.1,
 }
 const IDLE_SPD: Record<string, number> = {
@@ -589,8 +594,13 @@ export default function ArmAssembly() {
          behind the card. Centring on the measured forward angle with a
          small excursion keeps it facing front nearly all the time and
          only glancing off to either side. */
-      const LOOK_FORWARD = -0.41
-      const LOOK_SWAY = 0.19
+      /* -0.41 is the measured angle that points the gripper straight
+         down the lens, and square-on is the one orientation that makes a
+         machine look like a product shot. Resting a little off it — and
+         toward the card it has just put down, since raising this swings
+         the claw left — keeps it three-quarter and attentive. */
+      const LOOK_FORWARD = -0.27
+      const LOOK_SWAY = 0.17
       const gl = glance.current
       if (t > gl.next) {
         /* three times in five it just faces front; otherwise it picks a

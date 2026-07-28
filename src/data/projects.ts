@@ -44,6 +44,7 @@ export const PROJECTS: Project[] = [
       'A custom gripper model using dual force sensitive resistors (FSRs) and computer vision for closed-loop object manipulation. Controlled by custom PID algorithms, it measures contact force in real time to dynamically regulate grip pressure and prevent slipping.',
     stack: ['Python', 'OpenCV', 'PID', 'FSR', 'Fusion 360'],
     preview: '/projects/force-gripper.webp',
+    focus: '50% 20%',
     media: { type: 'image', src: '/projects/force-gripper.webp' },
     links: [],
   },
