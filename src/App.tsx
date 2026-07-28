@@ -119,12 +119,41 @@ function Shell() {
   }, [pathname])
 
   useEffect(() => {
+    const root = document.documentElement
+    let raf = 0
+    let x = 0
+    let y = 0
+    let dirty = false
+    /* The pointer feeds two things: the scene's parallax, and the patch
+       of crosshatch that warms under your hand (see body::after in
+       base.css). Both are written once per frame rather than per event —
+       a pointermove can fire far more often than the display refreshes,
+       and each write here dirties a compositor layer. */
+    const flush = () => {
+      raf = 0
+      if (!dirty) return
+      dirty = false
+      root.style.setProperty('--hatch-x', `${x}px`)
+      root.style.setProperty('--hatch-y', `${y}px`)
+      root.style.setProperty('--hatch-lit', '1')
+    }
     const onMove = (e: PointerEvent) => {
       session.pointer.x = (e.clientX / window.innerWidth) * 2 - 1
       session.pointer.y = (e.clientY / window.innerHeight) * 2 - 1
+      x = e.clientX
+      y = e.clientY
+      dirty = true
+      if (!raf) raf = requestAnimationFrame(flush)
     }
+    /* the light goes out when the pointer leaves the window */
+    const onLeave = () => root.style.setProperty('--hatch-lit', '0')
     window.addEventListener('pointermove', onMove)
-    return () => window.removeEventListener('pointermove', onMove)
+    document.addEventListener('pointerleave', onLeave)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      document.removeEventListener('pointerleave', onLeave)
+      if (raf) cancelAnimationFrame(raf)
+    }
   }, [])
 
   /* The 3D stage exists for one reason — the arm — so it is only

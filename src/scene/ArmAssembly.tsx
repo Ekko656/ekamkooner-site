@@ -19,8 +19,9 @@ import { session } from '../lib/session'
 
 type Part = {
   geom: THREE.BufferGeometry
-  /* the part's silhouette and hard creases, precomputed once — see EDGE_MAT */
-  edges: THREE.BufferGeometry
+  /* the part's silhouette and hard creases. Built lazily after the
+     machine is already on screen — see the deferred pass below. */
+  edges: THREE.BufferGeometry | null
   mat: THREE.Material
   aPos: THREE.Vector3
   aQuat: THREE.Quaternion
@@ -228,6 +229,9 @@ const EDGE_ANGLE = 32
 
 export default function ArmAssembly() {
   const [parts, setParts] = useState<Part[] | null>(null)
+  /* bumped as each part's outline lands, purely to re-render */
+  const [, setEdgePass] = useState(0)
+  const liveMeshes = useRef<THREE.Mesh[]>([])
   const outer = useRef<(THREE.Group | null)[]>([])
   const root = useRef<THREE.Group>(null)
   const partsGroup = useRef<THREE.Group>(null)
@@ -311,6 +315,7 @@ export default function ArmAssembly() {
       const tmpQ = new THREE.Quaternion()
       const tmpS = new THREE.Vector3()
 
+      liveMeshes.current = []
       robot.traverse((o) => {
         const mesh = o as THREE.Mesh
         if (!mesh.isMesh) return
@@ -322,16 +327,12 @@ export default function ArmAssembly() {
         const mat = pick(src)
         mesh.material = mat
         mesh.castShadow = true
-        /* one EdgesGeometry per part, shared by the live robot (as a child
-           of the mesh, so it inherits every joint transform for free) and
-           by the baked exploded parts further down */
-        const edges = new THREE.EdgesGeometry(mesh.geometry as THREE.BufferGeometry, EDGE_ANGLE)
-        mesh.add(new THREE.LineSegments(edges, EDGE_MAT))
+        liveMeshes.current.push(mesh)
         mesh.updateWorldMatrix(true, false)
         mesh.matrixWorld.decompose(tmpP, tmpQ, tmpS)
         collected.push({
           geom: mesh.geometry as THREE.BufferGeometry,
-          edges,
+          edges: null,
           mat,
           aPos: tmpP.clone().multiplyScalar(ARM_SCALE),
           aQuat: tmpQ.clone(),
@@ -395,6 +396,48 @@ export default function ArmAssembly() {
       setParts(planned)
     }
   }, [])
+
+  /* ---- the drawn edges, built one part at a time, after the fact ----
+
+     EdgesGeometry walks every triangle looking for creases, and building
+     it for all thirteen parts inside the load callback — right after
+     thirteen STLs had just been parsed and welded — put a long stall on
+     the main thread exactly when the About page was trying to start
+     scrolling. That is the load lag.
+
+     None of it is needed for the first frame: the machine is fully
+     readable as shaded solids. So the parts go on screen immediately and
+     the outlines are added afterwards, one part per idle slot, each one
+     triggering a small re-render. On a busy machine they simply arrive
+     later; nothing waits for them. */
+  useEffect(() => {
+    if (!parts) return
+    let cancelled = false
+    let i = 0
+    const idle: (cb: () => void) => number =
+      (window as unknown as { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback ??
+      ((cb) => window.setTimeout(cb, 1))
+
+    const step = () => {
+      if (cancelled) return
+      const part = parts[i]
+      if (!part) return
+      if (!part.edges) {
+        part.edges = new THREE.EdgesGeometry(part.geom, EDGE_ANGLE)
+        /* the live robot wears the same line copy, as a child of its
+           mesh so it inherits every joint transform for free */
+        const twin = liveMeshes.current[i]
+        if (twin) twin.add(new THREE.LineSegments(part.edges, EDGE_MAT))
+      }
+      i++
+      setEdgePass(i)
+      idle(step)
+    }
+    idle(step)
+    return () => {
+      cancelled = true
+    }
+  }, [parts])
 
   /* mount the live robot rig under the root group once parts exist */
   useEffect(() => {
@@ -617,7 +660,7 @@ export default function ArmAssembly() {
             }}
           >
             <mesh geometry={p.geom} material={p.mat} scale={ARM_SCALE} castShadow />
-            <lineSegments geometry={p.edges} material={EDGE_MAT} scale={ARM_SCALE} />
+            {p.edges && <lineSegments geometry={p.edges} material={EDGE_MAT} scale={ARM_SCALE} />}
           </group>
         ))}
       </group>

@@ -59,10 +59,12 @@
   border-bottom-color: var(--rule);
 }
 
+/* the same face as the four links beside it — the bar is one object */
 .masthead-name {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  letter-spacing: var(--track-display);
+  font-family: var(--font-ui);
+  font-weight: 500;
+  font-size: 1.05rem;
+  letter-spacing: var(--track-ui);
   transition: color var(--dur-fast) var(--ease-mech-out);
 }
 .masthead-name:hover {
@@ -499,8 +501,8 @@
 }
 .oc-list li {
   display: grid;
-  grid-template-columns: 3.25rem 1fr;
-  align-items: baseline;
+  grid-template-columns: 2.25rem 1fr;
+  align-items: center;
   padding: 0.62em var(--s-1);
   margin: 0 calc(var(--s-1) * -1);
   border-bottom: 1px solid var(--rule);
@@ -514,15 +516,17 @@
   color: var(--accent-deep);
   padding-left: var(--s-3);
 }
-.oc-num {
-  font-family: var(--font-voice);
-  font-size: var(--text-label);
-  letter-spacing: var(--track-label);
+.oc-mark {
+  width: 22px;
+  height: 22px;
   color: var(--ink-3);
-  transition: color var(--dur-fast) var(--ease-mech-out);
+  transition:
+    color var(--dur-fast) var(--ease-mech-out),
+    transform var(--dur-med) var(--ease-mech-out);
 }
-.oc-list li:hover .oc-num {
+.oc-list li:hover .oc-mark {
   color: var(--accent);
+  transform: rotate(-8deg) scale(1.12);
 }
 .oc-item {
   font-family: var(--font-ui);

@@ -203,6 +203,13 @@ export const MANIFESTO = {
 
 export const CONTACT = {
   email: 'ekooner656@gmail.com',
+  /* A `mailto:` only does anything if the machine has a mail client
+     registered, which on a lot of laptops and most public machines it
+     does not — the link looked broken because nothing happened. This
+     opens Gmail's compose window straight in the browser, already
+     addressed. The plain address is still printed on the contact page
+     for anyone who would rather copy it. */
+  mail: 'https://mail.google.com/mail/?view=cm&fs=1&to=ekooner656@gmail.com',
   linkedin: 'https://www.linkedin.com/in/ekam-kooner/',
   github: 'https://github.com/Ekko656',
   status: 'Open to internships for Summer 2026',

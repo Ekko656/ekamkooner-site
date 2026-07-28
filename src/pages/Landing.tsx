@@ -37,7 +37,7 @@ const MARKS = [
   },
   {
     label: 'Email',
-    href: `mailto:${CONTACT.email}`,
+    href: CONTACT.mail,
     path: 'M1.5 5.25A2.25 2.25 0 0 1 3.75 3h16.5a2.25 2.25 0 0 1 2.25 2.25v.383l-10.5 5.775L1.5 5.633V5.25Zm0 2.67v10.83A2.25 2.25 0 0 0 3.75 21h16.5a2.25 2.25 0 0 0 2.25-2.25V7.92l-9.858 5.42a2.25 2.25 0 0 1-2.284 0L1.5 7.92Z',
   },
 ]
@@ -264,7 +264,8 @@ export default function Landing() {
               href={m.href}
               aria-label={m.label}
               title={m.label}
-              {...(m.href.startsWith('mailto:') ? {} : { target: '_blank', rel: 'noreferrer' })}
+              target="_blank"
+              rel="noreferrer"
             >
               <svg viewBox="0 0 24 24" aria-hidden focusable="false">
                 <path d={m.path} fill="currentColor" />

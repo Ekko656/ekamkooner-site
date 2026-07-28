@@ -116,6 +116,23 @@ Locked in this pass — the full rules now live in `CONTEXT.md` §5 and §6:
   card with no icons.
 - [x] **The name only lights up near the cursor.**
 
+### Round six
+
+- [x] **The scroll-linked reveal is one timeline per BEAT**, not per
+  line. Stacked lines sit within a few pixels of each other, so
+  per-line triggers overlapped almost exactly and a block resolved all
+  at once. Now every word in a beat shares one scrub and the block
+  resolves in reading order.
+- [x] **The About load stall was the edge geometry.** EdgesGeometry for
+  all thirteen parts ran inside the load callback, right after thirteen
+  STLs had been parsed and welded. It is deferred now: parts go on
+  screen immediately, outlines arrive one per idle slot.
+- [x] **Card marks come from Lucide**; numerals dropped.
+- [x] **Masthead is "EK" on the landing**, in the same face as the nav.
+- [x] **The crosshatch warms purple under the pointer** — a masked
+  second layer, mask position written once per frame.
+- [x] **Email links open Gmail compose** rather than `mailto:`.
+
 ### How the humanoid was stopped from cropping AND drifting (hard-won, do not redo)
 
 The Spline scene frames itself on the machine's head. None of the

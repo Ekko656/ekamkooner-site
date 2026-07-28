@@ -128,6 +128,84 @@ body::before {
     );
 }
 
+
+/* ---- the stock, lit ----
+   A purple copy of the same weave, masked to a soft disc that follows
+   the pointer. The hatch itself never moves or changes; a patch of it
+   simply warms where your hand is, the way ink catches a light held
+   over a sheet. The mask carries all the movement, so nothing repaints
+   but one compositor layer.
+
+   Off for anyone who asked for less motion, and off on the low tier: a
+   full-viewport masked layer is exactly what a software rasteriser
+   cannot afford. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--hatch-lit, 0);
+  transition: opacity 0.6s var(--ease-mech-out);
+  background-image:
+    repeating-linear-gradient(
+      22.5deg,
+      transparent,
+      transparent 2px,
+      rgba(107, 63, 160, 0.5) 2px,
+      rgba(107, 63, 160, 0.5) 3px,
+      transparent 3px,
+      transparent 9px
+    ),
+    repeating-linear-gradient(
+      67.5deg,
+      transparent,
+      transparent 2px,
+      rgba(107, 63, 160, 0.42) 2px,
+      rgba(107, 63, 160, 0.42) 3px,
+      transparent 3px,
+      transparent 9px
+    ),
+    repeating-linear-gradient(
+      112.5deg,
+      transparent,
+      transparent 2px,
+      rgba(107, 63, 160, 0.34) 2px,
+      rgba(107, 63, 160, 0.34) 3px,
+      transparent 3px,
+      transparent 9px
+    ),
+    repeating-linear-gradient(
+      157.5deg,
+      transparent,
+      transparent 2px,
+      rgba(107, 63, 160, 0.26) 2px,
+      rgba(107, 63, 160, 0.26) 3px,
+      transparent 3px,
+      transparent 9px
+    );
+  -webkit-mask-image: radial-gradient(
+    circle 260px at var(--hatch-x, -999px) var(--hatch-y, -999px),
+    #000 0%,
+    rgba(0, 0, 0, 0.55) 45%,
+    transparent 72%
+  );
+  mask-image: radial-gradient(
+    circle 260px at var(--hatch-x, -999px) var(--hatch-y, -999px),
+    #000 0%,
+    rgba(0, 0, 0, 0.55) 45%,
+    transparent 72%
+  );
+}
+@media (prefers-reduced-motion: reduce) {
+  body::after {
+    display: none;
+  }
+}
+html[data-perf='low'] body::after {
+  display: none;
+}
+
 /* ============================================================
    primitives
    ============================================================ */

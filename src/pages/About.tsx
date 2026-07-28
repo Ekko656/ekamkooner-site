@@ -9,6 +9,7 @@ import { useEffect, useRef, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import { Gamepad2, HandFist, Headphones, Trophy, Volleyball, type LucideIcon } from 'lucide-react'
 import { session } from '../lib/session'
 
 function Beat({
@@ -72,53 +73,58 @@ function splitWords(el: HTMLElement): HTMLElement[] {
   return words
 }
 
-/* Just the names.
+/* Drawn marks, from Lucide.
 
-   These were line icons — a volleyball, a basketball, a boxing glove,
-   drawn by hand at 24px. They were the weakest thing on the page: a
-   hand-drawn ball reads as clip art next to a photographed machine, and
-   nothing else on this site uses an icon except the three brand marks.
+   These were hand-drawn at 24px and it showed — a hand-made volleyball
+   reads as clip art next to a photographed machine. Lucide's set is
+   professionally drawn on one grid with one stroke weight, which is the
+   whole point: five marks that look like they came from the same hand.
 
-   So the card says them the way the rest of the site says a list:
-   numbered, ruled, set in the type. */
-const OFF_CLOCK = ['Volleyball', 'NBA', 'League of Legends', 'Drake', 'Boxing']
+   NBA gets the trophy because the set has no basketball, and a trophy
+   sits better in a row of physical objects than the alternatives. */
+const OFF_CLOCK: { label: string; Icon: LucideIcon }[] = [
+  { label: 'Volleyball', Icon: Volleyball },
+  { label: 'NBA', Icon: Trophy },
+  { label: 'League of Legends', Icon: Gamepad2 },
+  { label: 'Drake', Icon: Headphones },
+  { label: 'Boxing', Icon: HandFist },
+]
 
 export default function About() {
   const card = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      /* Scroll-LINKED, not scroll-triggered.
+      /* Scroll-LINKED, and one timeline per BEAT rather than per line.
 
-         This used to be a one-shot tween: a line entered, and a blurred
-         word cascade played on its own clock. Two problems. The blur was
-         a per-word filter re-rasterised every frame alongside the WebGL
-         canvas, which is why it had to be tuned down twice. And because
-         it ran on its own clock it could still be mid-cascade by the
-         time the line had scrolled up near the top of the screen, which
-         reads as lag rather than as an entrance.
+         Linking words to scroll position was right; running a separate
+         trigger for every line was not. Lines stacked inside a beat sit
+         within a few pixels of each other, so their scroll windows
+         overlapped almost exactly and the whole block resolved at once —
+         messy, and it threw away the reading order entirely.
 
-         Now the words are tied to scroll position: each line resolves
-         from near-invisible ink to full ink as it travels from the
-         bottom of the screen to the reading line, and it is exactly as
-         far along as you have scrolled. Scrubbing back un-resolves it.
-         It is also far cheaper — one opacity per word, no filters. */
-      gsap.utils.toArray<HTMLElement>('.unblur').forEach((el) => {
-        const words = splitWords(el)
+         So the beat is the trigger, and every word in it — across all
+         its lines — shares one scrub with a stagger. The block resolves
+         strictly in reading order, top line first, as it rises to the
+         reading position. Scrubbing back un-resolves it. */
+      gsap.utils.toArray<HTMLElement>('.beat-text').forEach((block) => {
+        const lines = Array.from(block.querySelectorAll<HTMLElement>('.unblur'))
+        if (!lines.length) return
+        const words: HTMLElement[] = []
+        for (const line of lines) words.push(...splitWords(line))
         if (!words.length) return
+
         gsap.fromTo(
           words,
           { opacity: 0.14 },
           {
             opacity: 1,
             ease: 'none',
-            /* spread across the scrub so the line resolves left to right
-               as it rises, rather than every word at once */
             stagger: 0.5,
             scrollTrigger: {
-              trigger: el,
+              trigger: block,
               start: 'top 88%',
-              end: 'top 45%',
+              end: 'top 38%',
               scrub: 0.4,
             },
           },
@@ -327,14 +333,14 @@ export default function About() {
           <span className="oc-spine" aria-hidden />
           <p className="oc-kicker">Off the clock</p>
           <p className="oc-title">When I&rsquo;m not building</p>
-          <ol className="oc-list">
-            {OFF_CLOCK.map((label, i) => (
+          <ul className="oc-list">
+            {OFF_CLOCK.map(({ label, Icon }) => (
               <li key={label}>
-                <span className="oc-num">{String(i + 1).padStart(2, '0')}</span>
+                <Icon className="oc-mark" strokeWidth={1.5} aria-hidden />
                 <span className="oc-item">{label}</span>
               </li>
             ))}
-          </ol>
+          </ul>
           <p className="oc-foot">Thanks for reading this far.</p>
         </aside>,
         document.body,

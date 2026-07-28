@@ -8,7 +8,7 @@ export default function Contact() {
       <p className="section-index reveal">
         <span className="index-num">04</span> Contact
       </p>
-      <a className="contact-cta" href={`mailto:${CONTACT.email}`}>
+      <a className="contact-cta" href={CONTACT.mail} target="_blank" rel="noreferrer">
         <span className="mask-line">
           <span className="reveal-line">Let's build.</span>
         </span>
@@ -23,7 +23,7 @@ export default function Contact() {
         <a href={CONTACT.linkedin} target="_blank" rel="noreferrer" className="link">
           LinkedIn
         </a>
-        <a href={`mailto:${CONTACT.email}`} className="link">
+        <a href={CONTACT.mail} target="_blank" rel="noreferrer" className="link">
           {CONTACT.email}
         </a>
       </div>

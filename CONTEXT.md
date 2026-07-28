@@ -163,12 +163,12 @@ opacities. Anything you can identify as a texture stops being paper and
 starts being decoration.
 
 ### The off-the-clock card
-Rebuilt as a printed specimen card: an accent spine along the top edge,
-a Forum header, a 3rem display title, and the same numbered ruled index
-the doors and the project board use. The hand-drawn line icons
-(volleyball, basketball, boxing glove) were **deleted** — a drawn ball
-reads as clip art next to a photographed machine, and nothing else on
-the site uses an icon except the three brand marks.
+A printed specimen card: an accent spine along the top edge, a Forum
+header, a 3rem display title, ruled rows, an italic footer. The rows
+carry **Lucide** marks — the hand-drawn ones were replaced because a
+hand-made volleyball reads as clip art next to a photographed machine,
+and numerals were tried and dropped. NBA gets the trophy: the set has
+no basketball. `lucide-react` is a dependency for this.
 
 ### Deleted in the same pass — do not bring any of these back
 Particle name (`ParticleText`), custom reticle cursor (`Cursor`), dust field

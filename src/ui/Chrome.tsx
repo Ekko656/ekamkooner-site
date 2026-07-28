@@ -16,10 +16,8 @@ const PAGES = [
 
 /* The same bar on every page, landing included — same height, same
    margins, same four words in the same place. Only the left-hand slot
-   changes: the landing already has the name set six times this size a
-   few hundred pixels below, so printing it again in the corner would
-   be the bar saying something the page has already said. It carries
-   the dateline there instead. */
+   changes: the landing shows the initials, because the full name is
+   already set six times that size a few hundred pixels below it. */
 export function Nav() {
   const { pathname } = useLocation()
   const [sunk, setSunk] = useState(false)
@@ -36,13 +34,11 @@ export function Nav() {
 
   return (
     <header className={`masthead${sunk ? ' is-sunk' : ''}`}>
-      {home ? (
-        <p className="masthead-dateline label">Calgary &#8594; Vancouver</p>
-      ) : (
-        <Link to="/" className="masthead-name">
-          Ekam Kooner
-        </Link>
-      )}
+      {/* the initials on the landing, where the full name is already set
+          six times this size below; the name itself everywhere else */}
+      <Link to="/" className="masthead-name">
+        {home ? 'EK' : 'Ekam Kooner'}
+      </Link>
       <nav className="masthead-nav" aria-label="Sections">
         {PAGES.map((p) => (
           <Link
