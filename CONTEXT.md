@@ -134,9 +134,16 @@ The site is **paper and ink**, not a dark interface. `src/styles/tokens.css`.
   - `--font-voice` **Forum** (400) — the second voice, used small and
     letter-spaced to *name* things: section indices, card categories, status
     badges, datelines, footers.
-  - `--font-ui` **Schibsted Grotesk** (400/500/600) — anything you operate:
-    nav, buttons, fields, links, meta.
-  - Martian Mono, Zilla Slab, Shantell Sans and Figtree are **deleted** from
+  - `--font-ui` **Jost** (variable, 400–500) — anything you operate:
+    buttons, fields, links, marks, meta, and every small label. A
+    geometric sans in the Futura line, picked off a reference image
+    Ekam supplied. Carries `--track-ui` (0.06em) as standard: the
+    tracking is what makes it read as drawn rather than typed. It
+    replaced Schibsted Grotesk, which was competent and anonymous.
+    NOTE: the masthead nav links are the one exception — Ekam asked
+    for those in Forum specifically.
+  - Martian Mono, Zilla Slab, Shantell Sans, Figtree and Schibsted
+    Grotesk are **deleted** from
     `public/fonts` and from the tokens. Do not reintroduce a fourth family.
 - **Never full uppercase, never a weight under 400.** Both are AI-portfolio
   tells and Ekam called them out by name.

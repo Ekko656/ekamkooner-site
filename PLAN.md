@@ -89,6 +89,19 @@ Locked in this pass — the full rules now live in `CONTEXT.md` §5 and §6:
   Barrage demo is on Render's free tier, so a cold start takes ~25s
   before it answers 200. Don't "fix" those.
 
+### Round four
+
+- [x] **Jost replaces Schibsted Grotesk** as the UI face, matched to a
+  reference image Ekam supplied, with 0.06em tracking as standard.
+- [x] **The humanoid fills the right half and tracks the cursor again.**
+  Global events are back ON — they are what makes the machine follow
+  the pointer. What gets pinned now is the camera's whole transform,
+  position AND rotation, so the scene can turn the machine without
+  turning the frame.
+- [x] **The closing card fills its half of the frame** at 40rem with
+  Jost rows, and each interest row now takes the accent wash and steps
+  in under the pointer — the same gesture as an active filter.
+
 ### How the humanoid was stopped from cropping AND drifting (hard-won, do not redo)
 
 The Spline scene frames itself on the machine's head. None of the
@@ -117,8 +130,12 @@ leaves the drift. The scene flies the camera, so the machine rose about
 215px in five seconds and sailed off the top of the page. The whole
 position has to be held: x, y AND z.
 
-Current values: `CAM_X 0`, `CAM_Y 249`, `CAM_Z 1020`, `BOT_SCALE 0.46`,
-`BOT_Y 215`, measured at 1280x800 and confirmed stable over 8s.
+Rotation has to be pinned too, or the lookAt behaviour swings the frame
+along with the machine.
+
+Current values: `CAM_X 0`, `CAM_Y 249`, `CAM_Z 1080`, `CAM_RX 0.0145`,
+`BOT_SCALE 0.52`, `BOT_Y 232`. Re-measure these if the Spline scene is
+ever republished.
 
 ### Still open from this pass
 

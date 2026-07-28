@@ -62,17 +62,23 @@ const NAME = ['Ekam', 'Kooner']
    Values are empirical. If the Spline scene is ever republished they
    will need re-measuring; the names to look for are "Bot" (the model
    root) and "Camera 2". */
-const BOT_SCALE = 0.46
-const BOT_Y = 215
+const BOT_SCALE = 0.52
+const BOT_Y = 232
 /* The scene parks Camera 2 at (0, 249, 360), framed on the head, and
    then flies it. Pinning z alone fixed the crop but left the drift:
    the machine rose about 215px in five seconds and sailed off the top
    of the page. The whole position has to be held, not just the depth. */
 const CAM_X = 0
 const CAM_Y = 249
-const CAM_Z = 1020
+const CAM_Z = 1080
+/* the scene's resting camera tilt, held alongside the position so the
+   lookAt behaviour turns the MACHINE without turning the frame */
+const CAM_RX = 0.0145
+const CAM_RY = 0
+const CAM_RZ = 0
 
-type SplineObj = { scale: { x: number; y: number; z: number }; position: { x: number; y: number; z: number } }
+type Vec3 = { x: number; y: number; z: number }
+type SplineObj = { scale: Vec3; position: Vec3; rotation: Vec3 }
 type SplineApp = {
   findObjectByName: (n: string) => SplineObj | undefined
   setGlobalEvents?: (global: boolean) => void
@@ -89,16 +95,19 @@ type SplineApp = {
    cursor anywhere, including over the name, pushed the camera in until
    the legs were cut off. That is the intermittent cropping.
 
-   Global events go off (the canvas is already pointer-events: none, so
-   nothing is lost), and the camera position and model transform are
-   then re-asserted every frame for as long as this page is mounted. It is four property writes
-   per frame against a scene that is already running a render loop, and
-   it is the only version of this that cannot be raced. Only the Bot's
-   ROOT transform is pinned, so the machine's own idle animation still
-   plays underneath it. */
+   Global events stay ON — they are what makes the machine track the
+   cursor, which is worth keeping. What was never worth keeping was
+   letting them move the CAMERA. So the camera's whole transform,
+   position AND rotation, is re-asserted every frame: that pins the
+   frame while leaving the scene free to turn the machine inside it.
+   The Bot's root is pinned the same way, and only the root, so the
+   model's own idle still plays underneath.
+
+   A dozen property writes a frame against a scene already running a
+   render loop, and it is the only version of this that cannot be
+   raced. */
 function pinRobot(app: unknown) {
   const a = app as SplineApp
-  a.setGlobalEvents?.(false)
   let n = 0
   let raf = 0
   const tick = () => {
@@ -114,6 +123,9 @@ function pinRobot(app: unknown) {
       cam.position.x = CAM_X + eps
       cam.position.y = CAM_Y + eps
       cam.position.z = CAM_Z + eps
+      cam.rotation.x = CAM_RX + eps
+      cam.rotation.y = CAM_RY + eps
+      cam.rotation.z = CAM_RZ + eps
     }
     const bot = a.findObjectByName?.('Bot')
     if (bot) {

@@ -4,7 +4,7 @@
    Paper and ink. One accent: a royal purple, kept under about five
    percent of any screen. Three families with fixed roles that never
    swap: a book serif carries the writing, a roman serif carries the
-   labels that name things, and a grotesk carries anything you
+   labels that name things, and a geometric sans carries anything you
    operate. Nothing is set in full uppercase and nothing is set
    lighter than 400.
    ============================================================ */
@@ -46,26 +46,17 @@
   font-display: swap;
 }
 
-/* Schibsted Grotesk — everything you operate: buttons, fields, nav,
-   meta. Plain on purpose. */
+/* Jost — everything you operate: buttons, fields, marks, meta, and
+   every small label. A geometric sans in the Futura line, chosen off a
+   reference Ekam supplied; its wide round bowls and even stroke give
+   controls an airy, drawn quality that a neo-grotesque does not.
+
+   One variable file covers the range we use. It replaced Schibsted
+   Grotesk, which was competent and anonymous. */
 @font-face {
-  font-family: 'Schibsted Grotesk';
-  src: url('/fonts/schibsted-grotesk-400.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Schibsted Grotesk';
-  src: url('/fonts/schibsted-grotesk-500.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'Schibsted Grotesk';
-  src: url('/fonts/schibsted-grotesk-600.woff2') format('woff2');
-  font-weight: 600;
+  font-family: 'Jost';
+  src: url('/fonts/jost-var.woff2') format('woff2-variations');
+  font-weight: 400 500;
   font-style: normal;
   font-display: swap;
 }
@@ -108,7 +99,7 @@
      voice = the words that name things, ui = the words you act on. */
   --font-display: 'Old Standard TT', 'Iowan Old Style', Georgia, serif;
   --font-voice: 'Forum', 'Iowan Old Style', Georgia, serif;
-  --font-ui: 'Schibsted Grotesk', system-ui, -apple-system, sans-serif;
+  --font-ui: 'Jost', system-ui, -apple-system, sans-serif;
 
   --text-display: clamp(3.4rem, 7.4vw, 6.75rem);
   --text-h1: clamp(2.2rem, 4.3vw, 3.75rem);
@@ -118,6 +109,12 @@
   --text-body: 1.0625rem;
   --text-sm: 0.9375rem;
   --text-label: 0.8125rem;
+
+  /* Jost sets narrow and geometric, so the UI voice carries a little
+     tracking as standard — it is what makes the reference read as
+     drawn rather than typed. Never enough to become the spaced-out
+     uppercase tell; the type stays title case. */
+  --track-ui: 0.06em;
 
   /* one tracking value for the Forum labels, one for display type */
   --track-label: 0.14em;

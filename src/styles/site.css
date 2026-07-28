@@ -3,7 +3,7 @@
 
    Rules this file holds itself to, so it stays one thing:
      - three families, fixed roles. Old Standard TT is the writing,
-       Forum names things, Schibsted Grotesk is anything you operate.
+       Forum names things, Jost is anything you operate.
      - nothing set in full uppercase, nothing under weight 400.
      - one radius, one hairline, one shadow, one ease.
      - emphasis is the italic, never a recoloured word.
@@ -418,15 +418,22 @@
   top: 0;
   left: 0;
   z-index: 5;
-  /* it is the payoff of the whole page, so it lands at the size of a
-     real card on the desk rather than a notification */
-  width: 30rem;
-  padding: var(--s-5);
+  /* It is the payoff of the whole page and it lands in the empty left
+     half of the closing frame, so it is sized to actually fill that
+     space rather than sit in the middle of it. */
+  width: 40rem;
+  padding: var(--s-5) var(--s-8);
+  transition:
+    box-shadow var(--dur-med) var(--ease-mech-out),
+    border-color var(--dur-med) var(--ease-mech-out);
   background: var(--paper-raised);
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   box-shadow: var(--lift-high);
   will-change: transform;
+}
+.oc-card:hover {
+  border-color: var(--rule-strong);
 }
 .oc-head {
   display: flex;
@@ -450,7 +457,7 @@
 }
 .oc-title {
   font-family: var(--font-display);
-  font-size: 2.1rem;
+  font-size: 2.6rem;
   line-height: 1.15;
   margin: var(--s-3) 0;
 }
@@ -460,18 +467,41 @@
   flex-direction: column;
   gap: 0.7em;
 }
+/* Each interest is a row you can run the pointer along: the wash
+   fills, the ink and the mark take the accent, and the row steps in.
+   The same gesture as an active filter and the marks on the landing —
+   the card is the only object on the page you can actually touch, so
+   it answers the way everything else does. */
 .oc-list li {
   display: flex;
   align-items: center;
   gap: 0.8em;
+  padding: 0.3em var(--s-1);
+  margin-left: calc(var(--s-1) * -1);
+  border-radius: var(--radius);
+  font-family: var(--font-ui);
+  letter-spacing: var(--track-ui);
   font-size: var(--text-lead);
   color: var(--ink-2);
+  transition:
+    background var(--dur-fast) var(--ease-mech-out),
+    color var(--dur-fast) var(--ease-mech-out),
+    padding-left var(--dur-med) var(--ease-mech-out);
+}
+.oc-list li:hover {
+  background: var(--accent-wash);
+  color: var(--accent-deep);
+  padding-left: var(--s-2);
+}
+.oc-list li:hover .oc-icon {
+  color: var(--accent);
 }
 .oc-icon {
-  width: 24px;
-  height: 24px;
+  width: 26px;
+  height: 26px;
   flex: none;
   color: var(--ink-3);
+  transition: color var(--dur-fast) var(--ease-mech-out);
 }
 .oc-foot {
   margin-top: var(--s-4);
@@ -509,6 +539,7 @@
   border-bottom: 1px solid var(--rule);
   font-family: var(--font-ui);
   font-size: var(--text-sm);
+  letter-spacing: var(--track-ui);
   color: var(--ink);
   transition: border-color var(--dur-fast) var(--ease-mech-out);
 }
@@ -525,6 +556,7 @@
   gap: var(--s-1);
 }
 .board-tag {
+  letter-spacing: var(--track-ui);
   padding: 0.5em 0.9em;
   border-radius: var(--radius);
   border: 1px solid transparent;
@@ -734,6 +766,7 @@
 }
 
 .media-sound {
+  letter-spacing: var(--track-ui);
   position: absolute;
   right: var(--s-2);
   bottom: var(--s-2);
@@ -793,6 +826,7 @@
   margin-bottom: var(--s-4);
 }
 .sheet-stack li {
+  letter-spacing: var(--track-ui);
   padding: 0.35em 0.7em;
   border-radius: 2px;
   background: var(--paper-sunk);

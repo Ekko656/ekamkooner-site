@@ -139,6 +139,7 @@ canvas {
   font-family: var(--font-ui);
   font-size: var(--text-sm);
   font-weight: 500;
+  letter-spacing: var(--track-ui);
   line-height: 1;
   border: 1px solid transparent;
   transition:
@@ -197,6 +198,7 @@ canvas {
 .link {
   position: relative;
   display: inline-block;
+  letter-spacing: var(--track-ui);
   color: var(--ink-2);
   padding-bottom: 4px;
   transition: color var(--dur-fast) var(--ease-mech-out);
@@ -227,6 +229,7 @@ canvas {
   gap: 0.5em;
   font-size: var(--text-sm);
   font-weight: 500;
+  letter-spacing: var(--track-ui);
   color: var(--ink-2);
   transition: color var(--dur-fast) var(--ease-mech-out);
 }
