@@ -59,12 +59,11 @@
   border-bottom-color: var(--rule);
 }
 
-/* the same face as the four links beside it — the bar is one object */
+/* the monogram is set in the title face, like the name it stands for */
 .masthead-name {
-  font-family: var(--font-ui);
-  font-weight: 500;
-  font-size: 1.05rem;
-  letter-spacing: var(--track-ui);
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  letter-spacing: var(--track-display);
   transition: color var(--dur-fast) var(--ease-mech-out);
 }
 .masthead-name:hover {
@@ -115,6 +114,24 @@
 }
 .masthead-link.is-active::after {
   transform: scaleX(1);
+}
+
+/* sits with the nav, quieter than it — a control, not a destination */
+.sound-toggle {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-left: calc(var(--s-2) * -1);
+  border-radius: var(--radius);
+  color: var(--ink-3);
+  transition:
+    color var(--dur-fast) var(--ease-mech-out),
+    background var(--dur-fast) var(--ease-mech-out);
+}
+.sound-toggle:hover {
+  color: var(--accent-deep);
+  background: var(--accent-wash);
 }
 
 .progress {
@@ -286,7 +303,7 @@
   place-items: center;
   width: 48px;
   height: 48px;
-  border: 1px solid var(--accent-line);
+  border: 1px solid transparent;
   border-radius: var(--radius);
   color: var(--ink-2);
   opacity: 0;
@@ -359,23 +376,26 @@
   padding: 0 var(--margin);
 }
 
+/* A beat is more than a screen tall, so by the time the next one
+   arrives the previous has left completely. Two statements on screen at
+   once is two things being said at once. */
 .beat {
-  min-height: 72vh;
+  min-height: 118vh;
   display: flex;
   align-items: center;
   padding: 5vh 0;
 }
 .beat-tall {
-  min-height: 84vh;
+  min-height: 132vh;
 }
 .beat-hero {
-  min-height: 96vh;
+  min-height: 118vh;
 }
 /* a beat that starts on the opposite side from the one before carries
    extra lead-in, so the camera has empty scroll to cross the frame in
    before any copy arrives */
 .beat-flip {
-  padding-top: 46vh;
+  padding-top: 58vh;
 }
 
 .beat-text {
@@ -400,7 +420,7 @@
 }
 .a-lead em {
   font-style: italic;
-  color: inherit;
+  color: var(--accent-deep);
 }
 
 .a-body {
@@ -427,7 +447,7 @@
   color: var(--ink-3);
   margin-top: 1.1em;
   padding-left: var(--s-3);
-  border-left: 1px solid var(--rule);
+  border-left: 1px solid var(--accent-line);
 }
 
 /* the word spans the reveal splits lines into. They start dim in the
@@ -862,6 +882,16 @@
   background: var(--paper-sunk);
   font-size: var(--text-label);
   color: var(--ink-2);
+  cursor: default;
+  transition:
+    background var(--dur-fast) var(--ease-mech-out),
+    color var(--dur-fast) var(--ease-mech-out),
+    transform var(--dur-fast) var(--ease-mech-out);
+}
+.sheet-stack li:hover {
+  background: var(--accent-wash);
+  color: var(--accent-deep);
+  transform: translateY(-2px);
 }
 
 .detail-awards {

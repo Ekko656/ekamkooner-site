@@ -6,6 +6,7 @@ import Lenis from 'lenis'
 import './lib/eases'
 import { session } from './lib/session'
 import { perf } from './lib/perf'
+import { loadSoundPref, press, release, tick } from './lib/sound'
 import Stage from './scene/Stage'
 import { Nav, ReadProgress } from './ui/Chrome'
 import Landing from './pages/Landing'
@@ -120,39 +121,130 @@ function Shell() {
 
   useEffect(() => {
     const root = document.documentElement
-    let raf = 0
-    let x = 0
-    let y = 0
-    let dirty = false
     /* The pointer feeds two things: the scene's parallax, and the patch
-       of crosshatch that warms under your hand (see body::after in
-       base.css). Both are written once per frame rather than per event —
-       a pointermove can fire far more often than the display refreshes,
-       and each write here dirties a compositor layer. */
-    const flush = () => {
-      raf = 0
-      if (!dirty) return
-      dirty = false
-      root.style.setProperty('--hatch-x', `${x}px`)
-      root.style.setProperty('--hatch-y', `${y}px`)
-      root.style.setProperty('--hatch-lit', '1')
+       of crosshatch that warms under your hand (body::after in
+       base.css).
+
+       The warm patch is two lobes, not one. Both chase the pointer, but
+       at different rates and with slightly different sizes, so they are
+       never quite concentric and never quite caught up. That lag and
+       mismatch is the whole trick — a single lobe locked to the cursor
+       reads as a magnifying glass being dragged around, while two that
+       trail at different speeds read as something soaking through the
+       paper. Both breathe a little, out of phase, so it is never
+       perfectly still even when the pointer is.
+
+       All of it is written once per frame, never per event: a
+       pointermove fires far more often than the display refreshes and
+       every write here dirties a compositor layer. */
+    let tx = -999
+    let ty = -999
+    let x1 = -999
+    let y1 = -999
+    let x2 = -999
+    let y2 = -999
+    let lit = 0
+    let want = 0
+    let raf = 0
+
+    const loop = (t: number) => {
+      /* the wide lobe is lazier than the tight one */
+      x1 += (tx - x1) * 0.09
+      y1 += (ty - y1) * 0.09
+      x2 += (tx - x2) * 0.17
+      y2 += (ty - y2) * 0.17
+      lit += (want - lit) * 0.05
+      const r1 = 78 + Math.sin(t * 0.0013) * 9
+      const r2 = 52 + Math.cos(t * 0.0019) * 7
+      root.style.setProperty('--hatch-x', `${x1.toFixed(1)}px`)
+      root.style.setProperty('--hatch-y', `${y1.toFixed(1)}px`)
+      root.style.setProperty('--hatch-x2', `${x2.toFixed(1)}px`)
+      root.style.setProperty('--hatch-y2', `${y2.toFixed(1)}px`)
+      root.style.setProperty('--hatch-r', `${r1.toFixed(1)}px`)
+      root.style.setProperty('--hatch-r2', `${r2.toFixed(1)}px`)
+      root.style.setProperty('--hatch-lit', lit.toFixed(3))
+      raf = requestAnimationFrame(loop)
     }
+
     const onMove = (e: PointerEvent) => {
       session.pointer.x = (e.clientX / window.innerWidth) * 2 - 1
       session.pointer.y = (e.clientY / window.innerHeight) * 2 - 1
-      x = e.clientX
-      y = e.clientY
-      dirty = true
-      if (!raf) raf = requestAnimationFrame(flush)
+      if (tx < -900) {
+        /* first sighting: put both lobes under the cursor rather than
+           letting them fly in from the corner */
+        x1 = x2 = e.clientX
+        y1 = y2 = e.clientY
+      }
+      tx = e.clientX
+      ty = e.clientY
+      want = 1
     }
     /* the light goes out when the pointer leaves the window */
-    const onLeave = () => root.style.setProperty('--hatch-lit', '0')
+    const onLeave = () => {
+      want = 0
+    }
+
     window.addEventListener('pointermove', onMove)
     document.addEventListener('pointerleave', onLeave)
+    raf = requestAnimationFrame(loop)
     return () => {
       window.removeEventListener('pointermove', onMove)
       document.removeEventListener('pointerleave', onLeave)
-      if (raf) cancelAnimationFrame(raf)
+      cancelAnimationFrame(raf)
+    }
+  }, [])
+
+  /* ---- the clicks ----
+     Delegated once at the document rather than wired into every button,
+     so anything pressable anywhere on the site sounds the same without
+     each component having to remember to ask for it.
+
+     pointerdown and pointerup are separate sounds on purpose: a switch
+     does not make the same noise going down as it does coming back, and
+     hearing the release land is most of what makes it feel tactile
+     rather than like a notification. The hover tick only fires when the
+     pointer crosses onto a NEW target, or sweeping across a nav would
+     machine-gun it. */
+  useEffect(() => {
+    loadSoundPref()
+    const LIVE = 'a, button, input, .oc-list li, .sheet-stack li'
+    let lastHover: Element | null = null
+
+    const hit = (e: Event) => {
+      const t = e.target
+      return t instanceof Element ? t.closest(LIVE) : null
+    }
+    const onDown = (e: Event) => {
+      if (hit(e)) press()
+    }
+    const onUp = (e: Event) => {
+      if (hit(e)) release()
+    }
+    const onOver = (e: Event) => {
+      const el = hit(e)
+      if (el && el !== lastHover) {
+        lastHover = el
+        tick()
+      } else if (!el) {
+        lastHover = null
+      }
+    }
+    /* keyboard users get the press too, on the thing they activate */
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Enter' && e.key !== ' ') return
+      const el = document.activeElement
+      if (el && el.matches(LIVE)) press()
+    }
+
+    document.addEventListener('pointerdown', onDown)
+    document.addEventListener('pointerup', onUp)
+    document.addEventListener('pointerover', onOver)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onDown)
+      document.removeEventListener('pointerup', onUp)
+      document.removeEventListener('pointerover', onOver)
+      document.removeEventListener('keydown', onKey)
     }
   }, [])
 

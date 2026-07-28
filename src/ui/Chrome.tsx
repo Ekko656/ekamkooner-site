@@ -6,6 +6,8 @@
    actually has on a long page: how much of this is left. */
 import { useEffect, useRef, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { Volume2, VolumeX } from 'lucide-react'
+import { setSoundEnabled, soundEnabled } from '../lib/sound'
 
 const PAGES = [
   { to: '/about', label: 'About' },
@@ -50,8 +52,30 @@ export function Nav() {
             {p.label}
           </Link>
         ))}
+        <SoundToggle />
       </nav>
     </header>
+  )
+}
+
+/* Sound is on by default — it only ever fires on a real gesture, so it
+   can never ambush anyone — but shipping audio with no way to stop it
+   is hostile, and the choice is remembered. */
+function SoundToggle() {
+  const [on, setOn] = useState(soundEnabled)
+  return (
+    <button
+      className="sound-toggle"
+      aria-label={on ? 'Turn sound off' : 'Turn sound on'}
+      aria-pressed={on}
+      title={on ? 'Sound on' : 'Sound off'}
+      onClick={() => {
+        setSoundEnabled(!on)
+        setOn(!on)
+      }}
+    >
+      {on ? <Volume2 size={17} strokeWidth={1.6} /> : <VolumeX size={17} strokeWidth={1.6} />}
+    </button>
   )
 }
 

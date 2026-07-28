@@ -70,11 +70,6 @@ const BOT_Y = 168
 const CAM_X = 0
 const CAM_Y = 249
 const CAM_Z = 810
-/* the scene's resting camera tilt, held alongside the position so the
-   lookAt behaviour turns the MACHINE without turning the frame */
-const CAM_RX = 0.0145
-const CAM_RY = 0
-const CAM_RZ = 0
 
 type Vec3 = { x: number; y: number; z: number }
 type SplineObj = { scale: Vec3; position: Vec3; rotation: Vec3 }
@@ -107,6 +102,12 @@ type SplineApp = {
    raced. */
 function pinRobot(app: unknown) {
   const a = app as SplineApp
+  /* The scene's look-at is bound to pointer events, and the canvas sits
+     under `pointer-events: none`, so the machine never saw the cursor —
+     that is why it stopped following it. Global events listen on the
+     window instead, so it tracks the pointer anywhere on the page
+     without the canvas having to swallow clicks. */
+  a.setGlobalEvents?.(true)
   /* The Spline canvas has the same first-paint sizing problem the r3f
      stage had: it can come up measured wrong, and since a perspective
      camera's framing depends on the canvas aspect, a wrong size shows
@@ -129,9 +130,9 @@ function pinRobot(app: unknown) {
       cam.position.x = CAM_X + eps
       cam.position.y = CAM_Y + eps
       cam.position.z = CAM_Z + eps
-      cam.rotation.x = CAM_RX + eps
-      cam.rotation.y = CAM_RY + eps
-      cam.rotation.z = CAM_RZ + eps
+      /* rotation is deliberately NOT pinned: the look-at works by
+         turning the camera, and holding it still is the other half of
+         what killed the follow. Position alone stops the drift. */
     }
     const bot = a.findObjectByName?.('Bot')
     if (bot) {

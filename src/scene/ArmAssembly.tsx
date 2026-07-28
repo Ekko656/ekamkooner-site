@@ -176,20 +176,34 @@ const smooth01 = (x: number) => {
    One part is not metal-coloured: the jaw. It is anodised in the
    site's purple, so the accent lands on the part of the machine that
    actually does the work, and it is the only colour in the scene. */
+/* The drawn edges sit exactly on the surface they were derived from, so
+   the depth buffer cannot decide which is in front and the seams break
+   up into speckle at glancing angles. Pushing the solid a hair back in
+   depth — not in space, so nothing moves — lets the lines sit cleanly
+   on top of it. */
+const SOLID = {
+  polygonOffset: true,
+  polygonOffsetFactor: 1,
+  polygonOffsetUnits: 1,
+} as const
+
 function makeMats() {
   const shell = new THREE.MeshStandardMaterial({
+    ...SOLID,
     color: '#2b2b32',
     metalness: 0.3,
     roughness: 0.45,
     envMapIntensity: 1.0,
   })
   const servo = new THREE.MeshStandardMaterial({
+    ...SOLID,
     color: '#9a9aa4',
     metalness: 0.85,
     roughness: 0.3,
     envMapIntensity: 1.2,
   })
   const base = new THREE.MeshStandardMaterial({
+    ...SOLID,
     color: '#3d3d46',
     metalness: 0.7,
     roughness: 0.36,

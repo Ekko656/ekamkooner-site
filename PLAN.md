@@ -133,6 +133,36 @@ Locked in this pass — the full rules now live in `CONTEXT.md` §5 and §6:
   second layer, mask position written once per frame.
 - [x] **Email links open Gmail compose** rather than `mailto:`.
 
+### Round seven
+
+- [x] **The humanoid follows the cursor again.** Two causes, both mine:
+  the canvas is `pointer-events: none` so the scene's look-at never saw
+  the pointer (fixed with `setGlobalEvents(true)`), and the look-at
+  works by turning the CAMERA, which was being pinned. Camera position
+  is still pinned — that is what stops the drift — but its rotation is
+  now left alone. **Do not pin camera rotation.**
+- [x] **Beats are 118vh+**, so only one statement is on screen at a
+  time. NOTE: the camera swap keys in `Stage.tsx` were tuned against
+  the old 72/84/96vh beat centres. They were scaled roughly in
+  proportion, but the swap timing is worth a look on a real scroll.
+- [x] **Solids carry a polygon offset** so the drawn edges stop
+  z-fighting with the surface they came from (it showed as white
+  speckle at glancing angles).
+- [x] **Click sounds**, synthesised in `src/lib/sound.ts` — no audio
+  files. Delegated once at the document. Press and release are
+  different sounds. A toggle lives in the masthead and the choice is
+  remembered.
+- [x] Warm patch is smaller, fainter, and made of two lobes easing at
+  different rates so it trails rather than sitting under the cursor.
+
+### Known, not fixed
+
+- **The VLA arm clip has no audio track**, so it correctly shows no
+  sound control. Confirmed by scanning the container: `vla-teleop.webm`
+  and `arm-sim.webm` carry no Opus/Vorbis stream, while `claw.mp4` and
+  `ubc-bionics.mp4` do. Nothing in the code can add a control for audio
+  that is not in the file — the clip needs re-exporting with sound.
+
 ### How the humanoid was stopped from cropping AND drifting (hard-won, do not redo)
 
 The Spline scene frames itself on the machine's head. None of the

@@ -129,16 +129,21 @@ body::before {
 }
 
 
-/* ---- the stock, lit ----
-   A purple copy of the same weave, masked to a soft disc that follows
-   the pointer. The hatch itself never moves or changes; a patch of it
-   simply warms where your hand is, the way ink catches a light held
-   over a sheet. The mask carries all the movement, so nothing repaints
-   but one compositor layer.
+/* ---- the stock, warmed ----
+   The same weave in purple, masked to a small soft patch that trails
+   the pointer. It should read as ink catching a light held over the
+   sheet, not as a torch beam: the first version was a 260px disc at
+   full strength and looked exactly like a purple magnifying glass
+   following the cursor around.
 
-   Off for anyone who asked for less motion, and off on the low tier: a
-   full-viewport masked layer is exactly what a software rasteriser
-   cannot afford. */
+   So: a much smaller patch, a fraction of the ink, and — the part that
+   stops it feeling like a rigid circle — TWO offset lobes at different
+   radii, whose centres are eased toward the pointer at different rates
+   in App.tsx. The trailing lag and the slight mismatch between the two
+   is what makes it move like a smudge rather than a cursor.
+
+   Off for reduced motion and off on the low tier: a full-viewport
+   masked layer is what a software rasteriser cannot afford. */
 body::after {
   content: '';
   position: fixed;
@@ -146,14 +151,14 @@ body::after {
   z-index: 0;
   pointer-events: none;
   opacity: var(--hatch-lit, 0);
-  transition: opacity 0.6s var(--ease-mech-out);
+  transition: opacity 0.9s var(--ease-mech-out);
   background-image:
     repeating-linear-gradient(
       22.5deg,
       transparent,
       transparent 2px,
-      rgba(107, 63, 160, 0.5) 2px,
-      rgba(107, 63, 160, 0.5) 3px,
+      rgba(107, 63, 160, 0.22) 2px,
+      rgba(107, 63, 160, 0.22) 3px,
       transparent 3px,
       transparent 9px
     ),
@@ -161,8 +166,8 @@ body::after {
       67.5deg,
       transparent,
       transparent 2px,
-      rgba(107, 63, 160, 0.42) 2px,
-      rgba(107, 63, 160, 0.42) 3px,
+      rgba(107, 63, 160, 0.18) 2px,
+      rgba(107, 63, 160, 0.18) 3px,
       transparent 3px,
       transparent 9px
     ),
@@ -170,8 +175,8 @@ body::after {
       112.5deg,
       transparent,
       transparent 2px,
-      rgba(107, 63, 160, 0.34) 2px,
-      rgba(107, 63, 160, 0.34) 3px,
+      rgba(107, 63, 160, 0.14) 2px,
+      rgba(107, 63, 160, 0.14) 3px,
       transparent 3px,
       transparent 9px
     ),
@@ -179,23 +184,37 @@ body::after {
       157.5deg,
       transparent,
       transparent 2px,
-      rgba(107, 63, 160, 0.26) 2px,
-      rgba(107, 63, 160, 0.26) 3px,
+      rgba(107, 63, 160, 0.1) 2px,
+      rgba(107, 63, 160, 0.1) 3px,
       transparent 3px,
       transparent 9px
     );
-  -webkit-mask-image: radial-gradient(
-    circle 260px at var(--hatch-x, -999px) var(--hatch-y, -999px),
-    #000 0%,
-    rgba(0, 0, 0, 0.55) 45%,
-    transparent 72%
-  );
-  mask-image: radial-gradient(
-    circle 260px at var(--hatch-x, -999px) var(--hatch-y, -999px),
-    #000 0%,
-    rgba(0, 0, 0, 0.55) 45%,
-    transparent 72%
-  );
+  -webkit-mask-image:
+    radial-gradient(
+      circle var(--hatch-r, 78px) at var(--hatch-x, -999px) var(--hatch-y, -999px),
+      #000 0%,
+      rgba(0, 0, 0, 0.4) 52%,
+      transparent 78%
+    ),
+    radial-gradient(
+      circle var(--hatch-r2, 52px) at var(--hatch-x2, -999px) var(--hatch-y2, -999px),
+      rgba(0, 0, 0, 0.7) 0%,
+      transparent 80%
+    );
+  mask-image:
+    radial-gradient(
+      circle var(--hatch-r, 78px) at var(--hatch-x, -999px) var(--hatch-y, -999px),
+      #000 0%,
+      rgba(0, 0, 0, 0.4) 52%,
+      transparent 78%
+    ),
+    radial-gradient(
+      circle var(--hatch-r2, 52px) at var(--hatch-x2, -999px) var(--hatch-y2, -999px),
+      rgba(0, 0, 0, 0.7) 0%,
+      transparent 80%
+    );
+  -webkit-mask-composite: source-over;
+  mask-composite: add;
 }
 @media (prefers-reduced-motion: reduce) {
   body::after {
