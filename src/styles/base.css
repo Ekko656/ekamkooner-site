@@ -70,6 +70,64 @@ canvas {
   outline: none;
 }
 
+/* ---- the stock ----
+   A crosshatch weave laid over the paper, from the 21st.dev component
+   Ekam picked. Four passes of repeating hairlines at 22.5 degree steps,
+   which reads as the tooth of a sheet rather than as a pattern.
+
+   Ported off Tailwind to plain CSS, and pulled well down from the
+   original values: at the source opacities the weave was legible as
+   stripes, and anything you can identify as a texture stops being
+   paper and starts being decoration. It sits behind everything and
+   takes no pointer events.
+
+   Rendered on the body rather than an element so it never scrolls,
+   never repaints on scroll, and costs one fixed layer. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image:
+    repeating-linear-gradient(
+      22.5deg,
+      transparent,
+      transparent 2px,
+      rgba(75, 85, 99, 0.035) 2px,
+      rgba(75, 85, 99, 0.035) 3px,
+      transparent 3px,
+      transparent 9px
+    ),
+    repeating-linear-gradient(
+      67.5deg,
+      transparent,
+      transparent 2px,
+      rgba(107, 114, 128, 0.03) 2px,
+      rgba(107, 114, 128, 0.03) 3px,
+      transparent 3px,
+      transparent 9px
+    ),
+    repeating-linear-gradient(
+      112.5deg,
+      transparent,
+      transparent 2px,
+      rgba(55, 65, 81, 0.024) 2px,
+      rgba(55, 65, 81, 0.024) 3px,
+      transparent 3px,
+      transparent 9px
+    ),
+    repeating-linear-gradient(
+      157.5deg,
+      transparent,
+      transparent 2px,
+      rgba(31, 41, 55, 0.018) 2px,
+      rgba(31, 41, 55, 0.018) 3px,
+      transparent 3px,
+      transparent 9px
+    );
+}
+
 /* ============================================================
    primitives
    ============================================================ */

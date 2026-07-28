@@ -428,13 +428,14 @@
   border-left: 1px solid var(--rule);
 }
 
-/* the word spans the reveal splits lines into */
+/* the word spans the reveal splits lines into. They start dim in the
+   markup so there is no flash of full-strength text before the scrub
+   takes over, and a line that never got split still reads. */
 .unblur .w {
   display: inline-block;
-  will-change: auto;
 }
-.unblur:not(:has(.w)) {
-  opacity: 0;
+.unblur {
+  opacity: 1;
 }
 
 /* empty scroll at the end for the closing gesture to play in */
@@ -443,74 +444,66 @@
 }
 
 /* ---- the off-the-clock card ----
-   The thing the arm hauls up at the end. It is a card of paper, so
-   it is built like every other card on the site: white, hairline,
-   one shadow. The glass panel it used to be was the single most
-   generated-looking object on the page. */
+   The thing the arm hauls up at the end, and the last object on the
+   page, so it is built like a printed specimen card rather than a
+   panel: an accent spine along the top edge, a named header, a display
+   title, and the same numbered ruled index the doors and the project
+   board are built from. No icons — see the note in About.tsx.
+
+   It is the one object here you can actually touch, so every row
+   answers the pointer with the accent wash. */
 .oc-card {
   position: fixed;
   top: 0;
   left: 0;
   z-index: 5;
-  /* It is the payoff of the whole page and it lands in the empty left
-     half of the closing frame, so it is sized to actually fill that
-     space rather than sit in the middle of it. */
   width: 44rem;
   padding: var(--s-8);
-  transition:
-    box-shadow var(--dur-med) var(--ease-mech-out),
-    border-color var(--dur-med) var(--ease-mech-out);
+  overflow: hidden;
   background: var(--paper-raised);
   border: 1px solid var(--rule);
   border-radius: var(--radius);
   box-shadow: var(--lift-high);
   will-change: transform;
+  transition: border-color var(--dur-med) var(--ease-mech-out);
 }
 .oc-card:hover {
   border-color: var(--rule-strong);
 }
-.oc-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: var(--s-2);
-  padding-bottom: var(--s-1);
-  border-bottom: 1px solid var(--rule);
+.oc-spine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent);
 }
+
 .oc-kicker {
   font-family: var(--font-voice);
   font-size: var(--text-body);
   letter-spacing: var(--track-label);
-  color: var(--ink-2);
+  color: var(--ink-3);
 }
 .oc-title {
   font-family: var(--font-display);
   font-size: 3rem;
-  line-height: 1.15;
-  margin: var(--s-3) 0;
+  line-height: 1.05;
+  letter-spacing: var(--track-display);
+  margin: var(--s-2) 0 var(--s-5);
 }
+
 .oc-list {
   list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 0.7em;
+  border-top: 1px solid var(--rule);
 }
-/* Each interest is a row you can run the pointer along: the wash
-   fills, the ink and the mark take the accent, and the row steps in.
-   The same gesture as an active filter and the marks on the landing —
-   the card is the only object on the page you can actually touch, so
-   it answers the way everything else does. */
 .oc-list li {
-  display: flex;
-  align-items: center;
-  gap: 0.8em;
-  padding: 0.3em var(--s-1);
-  margin-left: calc(var(--s-1) * -1);
-  border-radius: var(--radius);
-  font-family: var(--font-ui);
-  letter-spacing: var(--track-ui);
-  font-size: var(--text-lead);
-  color: var(--ink-2);
+  display: grid;
+  grid-template-columns: 3.25rem 1fr;
+  align-items: baseline;
+  padding: 0.62em var(--s-1);
+  margin: 0 calc(var(--s-1) * -1);
+  border-bottom: 1px solid var(--rule);
   transition:
     background var(--dur-fast) var(--ease-mech-out),
     color var(--dur-fast) var(--ease-mech-out),
@@ -519,22 +512,27 @@
 .oc-list li:hover {
   background: var(--accent-wash);
   color: var(--accent-deep);
-  padding-left: var(--s-2);
+  padding-left: var(--s-3);
 }
-.oc-list li:hover .oc-icon {
-  color: var(--accent);
-}
-.oc-icon {
-  width: 26px;
-  height: 26px;
-  flex: none;
+.oc-num {
+  font-family: var(--font-voice);
+  font-size: var(--text-label);
+  letter-spacing: var(--track-label);
   color: var(--ink-3);
   transition: color var(--dur-fast) var(--ease-mech-out);
 }
+.oc-list li:hover .oc-num {
+  color: var(--accent);
+}
+.oc-item {
+  font-family: var(--font-ui);
+  font-size: var(--text-lead);
+  letter-spacing: var(--track-ui);
+  color: inherit;
+}
+
 .oc-foot {
-  margin-top: var(--s-4);
-  padding-top: var(--s-2);
-  border-top: 1px solid var(--rule);
+  margin-top: var(--s-5);
   font-family: var(--font-display);
   font-style: italic;
   font-size: var(--text-body);

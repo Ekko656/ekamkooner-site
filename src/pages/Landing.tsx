@@ -107,6 +107,13 @@ type SplineApp = {
    raced. */
 function pinRobot(app: unknown) {
   const a = app as SplineApp
+  /* The Spline canvas has the same first-paint sizing problem the r3f
+     stage had: it can come up measured wrong, and since a perspective
+     camera's framing depends on the canvas aspect, a wrong size shows
+     as a wrong crop — the machine occasionally loading as a full body
+     instead of the framing set here. One resize event after mount
+     settles it. */
+  const nudge = window.setTimeout(() => window.dispatchEvent(new Event('resize')), 60)
   let n = 0
   let raf = 0
   const tick = () => {
@@ -136,7 +143,10 @@ function pinRobot(app: unknown) {
     raf = requestAnimationFrame(tick)
   }
   raf = requestAnimationFrame(tick)
-  return () => cancelAnimationFrame(raf)
+  return () => {
+    window.clearTimeout(nudge)
+    cancelAnimationFrame(raf)
+  }
 }
 
 export default function Landing() {

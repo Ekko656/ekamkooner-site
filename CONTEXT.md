@@ -155,6 +155,21 @@ The site is **paper and ink**, not a dark interface. `src/styles/tokens.css`.
 - **Buttons** are `.btn` + `.btn-primary|secondary|ghost` in `base.css`. One
   shape, one press (1px down).
 
+### The stock
+The paper carries a crosshatch weave (`body::before` in `base.css`) —
+four passes of repeating hairlines at 22.5 degree steps, ported off a
+21st.dev component Ekam picked and pulled well down from its source
+opacities. Anything you can identify as a texture stops being paper and
+starts being decoration.
+
+### The off-the-clock card
+Rebuilt as a printed specimen card: an accent spine along the top edge,
+a Forum header, a 3rem display title, and the same numbered ruled index
+the doors and the project board use. The hand-drawn line icons
+(volleyball, basketball, boxing glove) were **deleted** — a drawn ball
+reads as clip art next to a photographed machine, and nothing else on
+the site uses an icon except the three brand marks.
+
 ### Deleted in the same pass — do not bring any of these back
 Particle name (`ParticleText`), custom reticle cursor (`Cursor`), dust field
 (`Dust`), film-grain overlay, humming column guides, the `BUILD 000` readout,

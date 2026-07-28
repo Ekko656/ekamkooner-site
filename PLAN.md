@@ -102,6 +102,20 @@ Locked in this pass — the full rules now live in `CONTEXT.md` §5 and §6:
   Jost rows, and each interest row now takes the accent wash and steps
   in under the pointer — the same gesture as an active filter.
 
+### Round five
+
+- [x] **The perf watchdog was demoting the page two seconds in.** It
+  graded the machine while the STLs were still loading. Now it ignores
+  the first 5s and needs 240 frames worse than 30fps.
+- [x] **STL vertices are welded** before computing normals — this, not
+  resolution, is what made the arm look low quality.
+- [x] **About's reveal is scroll-LINKED**, not triggered: words resolve
+  from dim ink to full ink as the line rises to the reading position,
+  and scrubbing back un-resolves them. Cheaper too — no per-word blur.
+- [x] **Crosshatch stock** on the paper; **card rebuilt** as a specimen
+  card with no icons.
+- [x] **The name only lights up near the cursor.**
+
 ### How the humanoid was stopped from cropping AND drifting (hard-won, do not redo)
 
 The Spline scene frames itself on the machine's head. None of the

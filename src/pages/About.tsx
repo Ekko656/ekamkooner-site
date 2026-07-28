@@ -10,7 +10,6 @@ import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { session } from '../lib/session'
-import { perf } from '../lib/perf'
 
 function Beat({
   side,
@@ -73,140 +72,57 @@ function splitWords(el: HTMLElement): HTMLElement[] {
   return words
 }
 
-/* Line icons rather than emoji. Emoji render as full-colour glyphs that
-   drag the card toward looking like a notification popup; a single
-   consistent 2px stroke family keeps it reading as instrument labelling. */
-const ICON = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const }
-const OFF_CLOCK = [
-  {
-    label: 'Volleyball',
-    svg: (
-      <>
-        <circle cx="12" cy="12" r="9" {...ICON} />
-        <path d="M12 3c3 4 3.5 9 1 17" {...ICON} />
-        <path d="M3.6 9.2c4.6-1 9.3.6 15.4 5.6" {...ICON} />
-        <path d="M20.5 8.4c-4.4 1.6-8.2 4.7-10.8 11.9" {...ICON} />
-      </>
-    ),
-  },
-  {
-    label: 'NBA',
-    svg: (
-      <>
-        <circle cx="12" cy="12" r="9" {...ICON} />
-        <path d="M12 3v18M3 12h18" {...ICON} />
-        <path d="M5.6 5.6c3.6 3.6 3.6 9.2 0 12.8M18.4 5.6c-3.6 3.6-3.6 9.2 0 12.8" {...ICON} />
-      </>
-    ),
-  },
-  {
-    label: 'League of Legends',
-    svg: (
-      <>
-        <path d="M7.5 8h9a4.5 4.5 0 0 1 4.4 5.4l-.7 3.4A2.6 2.6 0 0 1 16 18l-1.4-2h-5.2L8 18a2.6 2.6 0 0 1-4.2-1.2l-.7-3.4A4.5 4.5 0 0 1 7.5 8Z" {...ICON} />
-        <path d="M8 11.5v2M7 12.5h2M15.5 11.5h.01M17.5 13.5h.01" {...ICON} />
-      </>
-    ),
-  },
-  {
-    label: 'Drake',
-    svg: (
-      <>
-        <path d="M9 18V6l11-2v12" {...ICON} />
-        <circle cx="6.5" cy="18" r="2.5" {...ICON} />
-        <circle cx="17.5" cy="16" r="2.5" {...ICON} />
-      </>
-    ),
-  },
-  {
-    label: 'Boxing',
-    svg: (
-      <>
-        <path d="M6 9a4 4 0 0 1 4-4h4a5 5 0 0 1 5 5v2.5a3.5 3.5 0 0 1-3.5 3.5H10a4 4 0 0 1-4-4Z" {...ICON} />
-        <path d="M8 16v1.5A2.5 2.5 0 0 0 10.5 20h4a2.5 2.5 0 0 0 2.5-2.5V16" {...ICON} />
-        <path d="M15 5.5v4" {...ICON} />
-      </>
-    ),
-  },
-]
+/* Just the names.
+
+   These were line icons — a volleyball, a basketball, a boxing glove,
+   drawn by hand at 24px. They were the weakest thing on the page: a
+   hand-drawn ball reads as clip art next to a photographed machine, and
+   nothing else on this site uses an icon except the three brand marks.
+
+   So the card says them the way the rest of the site says a list:
+   numbered, ruled, set in the type. */
+const OFF_CLOCK = ['Volleyball', 'NBA', 'League of Legends', 'Drake', 'Boxing']
 
 export default function About() {
   const card = useRef<HTMLElement>(null)
 
   useEffect(() => {
     const ctx = gsap.context(() => {
-      /* unblur reveal: each line resolves from a soft blur + rise once as it
-         enters. A one-shot tween (not scrubbed) keeps the blur off the GPU
-         except during the brief transition, so scrolling stays smooth. */
+      /* Scroll-LINKED, not scroll-triggered.
+
+         This used to be a one-shot tween: a line entered, and a blurred
+         word cascade played on its own clock. Two problems. The blur was
+         a per-word filter re-rasterised every frame alongside the WebGL
+         canvas, which is why it had to be tuned down twice. And because
+         it ran on its own clock it could still be mid-cascade by the
+         time the line had scrolled up near the top of the screen, which
+         reads as lag rather than as an entrance.
+
+         Now the words are tied to scroll position: each line resolves
+         from near-invisible ink to full ink as it travels from the
+         bottom of the screen to the reading line, and it is exactly as
+         far along as you have scrolled. Scrubbing back un-resolves it.
+         It is also far cheaper — one opacity per word, no filters. */
       gsap.utils.toArray<HTMLElement>('.unblur').forEach((el) => {
-        const inView = el.getBoundingClientRect().top < window.innerHeight * 0.9
-        /* stagger lines that share a beat so they resolve in a small
-           cascade rather than all at once */
-        const stack = Array.from(el.parentElement?.querySelectorAll(':scope > .unblur') ?? [])
-        const lineDelay = stack.indexOf(el) * 0.07
         const words = splitWords(el)
         if (!words.length) return
-
-        /* the soft closing thought of a beat carries its life in its
-           motion, not in decoration: its words drift in slower, and the
-           whole line breathes in from wide tracking to its resting set */
-        const soft = el.classList.contains('a-soft')
-        const delay = inView ? 0.2 + lineDelay : lineDelay
-        /* Fires earlier and resolves quicker than it used to. At 84% and
-           0.85s a line was still mid-cascade by the time it had scrolled
-           near the top of the screen, which reads as lag rather than as
-           an entrance. It now starts as the line clears the bottom edge
-           and is finished well before it is being read. */
-        const trigger = inView ? undefined : { trigger: el, start: 'top 96%' }
-
-        /* the blur is the expensive half of this reveal: a per-word filter
-           on every span in the beat, re-rasterised each frame. The low
-           tier keeps the rise and the fade and drops only the softness. */
-        const blurFrom = perf.low ? {} : { filter: 'blur(9px)' }
-        const blurTo = perf.low ? {} : { filter: 'blur(0px)' }
-
         gsap.fromTo(
           words,
-          { opacity: 0, ...blurFrom, yPercent: soft ? 0 : 34, xPercent: soft ? 12 : 0 },
+          { opacity: 0.14 },
           {
             opacity: 1,
-            ...blurTo,
-            yPercent: 0,
-            xPercent: 0,
-            duration: soft ? 0.7 : 0.5,
-            ease: 'mechOut',
-            /* words arrive in a cascade; the whole line still resolves
-               quickly enough to read as one movement */
-            stagger: soft ? 0.045 : 0.022,
-            /* elements already on screen at load play on their own; the
-               rest play as they scroll into view */
-            delay,
-            scrollTrigger: trigger,
-            /* promote only while this beat is actually moving; holding the
-               hint on every word in the document costs a layer apiece */
-            onStart: () => {
-              for (const wsp of words) wsp.style.willChange = 'transform, opacity, filter'
-            },
-            /* never clearProps the filter: it strips the inline blur(0)
-               and the CSS base blur takes over, leaving text fuzzy */
-            onComplete: () => {
-              for (const wsp of words) wsp.style.willChange = 'auto'
+            ease: 'none',
+            /* spread across the scrub so the line resolves left to right
+               as it rises, rather than every word at once */
+            stagger: 0.5,
+            scrollTrigger: {
+              trigger: el,
+              start: 'top 88%',
+              end: 'top 45%',
+              scrub: 0.4,
             },
           },
         )
-        if (soft) {
-          gsap.fromTo(
-            el,
-            { letterSpacing: '0.09em' },
-            {
-              letterSpacing: '0.01em',
-              duration: 0.95,
-              ease: 'mechOut',
-              delay,
-              scrollTrigger: trigger ? { ...trigger } : undefined,
-            },
-          )
-        }
       })
     })
 
@@ -407,20 +323,18 @@ export default function About() {
           project detail panel hits; do not move this back inside. */}
       {createPortal(
         <aside className="oc-card" ref={card}>
-          <div className="oc-head">
-            <p className="oc-kicker">Off the clock</p>
-          </div>
+          {/* the printed spine: the one piece of colour on the object */}
+          <span className="oc-spine" aria-hidden />
+          <p className="oc-kicker">Off the clock</p>
           <p className="oc-title">When I&rsquo;m not building</p>
-          <ul className="oc-list">
-            {OFF_CLOCK.map((o) => (
-              <li key={o.label}>
-                <svg className="oc-icon" viewBox="0 0 24 24" aria-hidden>
-                  {o.svg}
-                </svg>
-                <span className="oc-item">{o.label}</span>
+          <ol className="oc-list">
+            {OFF_CLOCK.map((label, i) => (
+              <li key={label}>
+                <span className="oc-num">{String(i + 1).padStart(2, '0')}</span>
+                <span className="oc-item">{label}</span>
               </li>
             ))}
-          </ul>
+          </ol>
           <p className="oc-foot">Thanks for reading this far.</p>
         </aside>,
         document.body,
