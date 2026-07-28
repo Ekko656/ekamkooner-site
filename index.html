@@ -8,6 +8,29 @@
     <meta name="theme-color" content="#faf9f7" />
     <title>Ekam Kooner — Robotics & Embedded</title>
     <style>html{background:#faf9f7}</style>
+    <!--
+      The About page assembles a real SO-ARM101 out of ~15MB of STL
+      meshes, and mounting that page is what used to trigger the whole
+      fetch. These prefetch hints tell the browser to start pulling the
+      bytes into its cache at the lowest priority the moment the
+      document is parsed, well before the arm's own loader ever asks
+      for them and well before the user has clicked anything. By the
+      time About mounts, the network half of the load is usually
+      already done.
+    -->
+    <link rel="prefetch" href="/so101/so101.urdf" as="fetch" crossorigin />
+    <link rel="prefetch" href="/so101/meshes/base_so101_v2.stl" as="fetch" crossorigin />
+    <link rel="prefetch" href="/so101/meshes/base_motor_holder_so101_v1.stl" as="fetch" crossorigin />
+    <link rel="prefetch" href="/so101/meshes/motor_holder_so101_base_v1.stl" as="fetch" crossorigin />
+    <link rel="prefetch" href="/so101/meshes/rotation_pitch_so101_v1.stl" as="fetch" crossorigin />
+    <link rel="prefetch" href="/so101/meshes/upper_arm_so101_v1.stl" as="fetch" crossorigin />
+    <link rel="prefetch" href="/so101/meshes/under_arm_so101_v1.stl" as="fetch" crossorigin />
+    <link rel="prefetch" href="/so101/meshes/motor_holder_so101_wrist_v1.stl" as="fetch" crossorigin />
+    <link rel="prefetch" href="/so101/meshes/wrist_roll_pitch_so101_v2.stl" as="fetch" crossorigin />
+    <link rel="prefetch" href="/so101/meshes/wrist_roll_follower_so101_v1.stl" as="fetch" crossorigin />
+    <link rel="prefetch" href="/so101/meshes/moving_jaw_so101_v1.stl" as="fetch" crossorigin />
+    <link rel="prefetch" href="/so101/meshes/sts3215_03a_v1.stl" as="fetch" crossorigin />
+    <link rel="prefetch" href="/so101/meshes/sts3215_03a_no_horn_v1.stl" as="fetch" crossorigin />
   </head>
   <body>
     <div id="root"></div>

@@ -7,6 +7,7 @@ import './lib/eases'
 import { session } from './lib/session'
 import { perf } from './lib/perf'
 import { loadSoundPref, press, release, tick } from './lib/sound'
+import { preloadAssembly } from './scene/ArmAssembly'
 import Stage from './scene/Stage'
 import { Nav, ReadProgress } from './ui/Chrome'
 import Landing from './pages/Landing'
@@ -127,6 +128,31 @@ function Shell() {
     window.addEventListener('pointermove', onMove)
     return () => window.removeEventListener('pointermove', onMove)
   }, [])
+
+  /* ---- fetch the machine before it is asked for ----
+
+     The About page's arm is ~15MB of STL that has to be fetched,
+     welded and shaded. Doing all of that at the moment the reader
+     clicks About is what made it hang for a beat before appearing.
+
+     So it starts in the background instead, from whatever page they
+     are already on, once the browser has a spare idle slot and the
+     current page has finished settling. It runs at most once per
+     session — preloadAssembly() caches its own promise — and the About
+     page simply awaits the same promise when it mounts, so nothing is
+     duplicated and nothing about the result is downgraded to get here.
+
+     Skipped on the low tier, where the arm is the last thing that
+     machine needs speculatively chewing on, and skipped on About
+     itself, where the component is about to ask for it anyway. */
+  useEffect(() => {
+    if (perf.low || pathname === '/about') return
+    const idle: (cb: () => void) => number =
+      (window as unknown as { requestIdleCallback?: (cb: () => void) => number }).requestIdleCallback ??
+      ((cb) => window.setTimeout(cb, 1200))
+    const id = window.setTimeout(() => idle(() => void preloadAssembly()), 1500)
+    return () => window.clearTimeout(id)
+  }, [pathname])
 
   /* ---- the clicks ----
      Delegated once at the document rather than wired into every button,

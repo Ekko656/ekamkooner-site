@@ -252,41 +252,35 @@ const EDGE_MAT = new THREE.LineBasicMaterial({
 })
 const EDGE_ANGLE = 32
 
-export default function ArmAssembly() {
-  const [parts, setParts] = useState<Part[] | null>(null)
-  /* bumped as each part's outline lands, purely to re-render */
-  const [, setEdgePass] = useState(0)
-  const liveMeshes = useRef<THREE.Mesh[]>([])
-  const outer = useRef<(THREE.Group | null)[]>([])
-  const root = useRef<THREE.Group>(null)
-  const partsGroup = useRef<THREE.Group>(null)
-  const ring = useRef<THREE.Mesh>(null)
-  const locked = useRef(false)
-  const seated = useRef<boolean[]>([])
-  const lockPulse = useRef({ s: 0 })
-  const liveRobot = useRef<THREE.Object3D | null>(null)
-  const liveJoints = useRef<Joints | null>(null)
-  /* where the machine is currently looking, where it has decided to
-     look next, and when it will next reconsider */
-  const glance = useRef({ cur: 0, target: 0, next: 0 })
-  const liveAt = useRef(0)
-  const jawLink = useRef<THREE.Object3D | null>(null)
-  const gripV = useMemo(() => new THREE.Vector3(), [])
-  const gest = useMemo(makeGesture, [])
-  const cardTl = useRef<gsap.core.Timeline | null>(null)
-  const inZone = useRef(false)
+type LoadedAssembly = {
+  parts: Part[]
+  liveRobot: THREE.Object3D
+  liveJoints: Joints
+  liveMeshes: THREE.Mesh[]
+}
 
-  useEffect(() => {
-    cardTl.current = buildCardTimeline(gest)
-    return () => {
-      cardTl.current?.kill()
-      cardTl.current = null
-      session.grip.active = false
-      session.gripHold = false
-    }
-  }, [gest])
+/* Loading, pulled out of the component and cached at module scope.
 
-  useEffect(() => {
+   Mounting <ArmAssembly> used to BE the trigger for the whole load:
+   fetch the URDF, fetch thirteen STLs (about 15MB), weld and shade
+   each one. All of that started the instant the reader clicked into
+   About, which is exactly why it took a visible moment to appear.
+
+   preloadAssembly() can be called long before that — from anywhere,
+   as many times as you like — and the first call is the only one that
+   does real work. Every later call, including the one the component
+   makes on mount, gets the same promise. Calling it once during an
+   idle moment on whatever page the reader is already on (see App.tsx)
+   means that by the time they click About, the network fetch and the
+   parsing are usually already done, and mounting the component is
+   just handing the finished result to setParts. Nothing here is
+   simplified or lowered to get that speed — it is the same weld, the
+   same shading, just paid for earlier. */
+let assemblyPromise: Promise<LoadedAssembly> | null = null
+
+export function preloadAssembly(): Promise<LoadedAssembly> {
+  if (assemblyPromise) return assemblyPromise
+  assemblyPromise = new Promise<LoadedAssembly>((resolve) => {
     const manager = new THREE.LoadingManager()
     const loader = new URDFLoader(manager)
     ;(loader as unknown as { packages: Record<string, string> }).packages = {
@@ -343,7 +337,7 @@ export default function ArmAssembly() {
       const tmpQ = new THREE.Quaternion()
       const tmpS = new THREE.Vector3()
 
-      liveMeshes.current = []
+      const liveMeshes: THREE.Mesh[] = []
       robot.traverse((o) => {
         const mesh = o as THREE.Mesh
         if (!mesh.isMesh) return
@@ -355,7 +349,7 @@ export default function ArmAssembly() {
         const mat = pick(src)
         mesh.material = mat
         mesh.castShadow = true
-        liveMeshes.current.push(mesh)
+        liveMeshes.push(mesh)
         mesh.updateWorldMatrix(true, false)
         mesh.matrixWorld.decompose(tmpP, tmpQ, tmpS)
         collected.push({
@@ -416,12 +410,60 @@ export default function ArmAssembly() {
         planned[i].w1 = start + WINDOW
       })
 
-      /* keep the live articulated robot for the post lock life */
-      liveRobot.current = rig
-      liveJoints.current = joints
       rig.visible = false
+      resolve({ parts: planned, liveRobot: rig, liveJoints: joints, liveMeshes })
+    }
+  })
+  return assemblyPromise
+}
 
-      setParts(planned)
+export default function ArmAssembly() {
+  const [parts, setParts] = useState<Part[] | null>(null)
+  /* bumped as each part's outline lands, purely to re-render */
+  const [, setEdgePass] = useState(0)
+  const liveMeshes = useRef<THREE.Mesh[]>([])
+  const outer = useRef<(THREE.Group | null)[]>([])
+  const root = useRef<THREE.Group>(null)
+  const partsGroup = useRef<THREE.Group>(null)
+  const ring = useRef<THREE.Mesh>(null)
+  const locked = useRef(false)
+  const seated = useRef<boolean[]>([])
+  const lockPulse = useRef({ s: 0 })
+  const liveRobot = useRef<THREE.Object3D | null>(null)
+  const liveJoints = useRef<Joints | null>(null)
+  /* where the machine is currently looking, where it has decided to
+     look next, and when it will next reconsider */
+  const glance = useRef({ cur: 0, target: 0, next: 0 })
+  const liveAt = useRef(0)
+  const jawLink = useRef<THREE.Object3D | null>(null)
+  const gripV = useMemo(() => new THREE.Vector3(), [])
+  const gest = useMemo(makeGesture, [])
+  const cardTl = useRef<gsap.core.Timeline | null>(null)
+  const inZone = useRef(false)
+
+  useEffect(() => {
+    cardTl.current = buildCardTimeline(gest)
+    return () => {
+      cardTl.current?.kill()
+      cardTl.current = null
+      session.grip.active = false
+      session.gripHold = false
+    }
+  }, [gest])
+
+  useEffect(() => {
+    let cancelled = false
+    /* usually already resolved by the time this runs — see the note
+       on preloadAssembly() above */
+    preloadAssembly().then((res) => {
+      if (cancelled) return
+      liveMeshes.current = res.liveMeshes
+      liveRobot.current = res.liveRobot
+      liveJoints.current = res.liveJoints
+      setParts(res.parts)
+    })
+    return () => {
+      cancelled = true
     }
   }, [])
 
@@ -453,9 +495,15 @@ export default function ArmAssembly() {
       if (!part.edges) {
         part.edges = new THREE.EdgesGeometry(part.geom, EDGE_ANGLE)
         /* the live robot wears the same line copy, as a child of its
-           mesh so it inherits every joint transform for free */
+           mesh so it inherits every joint transform for free. Guarded
+           against a second visit: the parts are cached across mounts
+           now, so without this the same mesh would collect another set
+           of lines every time About is opened. */
         const twin = liveMeshes.current[i]
-        if (twin) twin.add(new THREE.LineSegments(part.edges, EDGE_MAT))
+        if (twin && !twin.userData.edged) {
+          twin.userData.edged = true
+          twin.add(new THREE.LineSegments(part.edges, EDGE_MAT))
+        }
       }
       i++
       setEdgePass(i)
