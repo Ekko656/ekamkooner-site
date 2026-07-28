@@ -221,7 +221,7 @@
    breaks the clip and the name renders invisible. */
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
   .landing-name .reveal-line {
-    background-image: linear-gradient(180deg, #131316 38%, #4a2f7d 100%);
+    background-image: linear-gradient(180deg, #131316 26%, #5d38ad 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
@@ -230,10 +230,12 @@
 
 /* one long line, so it runs at the label size on tighter tracking —
    at the full 0.14em it wrapped and stopped reading as one label */
+/* the one line of static purple on the site, at Ekam's call: it names
+   what he does, sitting directly under the name it belongs to */
 .landing-role {
   margin-top: var(--s-3);
   letter-spacing: 0.08em;
-  color: var(--ink-2);
+  color: var(--accent);
   opacity: 0;
   transform: translateY(10px);
 }
@@ -461,12 +463,6 @@
   font-size: var(--text-sm);
   letter-spacing: var(--track-label);
   color: var(--ink-2);
-}
-.oc-serial {
-  font-family: var(--font-voice);
-  font-size: var(--text-label);
-  letter-spacing: var(--track-label);
-  color: var(--ink-3);
 }
 .oc-title {
   font-family: var(--font-display);

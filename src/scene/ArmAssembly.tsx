@@ -14,6 +14,7 @@ import * as THREE from 'three'
 import gsap from 'gsap'
 import URDFLoader from 'urdf-loader'
 import { STLLoader } from 'three/examples/jsm/loaders/STLLoader.js'
+import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js'
 import { session } from '../lib/session'
 
 type Part = {
@@ -267,7 +268,22 @@ export default function ArmAssembly() {
         done: (o: THREE.Object3D) => void,
       ) => void
     }).loadMeshCb = (path, m, _material, done) => {
-      new STLLoader(m).load(path, (geom) => {
+      new STLLoader(m).load(path, (raw) => {
+        /* THE reason the machine looked low quality.
+
+           An STL is a triangle soup: no shared vertices, every triangle
+           carrying its own three corners. Running computeVertexNormals
+           on that gives every triangle a single flat normal, so every
+           curved surface — every fillet, boss and servo barrel — renders
+           as visible facets. It reads as a low-poly model no matter what
+           resolution it is rendered at, which is why bumping the canvas
+           size and the pixel ratio only got us halfway.
+
+           Welding coincident corners first means the normals average
+           across neighbouring faces and the curves shade smoothly. It
+           also gives the drawn edges something sane to work from: on the
+           soup, EdgesGeometry saw every triangle boundary as a crease. */
+        const geom = mergeVertices(raw)
         geom.computeVertexNormals()
         const mesh = new THREE.Mesh(geom)
         mesh.userData.src = path

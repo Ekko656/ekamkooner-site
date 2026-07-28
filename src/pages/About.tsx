@@ -409,9 +409,6 @@ export default function About() {
         <aside className="oc-card" ref={card}>
           <div className="oc-head">
             <p className="oc-kicker">Off the clock</p>
-            <span className="oc-serial" aria-hidden>
-              EK · 05
-            </span>
           </div>
           <p className="oc-title">When I&rsquo;m not building</p>
           <ul className="oc-list">

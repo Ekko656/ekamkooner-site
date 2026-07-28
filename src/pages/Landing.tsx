@@ -53,24 +53,23 @@ const NAME = ['Ekam', 'Kooner']
    and both `setZoom` and moving `Camera 2` are overwritten every frame
    by the scene's own camera animation.
 
-   The framing is deliberately the scene's own: head, shoulders and
-   torso, cut off at the bottom of the page. A full standing figure was
-   tried and left too much empty paper around it — the bust fills the
-   column and reads as a portrait. What the pin is for is holding that
-   framing still, not changing it.
+   The framing is a three-quarter portrait: head down to mid-thigh, cut
+   off by the bottom of the page. A full standing figure was tried and
+   left too much empty paper around it; a head-and-shoulders bust cropped
+   too tight. This fills the column and still reads as a whole machine.
 
    Values are empirical. If the Spline scene is ever republished they
    will need re-measuring; the names to look for are "Bot" (the model
    root) and "Camera 2". */
-const BOT_SCALE = 0.8
-const BOT_Y = 26
+const BOT_SCALE = 0.62
+const BOT_Y = 135
 /* The scene parks Camera 2 at (0, 249, 360), framed on the head, and
    then flies it. Pinning z alone fixed the crop but left the drift:
    the machine rose about 215px in five seconds and sailed off the top
    of the page. The whole position has to be held, not just the depth. */
 const CAM_X = 0
 const CAM_Y = 249
-const CAM_Z = 360
+const CAM_Z = 700
 /* the scene's resting camera tilt, held alongside the position so the
    lookAt behaviour turns the MACHINE without turning the frame */
 const CAM_RX = 0.0145
@@ -205,7 +204,7 @@ export default function Landing() {
         <p className="landing-sub">
           Robot arms and grippers, for now.
           <br />
-          Humanoids are the future.
+          Humanoids in the future.
         </p>
 
         <nav className="marks" aria-label="Elsewhere">
