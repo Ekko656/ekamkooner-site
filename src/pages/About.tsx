@@ -10,6 +10,7 @@ import { createPortal } from 'react-dom'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import { Gamepad2, HandFist, Headphones, Trophy, Volleyball, type LucideIcon } from 'lucide-react'
+import { perf } from '../lib/perf'
 import { session } from '../lib/session'
 
 function Beat({
@@ -114,6 +115,34 @@ export default function About() {
         for (const line of lines) words.push(...splitWords(line))
         if (!words.length) return
 
+        /* The opening line is already on screen when the page opens, so
+           scrubbing it against scroll position means it is sitting there
+           half-transparent before the reader has done anything. It is the
+           first thing they read; it gets to be ink. */
+        if (block.closest('.beat-hero')) {
+          gsap.set(words, { opacity: 1 })
+          return
+        }
+
+        /* Without acceleration a scrubbed per-word tween is the most
+           expensive thing on this page: every scroll frame writes an
+           opacity to a hundred-odd spans. The low tier gets the whole
+           line at once, on one trigger, and never scrubs. */
+        if (perf.low) {
+          gsap.fromTo(
+            block,
+            { opacity: 0.3 },
+            {
+              opacity: 1,
+              duration: 0.4,
+              ease: 'mechOut',
+              scrollTrigger: { trigger: block, start: 'top 88%' },
+            },
+          )
+          gsap.set(words, { opacity: 1 })
+          return
+        }
+
         gsap.fromTo(
           words,
           { opacity: 0.14 },
@@ -123,8 +152,11 @@ export default function About() {
             stagger: 0.5,
             scrollTrigger: {
               trigger: block,
-              start: 'top 88%',
-              end: 'top 38%',
+              start: 'top 92%',
+              /* fully resolved by the time the block reaches the middle
+                 of the screen — you should never be reading a line that
+                 is still arriving */
+              end: 'top 50%',
               scrub: 0.4,
             },
           },
@@ -141,7 +173,9 @@ export default function About() {
        into its resting spot with a little arc and settle. Once it never
        has to stay locked to the moving claw, the flat-card / 3D-claw
        mismatch never gets a chance to show. */
-    const REST = () => ({ x: window.innerWidth * 0.27, y: window.innerHeight * 0.5 })
+    /* the machine finishes on the RIGHT of the closing frame, so the
+       card is thrown into the open left half */
+    const REST = () => ({ x: window.innerWidth * 0.32, y: window.innerHeight * 0.5 })
     /* downward acceleration for the thrown card, in px/s^2 */
     const GRAV = 2400
     const FLIGHT = 0.9

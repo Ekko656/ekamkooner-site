@@ -294,6 +294,14 @@
   gap: var(--s-2);
   margin-top: var(--s-5);
 }
+/* Only the landing hides them to start with — that page walks them in
+   on its entrance clock. Anywhere else they are simply there; the
+   contact page had them at opacity 0 with nothing to animate them,
+   which is to say invisible. */
+.page-landing .mark {
+  opacity: 0;
+  transform: translateY(10px);
+}
 /* Each mark sits in its own ruled square, and that rule is faintly
    purple at rest — the accent is present without announcing itself.
    Under the pointer the square fills, the rule and the mark go full
@@ -306,8 +314,6 @@
   border: 1px solid transparent;
   border-radius: var(--radius);
   color: var(--ink-2);
-  opacity: 0;
-  transform: translateY(10px);
   transition:
     background var(--dur-fast) var(--ease-mech-out),
     border-color var(--dur-fast) var(--ease-mech-out),
@@ -388,8 +394,21 @@
 .beat-tall {
   min-height: 132vh;
 }
+/* The opening beat is exactly one screen tall, unlike the rest.
+
+   Every other beat is 118vh so that a statement has left before the
+   next arrives — but the FIRST beat is the one you land on at scroll
+   zero, and centring text inside a box taller than the window puts it
+   below the middle of the screen, not on it. At one screen its centre
+   and the viewport's are the same point. The next beat still starts a
+   full screen down, so nothing is ever on screen with it.
+
+   Then lifted by a line, which is what Ekam actually asked for. */
 .beat-hero {
-  min-height: 118vh;
+  min-height: 100vh;
+}
+.beat-hero .beat-text {
+  transform: translateY(-1.2em);
 }
 /* a beat that starts on the opposite side from the one before carries
    extra lead-in, so the camera has empty scroll to cross the frame in
@@ -663,11 +682,35 @@
   border-color: var(--rule-strong);
   box-shadow: var(--lift);
 }
+/* Cropped to fill, as it was. Letting every still sit inside its frame
+   whole was tried and looked worse — a grid of small pictures floating
+   in white boxes rather than a board of work.
+
+   What was actually wrong was WHERE the crop was taken. A centred crop
+   of a portrait photo of an RC car keeps the middle of the frame, which
+   in that shot is a desk and a mouse. So the four stills whose subject
+   is not in the centre carry their own focal point, set per project in
+   data/projects.ts. */
 .card-media img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   transition: transform 0.8s var(--ease-mech-out);
+}
+/* The exception: a still whose subject runs to all four edges, so any
+   crop loses a corner. It is pulled back inside the frame instead —
+   only just far enough that nothing is cut, with no padding beyond
+   that, so it still reads as a full card rather than a thumbnail
+   floating in a box.
+
+   The frame takes the same white as the shot's own background, so the
+   join is invisible and the whole tile looks like one image. */
+.card-media.is-plate {
+  background: #ffffff;
+}
+.card-media img.is-contained {
+  object-fit: contain;
+  padding: 0;
 }
 .card:hover .card-media img {
   transform: scale(1.03);
@@ -994,12 +1037,14 @@
   color: var(--ink-2);
   max-width: 30rem;
 }
-.contact-links {
-  display: flex;
-  flex-wrap: wrap;
+/* the marks sit where the word links used to, centred under the note */
+.contact-marks {
   justify-content: center;
-  gap: var(--s-4);
   margin-top: var(--s-3);
+}
+.contact-address {
+  margin-top: var(--s-2);
+  user-select: all;
 }
 .contact-footer {
   position: absolute;
@@ -1055,6 +1100,16 @@
    Nothing here removes a surface or a state; it removes work.
    ============================================================ */
 
+/* The shadows stay, on every tier. They are what make a card read as a
+   sheet lying on the page rather than a rectangle drawn on it, and that
+   is not decoration worth trading away.
+
+   The masthead does lose its transparency: a see-through bar over
+   moving content is a full-width recomposite on every scroll frame,
+   which is a different order of cost from a static shadow. */
+html[data-perf='low'] .masthead {
+  background: var(--paper);
+}
 html[data-perf='low'] .card:hover {
   transform: none;
 }

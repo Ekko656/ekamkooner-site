@@ -71,18 +71,16 @@ canvas {
 }
 
 /* ---- the stock ----
-   A crosshatch weave laid over the paper, from the 21st.dev component
-   Ekam picked. Four passes of repeating hairlines at 22.5 degree steps,
-   which reads as the tooth of a sheet rather than as a pattern.
+   The crosshatch weave, from the 21st.dev component Ekam picked, at his
+   values: four passes of repeating hairlines at 22.5 degree steps, 8px
+   apart. It was tuned down once and thinned to two passes on slow
+   machines; both were wrong. Two passes is a grid, not a hatch — it
+   takes all four angles for the eye to read it as tooth rather than
+   lattice. It stays as supplied, on every tier.
 
-   Ported off Tailwind to plain CSS, and pulled well down from the
-   original values: at the source opacities the weave was legible as
-   stripes, and anything you can identify as a texture stops being
-   paper and starts being decoration. It sits behind everything and
-   takes no pointer events.
-
-   Rendered on the body rather than an element so it never scrolls,
-   never repaints on scroll, and costs one fixed layer. */
+   Ported off Tailwind to plain CSS. Rendered on the body rather than an
+   element so it never scrolls, never repaints on scroll, and costs one
+   fixed layer. */
 body::before {
   content: '';
   position: fixed;
@@ -94,37 +92,37 @@ body::before {
       22.5deg,
       transparent,
       transparent 2px,
-      rgba(75, 85, 99, 0.035) 2px,
-      rgba(75, 85, 99, 0.035) 3px,
+      rgba(75, 85, 99, 0.06) 2px,
+      rgba(75, 85, 99, 0.06) 3px,
       transparent 3px,
-      transparent 9px
+      transparent 8px
     ),
     repeating-linear-gradient(
       67.5deg,
       transparent,
       transparent 2px,
-      rgba(107, 114, 128, 0.03) 2px,
-      rgba(107, 114, 128, 0.03) 3px,
+      rgba(107, 114, 128, 0.05) 2px,
+      rgba(107, 114, 128, 0.05) 3px,
       transparent 3px,
-      transparent 9px
+      transparent 8px
     ),
     repeating-linear-gradient(
       112.5deg,
       transparent,
       transparent 2px,
-      rgba(55, 65, 81, 0.024) 2px,
-      rgba(55, 65, 81, 0.024) 3px,
+      rgba(55, 65, 81, 0.04) 2px,
+      rgba(55, 65, 81, 0.04) 3px,
       transparent 3px,
-      transparent 9px
+      transparent 8px
     ),
     repeating-linear-gradient(
       157.5deg,
       transparent,
       transparent 2px,
-      rgba(31, 41, 55, 0.018) 2px,
-      rgba(31, 41, 55, 0.018) 3px,
+      rgba(31, 41, 55, 0.03) 2px,
+      rgba(31, 41, 55, 0.03) 3px,
       transparent 3px,
-      transparent 9px
+      transparent 8px
     );
 }
 

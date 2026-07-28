@@ -84,9 +84,12 @@ const makeGesture = (): Gesture => ({ ...DISPLAY_POSE, grab01: 0 }) as Gesture
    back up, the way a hand does after letting something go. */
 const AFTER_POSE: Record<string, number> = {
   Rotation: 0.8,
-  Pitch: 0.42,
-  Elbow: -0.82,
-  Wrist_Pitch: 1.22,
+  /* held higher than it was. Lower Pitch is further up, and at 0.42 the
+     machine finished the page looking tired — the whole point of the
+     stance is that it is proud after setting the card down. */
+  Pitch: 0.24,
+  Elbow: -0.95,
+  Wrist_Pitch: 1.12,
   Wrist_Roll: 0,
   Jaw: 0.55,
 }
@@ -129,9 +132,12 @@ const IDLE_AMP: Record<string, number> = {
 /* the freer idle the machine falls into once the card is delivered and it
    has nothing left to do: wider, lazier travel on every joint */
 const IDLE_LIVE: Record<string, number> = {
-  /* kept small: this rides on top of the look sway, and the two together
-     must stay well inside the bound that keeps the machine facing front */
-  Rotation: 0.06,
+  /* Small on purpose. The base yaw's character comes from the glance
+     controller further down, which turns it deliberately and
+     occasionally; this is only the fine tremor underneath. Raising it
+     to 0.36 stacked on top of the glance and swung the machine clean
+     out of frame. */
+  Rotation: 0.05,
   Pitch: 0.13,
   Elbow: 0.19,
   Wrist_Pitch: 0.27,
@@ -255,6 +261,9 @@ export default function ArmAssembly() {
   const lockPulse = useRef({ s: 0 })
   const liveRobot = useRef<THREE.Object3D | null>(null)
   const liveJoints = useRef<Joints | null>(null)
+  /* where the machine is currently looking, where it has decided to
+     look next, and when it will next reconsider */
+  const glance = useRef({ cur: 0, target: 0, next: 0 })
   const liveAt = useRef(0)
   const jawLink = useRef<THREE.Object3D | null>(null)
   const gripV = useMemo(() => new THREE.Vector3(), [])
@@ -554,14 +563,21 @@ export default function ArmAssembly() {
       const nz = fbm(t * 0.85, 12.3)
       const u = Math.min(1, Math.max(0, 0.5 + 0.72 * nz))
       const jawIdle = JAW_SHUT + (JAW_WIDE - JAW_SHUT) * (u * u * (3 - 2 * u))
-      /* Once the card is delivered the machine looks around instead of
-         staying pointed at what it put down: three sine rates that never
-         line up, so the wandering has no obvious loop. The sum is
-         normalised to -1..1 and then scaled, so the yaw is a bounded sway
-         either side of the stance rather than an open-ended swing. At
-         LOOK_MAX it turns about 22 degrees each way, nowhere near far
-         enough to present its side to the camera or to reach back across
-         the card sitting off to the left. */
+      /* Once the card is delivered the machine can look around — but it
+         does not pace.
+
+         This was three summed sines, which meant it swept left and right
+         forever like a metronome, and stacked on top of the base joint's
+         own idle it swung far enough to leave the frame entirely. Both
+         problems have the same root: continuous motion.
+
+         So the yaw is a GLANCE now. It mostly sits forward. Every few
+         seconds it rolls the dice: usually it stays (or returns to)
+         centre, occasionally it turns to one side, holds there a while,
+         and comes back. The interval and the side are both random, so it
+         never falls into a rhythm and you cannot predict it. Targets are
+         clamped inside LOOK_SWAY, so wherever it decides to look it is
+         still on screen. */
       /* Measured, not guessed. Sweeping this offset and projecting the
          claw against the base shows the yaw runs the opposite way to what
          it looks like: raising it swings the claw LEFT, and the gripper
@@ -574,13 +590,17 @@ export default function ArmAssembly() {
          small excursion keeps it facing front nearly all the time and
          only glancing off to either side. */
       const LOOK_FORWARD = -0.41
-      const LOOK_SWAY = 0.2
-      const wander =
-        (0.55 * Math.sin(t * 0.13 + 0.4) +
-          0.28 * Math.sin(t * 0.31 + 2.1) +
-          0.14 * Math.sin(t * 0.73 + 4.3)) /
-        0.97
-      const look = settled * (LOOK_FORWARD + LOOK_SWAY * wander)
+      const LOOK_SWAY = 0.19
+      const gl = glance.current
+      if (t > gl.next) {
+        /* three times in five it just faces front; otherwise it picks a
+           side and a depth of turn */
+        gl.target = Math.random() < 0.6 ? 0 : (Math.random() * 2 - 1) * LOOK_SWAY
+        gl.next = t + 3 + Math.random() * 6
+      }
+      /* eased, not snapped: a head turn, not a servo step */
+      gl.cur += (gl.target - gl.cur) * Math.min(1, dt * 1.1)
+      const look = settled * (LOOK_FORWARD + gl.cur)
       for (const name of JOINT_NAMES) {
         /* amplitudes swell after the toss: the arm bends around casually
            instead of holding the tight pose it needed for the gesture */

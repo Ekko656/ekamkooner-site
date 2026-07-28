@@ -163,6 +163,20 @@ Locked in this pass — the full rules now live in `CONTEXT.md` §5 and §6:
   `ubc-bionics.mp4` do. Nothing in the code can add a control for audio
   that is not in the file — the clip needs re-exporting with sound.
 
+### The arm's yaw budget (do not raise these blindly)
+
+The base joint's screen travel is roughly 550px per radian. Its yaw is
+the SUM of two things, and they stack:
+
+- the glance controller (`LOOK_SWAY`, currently 0.19), and
+- the joint's own idle drift (`IDLE_LIVE.Rotation`, currently 0.05).
+
+At 0.19 + 0.05 that is about 132px either side of forward, which is
+comfortably inside the frame. Raising `IDLE_LIVE.Rotation` to 0.36 to
+make the machine "move more" put the total at 0.56 — around 300px each
+way — and swung it clean off screen. If it needs more life, give it to
+the glance, not the drift.
+
 ### How the humanoid was stopped from cropping AND drifting (hard-won, do not redo)
 
 The Spline scene frames itself on the machine's head. None of the

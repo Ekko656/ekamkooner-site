@@ -16,6 +16,13 @@ export type Project = {
   /* The still shown on the board. Previews are always images: video only
      ever plays inside the detail popup, once a card is opened. */
   preview: string
+  /* Where to take the crop from, as a CSS object-position. Only set on
+     the stills whose subject is not in the middle of the frame; the
+     rest are centred and fine. */
+  focus?: string
+  /* The one still whose subject runs to all four edges. Any crop of it
+     loses a corner, so it is pulled back inside the frame instead. */
+  fit?: 'contain'
   media: { type: 'video' | 'image'; src: string; poster?: string }
   /* Optional: a hosted clip played in the detail popup instead of `media`.
      The card still uses `media` for its thumbnail, since an iframe cannot
@@ -64,6 +71,7 @@ export const PROJECTS: Project[] = [
       'Embedded software for a transradial prosthetic arm. I work on the Rust codebase that handles the lower level systems work.',
     stack: ['Rust', 'PyO3', 'STM32', 'I²C'],
     preview: '/projects/ubcbionics.png',
+    focus: '18% 50%',
     media: { type: 'video', src: '/projects/ubc-bionics.mp4', poster: '/projects/ubcbionics.png' },
     links: [
       { label: 'GitHub', href: 'https://github.com/BEARUBC' },
@@ -144,6 +152,7 @@ export const PROJECTS: Project[] = [
       'A small Arduino powered metal claw that uses an ultrasonic sensor to detect nearby objects, clamps onto them for a few seconds, then releases. A class project built with a hand modeled CAD design and a custom control loop on the Arduino.',
     stack: ['Arduino', 'C++', 'Ultrasonic (HC-SR04)', 'Fusion 360'],
     preview: '/projects/claw.jpg',
+    fit: 'contain',
     media: { type: 'video', src: '/projects/claw.mp4', poster: '/projects/claw.jpg' },
     links: [],
   },
@@ -170,6 +179,7 @@ export const PROJECTS: Project[] = [
       'A Bluetooth module paired to a phone controller app with dual servos for drive. First place in a high school battlebot competition and a school record for item collection.',
     stack: ['Arduino', 'C++', 'Bluetooth HC 05', 'Servos'],
     preview: '/projects/rc-car.jpg',
+    focus: '50% 30%',
     media: { type: 'image', src: '/projects/rc-car.jpg' },
     links: [],
   },

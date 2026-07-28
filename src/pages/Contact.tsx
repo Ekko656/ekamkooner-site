@@ -1,5 +1,6 @@
 /* Contact: one clear invitation. */
 import { CONTACT } from '../data/projects'
+import Marks from '../ui/Marks'
 
 export default function Contact() {
   return (
@@ -16,17 +17,12 @@ export default function Contact() {
       <p className="contact-note reveal">
         Robotics, embedded systems, internships, or whatever you are building.
       </p>
-      <div className="contact-links">
-        <a href={CONTACT.github} target="_blank" rel="noreferrer" className="link">
-          GitHub
-        </a>
-        <a href={CONTACT.linkedin} target="_blank" rel="noreferrer" className="link">
-          LinkedIn
-        </a>
-        <a href={CONTACT.mail} target="_blank" rel="noreferrer" className="link">
-          {CONTACT.email}
-        </a>
-      </div>
+      {/* the same three marks as the landing, not a second set of word
+          links doing the same job in a different voice */}
+      <Marks className="contact-marks" />
+      {/* the address in plain text as well: the mark opens a compose
+          window, but anyone who would rather copy it can */}
+      <p className="contact-address label">{CONTACT.email}</p>
       <footer className="contact-footer">Ekam Kooner 2026</footer>
     </div>
   )

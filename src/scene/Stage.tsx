@@ -69,8 +69,14 @@ const IDLE_FRAME = { pos: new THREE.Vector3(0, 0.3, 9.6), look: new THREE.Vector
    sits in the right third so the pulled card has room on the left */
 /* pulled back so the whole machine reads on the right of the closing
    frame, leaving the left half open for the placard the arm sets down */
-const END_POS = new THREE.Vector3(1.1, 0.3, 9.8)
-const END_LOOK = new THREE.Vector3(1.15, -0.25, 0)
+/* The closing frame. The camera sits just off the machine's left and
+   aims at a point further left still, which does two things at once:
+   the machine falls into the RIGHT of the frame, and it is seen from
+   three-quarters rather than square on — turned, working, rather than
+   posing for the camera. The card is thrown into the open left half
+   (see REST in About.tsx). */
+const END_POS = new THREE.Vector3(0.9, 0.55, 9.0)
+const END_LOOK = new THREE.Vector3(0.55, -0.2, 0)
 const ss = (x: number) => {
   const t = Math.min(Math.max(x, 0), 1)
   return t * t * (3 - 2 * t)
@@ -122,6 +128,10 @@ function CameraRig() {
       target.look.set(ARM_CENTER.x + cos * key.lat, ARM_CENTER.y, ARM_CENTER.z - sin * key.lat)
       const pull = ss(session.cardPull)
       if (pull > 0) {
+        /* The closing camera is STATIC. An orbit was tried here and cut:
+           moving the camera to create life is the cheap version of the
+           idea. The machine has six joints — it can do its own moving,
+           and it does (see IDLE_LIVE in ArmAssembly). */
         target.pos.lerp(END_POS, pull)
         target.look.lerp(END_LOOK, pull)
       }
@@ -223,7 +233,12 @@ export default function Stage({ showArm }: { showArm: boolean }) {
            settled on the MINIMUM here, so a retina screen was rendering
            the machine at half resolution — the other half of why it
            looked soft. */
-        dpr={low ? 1 : Math.min(typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1, 2)}
+        /* Even on the low tier this does not drop to 1. Rendering the
+           machine at half resolution is the single most visible thing we
+           could take away — it is the reason the arm ever looked like
+           it was streaming at 360p — and it buys less than dropping the
+           effects around it does. */
+        dpr={Math.min(typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1, low ? 1.5 : 2)}
         /* Off About the scene is background only: drifting dust, stars,
            a glow pool. On the low tier that is not worth sixty renders a
            second, so it is drawn once and left. About keeps a live loop

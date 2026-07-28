@@ -153,6 +153,9 @@ export const press = () =>
 export const release = () =>
   play({ freq: 640, drop: 470, dur: 0.03, level: 0.075, snap: 0.32, snapHz: 3200 })
 
-/* the smallest one, for passing over something live */
+/* the smallest one, for passing over something live. Nudged up from
+   0.028: it was so far under the press that it read as almost nothing.
+   Still well below the click, which is the point — a hover is not an
+   event, it is a hint that something is live. */
 export const tick = () =>
-  play({ freq: 900, drop: 820, dur: 0.016, level: 0.028, snap: 0.22, snapHz: 4200 })
+  play({ freq: 900, drop: 820, dur: 0.018, level: 0.042, snap: 0.26, snapHz: 4200 })

@@ -62,12 +62,25 @@ function initialTier(): State {
      the one version of the page nobody ever looks at. */
   const forced = new URLSearchParams(window.location.search).get('perf')
   if (forced === 'low' || forced === 'high') return { tier: forced, webgl, reduced }
-  /* a phone with eight small cores is not the target here; this is aimed
-     at the desktop that reports two or four and no GPU */
+  /* This used to read `reduced || software || !webgl || thin || lowMem`,
+     which was much too eager. Two of those had no business being here:
+
+     `reduced` is a preference about MOTION, not a statement about the
+     machine. Someone on a fast laptop who has asked the OS to calm
+     animations down was being handed the stripped site — no texture, no
+     shadows, no drawn edges — for wanting less movement. Motion is
+     already handled properly by the reduced-motion media query.
+
+     `thin` on its own caught plenty of perfectly capable machines: a
+     four-core laptop with a real GPU renders this fine. Core count only
+     means something here alongside genuinely low memory.
+
+     What is left is what the file was written for: a machine with no
+     GPU, or one falling back to a software rasteriser. */
   const thin = (navigator.hardwareConcurrency ?? 8) <= 4
   const memory = (navigator as Navigator & { deviceMemory?: number }).deviceMemory
   const lowMem = typeof memory === 'number' && memory <= 4
-  const tier: Tier = reduced || software || !webgl || thin || lowMem ? 'low' : 'high'
+  const tier: Tier = software || !webgl || (thin && lowMem) ? 'low' : 'high'
   return { tier, webgl, reduced }
 }
 

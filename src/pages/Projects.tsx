@@ -16,8 +16,14 @@ function Card({ p, onOpen }: { p: Project; onOpen: (p: Project) => void }) {
   return (
     <button className="card" onClick={() => onOpen(p)}>
       {/* strictly a still. Video only ever plays in the detail popup. */}
-      <figure className="card-media">
-        <img src={p.preview} alt={p.title} loading="lazy" />
+      <figure className={`card-media${p.fit === 'contain' ? ' is-plate' : ''}`}>
+        <img
+          src={p.preview}
+          alt={p.title}
+          loading="lazy"
+          className={p.fit === 'contain' ? 'is-contained' : undefined}
+          style={p.focus ? { objectPosition: p.focus } : undefined}
+        />
         {p.status && <span className="card-status">{p.status}</span>}
       </figure>
       <span className="card-row">
