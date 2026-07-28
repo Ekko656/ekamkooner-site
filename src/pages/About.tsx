@@ -219,7 +219,7 @@ export default function About() {
        into its resting spot with a little arc and settle. Once it never
        has to stay locked to the moving claw, the flat-card / 3D-claw
        mismatch never gets a chance to show. */
-    const REST = () => ({ x: window.innerWidth * 0.27, y: window.innerHeight * 0.46 })
+    const REST = () => ({ x: window.innerWidth * 0.27, y: window.innerHeight * 0.5 })
     /* downward acceleration for the thrown card, in px/s^2 */
     const GRAV = 2400
     const FLIGHT = 0.9

@@ -178,6 +178,35 @@ export default function Stage({ showArm }: { showArm: boolean }) {
       off()
     }
   }, [])
+  /* Make the canvas take its real size.
+
+     r3f sizes itself from a ResizeObserver on its container, and on a
+     fresh load that measurement never lands: the canvas is left at the
+     bare <canvas> default of 300x150 while CSS stretches it across the
+     whole viewport. The machine was being rendered at 300x150 and blown
+     up to 3000px wide — that is the "why does it look like 360p", and
+     it was in fact far worse than 360p.
+
+     A single window resize event snaps it to full size. It cannot be
+     fired from inside <Canvas>, because with no root none of its
+     children ever mount — which is exactly why this hook lives out
+     here, in the component that does. Fired next frame and again once
+     layout has settled, in case fonts or a scrollbar move things.
+
+     This is also the real cause of the long-standing note in PLAN.md
+     about the stage canvas "never initialising" in the preview pane.
+     That was never a pane quirk: it happens in every browser, and it
+     was only ever masked by anything that happened to fire a resize. */
+  useEffect(() => {
+    const fire = () => window.dispatchEvent(new Event('resize'))
+    const raf = requestAnimationFrame(fire)
+    const id = window.setTimeout(fire, 250)
+    return () => {
+      cancelAnimationFrame(raf)
+      window.clearTimeout(id)
+    }
+  }, [])
+
   const low = tier === 'low'
 
   /* No context, no stage. A machine that cannot give us WebGL would
@@ -190,7 +219,11 @@ export default function Stage({ showArm }: { showArm: boolean }) {
       <Canvas
         /* a software rasteriser pays for every pixel it fills, and at
            dpr 2 that is four times the work for the same frame */
-        dpr={low ? 1 : [1, 2]}
+        /* An explicit number, not a [min, max] range. Given a range r3f
+           settled on the MINIMUM here, so a retina screen was rendering
+           the machine at half resolution — the other half of why it
+           looked soft. */
+        dpr={low ? 1 : Math.min(typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1, 2)}
         /* Off About the scene is background only: drifting dust, stars,
            a glow pool. On the low tier that is not worth sixty renders a
            second, so it is drawn once and left. About keeps a live loop

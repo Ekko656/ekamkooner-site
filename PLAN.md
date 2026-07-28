@@ -218,12 +218,42 @@ rAF-driven animation is frozen between captures, so:
 Judge motion by pumping several screenshots in a row, and treat a single
 probe of an animated value as a still frame, not the settled result.
 
-Worse than that: the r3f stage canvas never initialises in the pane at
-all. It stays at the default 300x150 with no renderer attached, on every
-page and every tier, and this is true of a clean checkout too - so the
-arm and the starfield simply cannot be seen there. Anything that renders
-in that canvas has to be checked in a real browser. What looks like
-"the stars disappeared" in a pane screenshot is this, not a regression.
+~~Worse than that: the r3f stage canvas never initialises in the pane.~~
+**SOLVED 2026-07-28 — this was never a pane quirk.** The canvas sat at
+the default 300x150 in *every* browser on a fresh load, and CSS then
+stretched it across the viewport, so the machine was rendered at
+300x150 and blown up to 3000px wide. It only ever looked fine because
+something happened to fire a window resize (in an automated session,
+the very first `resize_window` call), which snaps it to full size.
+
+See section 8 for the fix and why it has to live where it does.
+
+## 8. The stage canvas sizing bug (fixed, do not re-break)
+
+Two separate faults were making the About arm look, in Ekam's words,
+"like its 360p":
+
+1. **The canvas never took its real size.** r3f measures its container
+   with a ResizeObserver and that measurement never landed here, so the
+   renderer stayed at the bare `<canvas>` default of 300x150 while CSS
+   stretched it to full width.
+   - `resize={{ offsetSize: true }}` does not fix it.
+   - Gating the `<Canvas>` on a measured container does not fix it; the
+     container reports 1512x857 the whole time, so measuring was never
+     what was broken.
+   - It **cannot** be fixed from inside `<Canvas>`: with no root, none
+     of its children mount, so nothing in there ever runs.
+   - What works is dispatching a `resize` event from `Stage` itself,
+     next frame and again once layout settles. That hook is deliberately
+     outside the Canvas. Do not move it in.
+
+2. **`dpr={[1, 2]}` resolved to the minimum**, so a retina screen
+   rendered at half resolution. It is now an explicit number.
+
+Verified: canvas buffer 3024x1602 backing a 1512x801 box, effective
+dpr 2.00, on a fresh load in a clean tab with no resize of any kind.
+
+---
 
 ## 7. Performance on machines without graphics acceleration
 

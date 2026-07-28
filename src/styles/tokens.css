@@ -90,6 +90,9 @@
   --accent: #6b3fa0;
   --accent-deep: #4b2e83;
   --accent-wash: #f0ebf8;
+  /* a hairline that is only just purple — used where the accent should
+     be present at rest without announcing itself */
+  --accent-line: #ded1ef;
 
   /* ---- ink used on dark objects (the machines) ---- */
   --void: #101014;

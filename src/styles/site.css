@@ -77,13 +77,15 @@
 /* The active page is named in the accent and underscored. The rule
    grows from the left on hover and is simply present when active —
    the same movement either way, so hovering previews arriving. */
-/* set in the second voice, like every other word on the site whose job
-   is to name a place rather than to be read as prose */
+/* Jost, like every other control on the site. Forum was tried here and
+   the bar ended up reading as a third voice competing with the name
+   beside it; the nav is something you operate, so it belongs to the
+   face that operates things. */
 .masthead-link {
   position: relative;
-  font-family: var(--font-voice);
+  font-family: var(--font-ui);
   font-size: 1rem;
-  letter-spacing: 0.06em;
+  letter-spacing: var(--track-ui);
   color: var(--ink-2);
   padding-bottom: 3px;
   transition: color var(--dur-fast) var(--ease-mech-out);
@@ -189,14 +191,14 @@
   z-index: var(--z-content);
   grid-column: 1;
   justify-self: center;
-  align-self: end;
+  /* centred in its column, not hung off the bottom of it */
+  align-self: center;
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   max-width: 32rem;
   width: 100%;
-  padding-bottom: 12vh;
 }
 
 .landing-name {
@@ -255,29 +257,40 @@
    fill as an active filter, at the size of a control. */
 .marks {
   display: flex;
-  gap: var(--s-1);
+  align-items: center;
+  gap: var(--s-2);
   margin-top: var(--s-5);
 }
+/* Each mark sits in its own ruled square, and that rule is faintly
+   purple at rest — the accent is present without announcing itself.
+   Under the pointer the square fills, the rule and the mark go full
+   accent, and the whole thing lifts a pixel. */
 .mark {
   display: grid;
   place-items: center;
-  width: 42px;
-  height: 42px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid var(--accent-line);
   border-radius: var(--radius);
   color: var(--ink-2);
   opacity: 0;
   transform: translateY(10px);
   transition:
     background var(--dur-fast) var(--ease-mech-out),
-    color var(--dur-fast) var(--ease-mech-out);
+    border-color var(--dur-fast) var(--ease-mech-out),
+    color var(--dur-fast) var(--ease-mech-out),
+    box-shadow var(--dur-med) var(--ease-mech-out);
 }
 .mark svg {
-  width: 21px;
-  height: 21px;
+  width: 22px;
+  height: 22px;
+  display: block;
 }
 .mark:hover {
   background: var(--accent-wash);
+  border-color: var(--accent);
   color: var(--accent-deep);
+  box-shadow: var(--lift);
 }
 
 /* ---- the humanoid ----
