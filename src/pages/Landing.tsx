@@ -62,14 +62,14 @@ const NAME = ['Ekam', 'Kooner']
    will need re-measuring; the names to look for are "Bot" (the model
    root) and "Camera 2". */
 const BOT_SCALE = 0.62
-const BOT_Y = 135
+const BOT_Y = 168
 /* The scene parks Camera 2 at (0, 249, 360), framed on the head, and
    then flies it. Pinning z alone fixed the crop but left the drift:
    the machine rose about 215px in five seconds and sailed off the top
    of the page. The whole position has to be held, not just the depth. */
 const CAM_X = 0
 const CAM_Y = 249
-const CAM_Z = 700
+const CAM_Z = 810
 /* the scene's resting camera tilt, held alongside the position so the
    lookAt behaviour turns the MACHINE without turning the frame */
 const CAM_RX = 0.0145
@@ -150,6 +150,39 @@ export default function Landing() {
      scene finished loading and the pin never ran a single frame */
   useEffect(() => () => cancelPin.current?.(), [])
 
+  /* The name is solid ink until the cursor comes near it, then the
+     violet ramp fades up under the letters and fades out again as you
+     leave. A light that answers you rather than a permanent effect —
+     black in a screenshot, alive in the hand. Distance is measured to
+     the name's box, so approaching from any side works. */
+  useEffect(() => {
+    const el = root.current?.querySelector<HTMLElement>('.landing-name')
+    if (!el) return
+    const NEAR = 120 // fully lit at or inside this many px
+    const FAR = 460 // fully dark beyond this
+    let raf = 0
+    let want = 0
+    let have = 0
+    const onMove = (e: PointerEvent) => {
+      const r = el.getBoundingClientRect()
+      const dx = Math.max(r.left - e.clientX, 0, e.clientX - r.right)
+      const dy = Math.max(r.top - e.clientY, 0, e.clientY - r.bottom)
+      const d = Math.hypot(dx, dy)
+      want = 1 - Math.min(Math.max((d - NEAR) / (FAR - NEAR), 0), 1)
+    }
+    const loop = () => {
+      have += (want - have) * 0.12
+      el.style.setProperty('--lit', have.toFixed(3))
+      raf = requestAnimationFrame(loop)
+    }
+    window.addEventListener('pointermove', onMove)
+    raf = requestAnimationFrame(loop)
+    return () => {
+      window.removeEventListener('pointermove', onMove)
+      cancelAnimationFrame(raf)
+    }
+  }, [])
+
   useEffect(() => {
     const ctx = gsap.context(() => {
       gsap
@@ -190,7 +223,13 @@ export default function Landing() {
         <h1 className="landing-name">
           {NAME.map((word) => (
             <span className="mask-line" key={word}>
-              <span className="reveal-line">{word}</span>
+              <span className="reveal-line">
+                {/* the lit copy, faded in over the solid ink by proximity */}
+                <span className="name-lit" aria-hidden>
+                  {word}
+                </span>
+                {word}
+              </span>
             </span>
           ))}
         </h1>

@@ -122,11 +122,26 @@ export function startWatchdog() {
   /* an explicit ?perf=high means "show me the full site"; it should not
      be second-guessed by the very measurement it was used to override */
   if (new URLSearchParams(window.location.search).get('perf')) return
-  const NEED = 90 // frames of evidence before deciding
-  const SLOW = 24 // ms per frame; about 42fps
+  /* Judge the steady state, not the opening.
+
+     This used to decide after 90 frames at better than 42fps, which on
+     About meant it was grading the machine while a dozen STLs were
+     still being parsed, welded and turned into edge geometry. It
+     reliably concluded the machine was slow about two seconds in and
+     dropped the whole page to the low tier — the arm rendered sharp for
+     a moment and then visibly fell to dpr 1 with no antialiasing. That
+     is the "it goes 360p after two seconds".
+
+     So: ignore everything for the first few seconds, then require a
+     much longer run of genuinely bad frames before touching anything.
+     A wrong demotion is far more visible than a late one. */
+  const GRACE = 5000 // ms of loading and settling that are not evidence
+  const NEED = 240 // frames of evidence before deciding
+  const SLOW = 34 // ms per frame; about 30fps
+  const started = performance.now()
   let counted = 0
   let total = 0
-  let last = performance.now()
+  let last = started
   let raf = 0
 
   const tick = (now: number) => {
@@ -134,7 +149,7 @@ export function startWatchdog() {
     last = now
     /* a hidden tab, a tab-switch or a long stall (an STL load, a route
        change) is not evidence about the machine's steady-state speed */
-    if (!document.hidden && dt < 200) {
+    if (now - started > GRACE && !document.hidden && dt < 200) {
       total += dt
       counted++
       if (counted >= NEED) {

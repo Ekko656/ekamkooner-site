@@ -219,12 +219,24 @@
    The gradient has to sit on `.reveal-line`, the element that actually
    holds the glyphs. Put it on the parent and the masked-reveal wrapper
    breaks the clip and the name renders invisible. */
+.landing-name .reveal-line {
+  position: relative;
+}
+/* The lit copy sits exactly over the solid ink and is faded up by
+   `--lit`, which Landing.tsx drives from the cursor's distance to the
+   name. At rest it is zero and the name is plain black. */
 @supports ((-webkit-background-clip: text) or (background-clip: text)) {
-  .landing-name .reveal-line {
-    background-image: linear-gradient(180deg, #131316 26%, #5d38ad 100%);
+  .name-lit {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    background-image: linear-gradient(180deg, #131316 18%, #6b3fa0 100%);
     -webkit-background-clip: text;
     background-clip: text;
     color: transparent;
+    opacity: var(--lit, 0);
+    pointer-events: none;
   }
 }
 
@@ -283,16 +295,23 @@
     color var(--dur-fast) var(--ease-mech-out),
     box-shadow var(--dur-med) var(--ease-mech-out);
 }
+/* the mark itself tilts and grows a little under the pointer. It rides
+   on the svg rather than the anchor, because the anchor's transform
+   belongs to the entrance tween and the two would overwrite each other. */
 .mark svg {
-  width: 22px;
-  height: 22px;
+  width: 24px;
+  height: 24px;
   display: block;
+  transition: transform var(--dur-med) var(--ease-mech-out);
 }
 .mark:hover {
   background: var(--accent-wash);
   border-color: var(--accent);
   color: var(--accent-deep);
   box-shadow: var(--lift);
+}
+.mark:hover svg {
+  transform: rotate(-7deg) scale(1.12);
 }
 
 /* ---- the humanoid ----
@@ -436,8 +455,8 @@
   /* It is the payoff of the whole page and it lands in the empty left
      half of the closing frame, so it is sized to actually fill that
      space rather than sit in the middle of it. */
-  width: 40rem;
-  padding: var(--s-5) var(--s-8);
+  width: 44rem;
+  padding: var(--s-8);
   transition:
     box-shadow var(--dur-med) var(--ease-mech-out),
     border-color var(--dur-med) var(--ease-mech-out);
@@ -460,13 +479,13 @@
 }
 .oc-kicker {
   font-family: var(--font-voice);
-  font-size: var(--text-sm);
+  font-size: var(--text-body);
   letter-spacing: var(--track-label);
   color: var(--ink-2);
 }
 .oc-title {
   font-family: var(--font-display);
-  font-size: 2.6rem;
+  font-size: 3rem;
   line-height: 1.15;
   margin: var(--s-3) 0;
 }
