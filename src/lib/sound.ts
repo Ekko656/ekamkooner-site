@@ -21,9 +21,13 @@
      - Nothing is ever heard on page load. The AudioContext is not even
        built until the first real gesture, which also happens to be
        what browsers require.
-     - Press and release are different sounds. A switch does not make
-       the same noise going down as coming up, and matching them is the
-       difference between tactile and cheap.
+     - ONE sound per click, on the way down. There used to be a second,
+       brighter sound on the way up, which is what a real switch does —
+       but the gap between down and up is set by how the reader clicks,
+       not by us. A trackpad tap fires them ~15ms apart and they fuse
+       into one blurred noise; a deliberate press separates them into
+       two. Same click, two different results. A single sound on
+       pointerdown is the same every time.
      - It can be switched off, and the choice is remembered.
    ============================================================ */
 
@@ -145,13 +149,9 @@ function play(s: Shape) {
   osc.stop(t + s.dur + 0.02)
 }
 
-/* going down: lower, rounder, with the most weight */
+/* the click, on the way down. The only one. */
 export const press = () =>
   play({ freq: 380, drop: 190, dur: 0.055, level: 0.16, snap: 0.5, snapHz: 2100 })
-
-/* coming up: shorter, brighter, quieter — the switch letting go */
-export const release = () =>
-  play({ freq: 640, drop: 470, dur: 0.03, level: 0.075, snap: 0.32, snapHz: 3200 })
 
 /* the smallest one, for passing over something live. Nudged up from
    0.028: it was so far under the press that it read as almost nothing.

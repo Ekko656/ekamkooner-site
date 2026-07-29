@@ -6,7 +6,7 @@ import Lenis from 'lenis'
 import './lib/eases'
 import { session } from './lib/session'
 import { perf } from './lib/perf'
-import { loadSoundPref, press, release, tick } from './lib/sound'
+import { loadSoundPref, press, tick } from './lib/sound'
 import { preloadAssembly } from './scene/ArmAssembly'
 import Stage from './scene/Stage'
 import { Nav, ReadProgress } from './ui/Chrome'
@@ -159,12 +159,17 @@ function Shell() {
      so anything pressable anywhere on the site sounds the same without
      each component having to remember to ask for it.
 
-     pointerdown and pointerup are separate sounds on purpose: a switch
-     does not make the same noise going down as it does coming back, and
-     hearing the release land is most of what makes it feel tactile
-     rather than like a notification. The hover tick only fires when the
-     pointer crosses onto a NEW target, or sweeping across a nav would
-     machine-gun it. */
+     One sound per click, on pointerdown only. There was a second,
+     brighter one on pointerup — which is what a real switch does — but
+     the gap between down and up belongs to the reader, not to us: a
+     trackpad tap fires them about 15ms apart and they smear into one
+     muddy noise, while a deliberate press separates them into two
+     distinct hits. The same click sounded like two different things
+     depending on how it was made. One sound on the way down is the
+     same every time.
+
+     The hover tick only fires when the pointer crosses onto a NEW
+     target, or sweeping across a nav would machine-gun it. */
   useEffect(() => {
     loadSoundPref()
     const LIVE = 'a, button, input, .oc-list li, .sheet-stack li'
@@ -176,9 +181,6 @@ function Shell() {
     }
     const onDown = (e: Event) => {
       if (hit(e)) press()
-    }
-    const onUp = (e: Event) => {
-      if (hit(e)) release()
     }
     const onOver = (e: Event) => {
       const el = hit(e)
@@ -197,12 +199,10 @@ function Shell() {
     }
 
     document.addEventListener('pointerdown', onDown)
-    document.addEventListener('pointerup', onUp)
     document.addEventListener('pointerover', onOver)
     document.addEventListener('keydown', onKey)
     return () => {
       document.removeEventListener('pointerdown', onDown)
-      document.removeEventListener('pointerup', onUp)
       document.removeEventListener('pointerover', onOver)
       document.removeEventListener('keydown', onKey)
     }
