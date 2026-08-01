@@ -5,7 +5,7 @@
   "framework": "vite",
   "rewrites": [
     {
-      "source": "/((?!assets/|projects/|fonts/|so101/|favicon|.*\\.[a-zA-Z0-9]+$).*)",
+      "source": "/((?!_vercel/|assets/|projects/|fonts/|so101/|favicon|.*\\.[a-zA-Z0-9]+$).*)",
       "destination": "/index.html"
     }
   ],
