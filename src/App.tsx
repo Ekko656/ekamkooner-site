@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import gsap from 'gsap'
 import { ScrollTrigger } from 'gsap/ScrollTrigger'
 import Lenis from 'lenis'
@@ -238,6 +239,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <Shell />
+      <Analytics />
     </BrowserRouter>
   )
 }
